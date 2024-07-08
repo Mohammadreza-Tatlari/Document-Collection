@@ -1,0 +1,55 @@
+https://askubuntu.com/questions/111510/how-to-activate-pinch-to-zoom-twisting-with-synaptics-touchpad
+
+in order to active pinch-to-zoom in ubuntu
+
+how to set google-chrome to start with pinch-zooming:	
+google-chrome-stable --enable-features=UseOzonePlatform --ozone-platform=wayland
+
+Terminal common Commands:
+
+mkdir -> make directory 
+rmdir -> remove directory 
+cd -> change directory 
+cd ~ -> it moves to home 
+cd ../ -> it goes back
+ls -ltrh -> show files and directories
+clear -> clear the screen
+cat -> show contents of a file (tac reverse)
+cp -> file1 file2 -> copy files1 to files2
+rm -> remove files 
+man cat -> shows details and helps about cat(example)
+mv  files -> move files 
+grep (something) files -> it helps to find something in a long text
+$: in front of the command line means a user not the root-user
+su - ( I forgot the password of my su I will search for it)
+cd var/log cat syslog: to see systems log
+sudo command: runs command with root access
+su - -> become the root! ( perilous )
+less (file) -> show a huge file (or small file) page by page with control
+lsb_release -a -> to show version of linux			
+mount -> to see the information of hard disk
+uptime: information of the OS and how long it has been working
+ps -e or ps aux to see the running process in OS
+man shutdown -> give manual about for instance shutdown
+wall (text) => to write something for everone
+Top => shows all activity on our system
+traceroute -> to see and ping destination and each node
+tree => to show list of items in tree format
+locate (filename): to show the location of file
+whereis => to show where the file is 
+whatis => explains what that files do
+which => to see which kind of app is being used
+ctrl+C => it breaks the process and comes out
+ctrl+D => it tells that the process inputs are over and is over, then comes out
+sudo su - : for being in root
+dmesg: for see all the logs and anything that happened before the kernel is being booted. (all the logs behind the splash screen) (kernel ring buffer)
+
+
+
+
+
+
+
+
+
+				

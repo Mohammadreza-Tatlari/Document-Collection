@@ -1,0 +1,717 @@
+LPIC-1
+This note is dedicate for jodging down information about LPIC and fundamentals of Linux system.
+WEBSITE: https://linux1st.com/archives.html
+GIT REPO:https://github.com/jadijadi/lpic1book
+
+LPIC-1-005 - Hardware and Concepts
+sysfs: its a folder/file that contains information about all hardware devices and kernels and other elements that our system has and it illustrate all of them to user and let the system use the information in order to function. all this information are located in kernerl
+to have access:
+cd /sys/ -> direct to sysfs folder
+
+udev or /dev: are the file managers for systems which it means that they are sudoes and the real data is not there but if we find our hardware of device in this folder it means that we can do whatever we want because the root system has identified it. you can interact if udev files and write or read it directely and you can change data inside hard drive
+also you can modify or customise devices via it. like configuration of recognizing a hard disk file.
+
+D-bus (dbus) is a message bus system, a simple way for applications to talk to one another in addition to interprocess communication 
+
+/proc direcotry (processes directory): is a folder which data of kernel setting and processes are located in there and its is placed inside the kernel not the processor and all processes have their unique ID and by directing them their activity can be monitored. but also it shows IRQs (interrupt request)
+DMA (direct memory access, faster than I/O ports)
+I/O ports ( locations in memory where CPU can talk with devices)
+and network setting are all located in proc
+Important: it is a sudo file system: which it means that it mock the result of file systems
+
+how ever if you want to change some information directly it is essential to modify the /etc directory.
+
+
+LPIC-1-006 - Understanding of hardware functionality
+some commands like ls
+lsusb: listing for usb devices
+lspci: for pci devices
+lsblk: for block devices(devices that can be W/R like disks)
+lshw: take a huge list from hardware
+
+kernel loadable modules:
+actually linux has most of the drives in built in condition so installing them are not required but for reducing the load balance and size of the Kernel all of the mare not loaded.the loadable files exist because all of them cannot be mounted.
+consider the usage of drive which are commands and instructionfor example a webcam can interact with OS and how user can use it. however we have such thing as module. 
+to inspect list of modules 
+we can use: 
+lsmod/ -> to list modules
+rmmode -> to remove modules
+modprobe -> to add a module (it is an easier way than insmod)
+-f -> to switch and force action
+
+fun thing:
+Linux Kernel is looklike saying mashin benz (mashin = kernel , benz= linux)
+
+
+LPIC-1-007 - Boot procedure & Stages - each level and stages and introduction
+the procedure of booting the system
+1. the motherboard firmware does the POST processed (PowerOnSelfTest)
+2.motherboard loads the bootloader for loading the OS on 
+3.Bootloader loads the linux kernel based on its configs/commands
+4.Kernel loads and prepares the system (root filesystem) and runs the initialization program
+5.Init program start the service, other programs, .. (webserver, graphiccal interfaces , networking, ...) /init folder 
+ 
+kernel is not responsible for starting all programs so it mandates init to handle those processes
+
+note: firmware is not just responsible for loading the bootloader or grub. it loades whatever that is pointed to it. also bootloader is not obligated to just load the kernel it can load anything
+
+we have 2 kind of firmware for bootloading 
+1.BIOS (Basic Input Output System)
+ which is older and much limited to one sector of the disk which can be called (MBR:master boot record) and needs a multi stage bootloader so
+2.UEFI (Unified Extensible Firmware Interface):
+is graphical and fancy it specifices a special disk partition for the bootloader called EFI System Partition(EPS)
+ESP is a FAT and mounted in boot/efi and bootloader files have .efi suffixes/ extensions
+you can check these files in /sys/firmware/efi
+
+
+LPIC-1-008 Boot Procedure & Stages - journal and logs
+dmesg:
+when we boot our system after the booatloading process the linux kernel gives a log about how its loading and booting. so it is possible to check it and analys the process if any problem occurs.
+but this log happens behide a splash screen so to see it we can simply use ecs button or after the boot process we can use dmesg command to see the logs
+
+conclusion: dmesg shows the kernel ring buffer
+
+less /var/log/dmesg less shows the logs in page format also it is feasible to use cat
+for fedora is in /var/log/boot.log
+
+journalctl -> this command is the same as dmesg but categorizing and sorting is possible in it 
+journalctl -b -> for boot journal
+journalctl -u -> for all logs
+journalctl -k -> for kernel logs which are happened before be written in hard disk
+
+var/log/messages
+the kernel is still logging its messages in dmesg due to buffer ring
+in some systems, it might be aclled var/log/syslog
+there are many other logs at /var/log
+
+init(initializer) -> after the POST of motherboard, firmware, bootloader, and kerner the init is commenced via kernel to maintain and handle other procedures like checking the network and deamen which are bundled in subsystems, services and other deamens, but what is deamens? it is a way of process which application begin to work and listen and when a user call them they will response and make it plausbile to write condition for each logic. so deamens are applications running in background in order to be used.
+
+there are different init systems:
+-sysVinit; is base on Unix system V. it is now abrogated but some old system are still using it.
+-systemd: is a new replacement for sysVinit. but in linux systems it was standarized that each program was dedicated to do one thing but in systemd some application do something in outstand actions. also many logs are not in text
+-upstart: existed between 2014 to 2015 and was programmed by ubuntu and canonical team but it did not continue
+we can use which init for each system to find out which kind of init we are using
+
+ps -p 1 => shows the first process in system base on id which is 1
+ps -p (process ID) => it shows the app that has the ID
+pstree => to see the tree of processes (fun to checkout)
+systemctl list-units --type devices => this command shows us list of unit in our system processor and in this case we want to just recieve devices type units
+systemctl cat cup => for print the condition of for example cup.service (printing)
+
+systemctl status sshd (for instance) => for checking the status of sshd 
+systemctl enalbe sshd => enables sshd. the different between start and enable is that when we start the system the sshd is enabled so it will start alongside the system
+
+systemctl is-running -> give you status on the way that system is working or if any services is degraded or upgraded
+systemctl --failed -> shows the faild processes
+
+
++LPIC-1-009 Runlevel - Targets - expression and definitions
+runlevels: is like when the system is in live section or in what level the system can do certain things
+
+systemctl status => gives all the information about all status of different process
+
+commands that put the system in some special target
+rescue: local file systems are mounted, there can be no etworking and only root user 
+emergency: only the root file system and in read only mode, no networking and only root 
+reboot: it reboot the system
+halt: stops all processes and halts CPU activities
+poweroff: like halt but also sends an ACPI shutdown signal (no lights)
+
+systemctl isolate emergency: set and isolate the target level in emergency target
+we can check them in each target via 
+systemctl is-system-running command
+
+this is how we can isolate each level target for ourselves to work with
+runlevel => to see in which level we are 
+we have 6 levels
+to see each level and its configuration we can use 
+/etc ls rc -> which contains all levels and their properties that system reads from them in each target level
+for example after that if we write
+init 6
+then the system read fro rc.6 and reboot the system 
+
+
++LPIC-1-010 Runlevel - Targets - how to shutdown a system properly
+when we are working with linux or unix system multiple users may be working on it but the admin somehow wants to shutdown the system/server so for doing such an action the admin should send a command that halt and stop processor in proper and step by step way. the procedure is like this -> the system sends for example a 15 code command to processes and the procedures stop there work programaticaly
+or sends code 9 that shutdown the whole process suddenly
+
+regular commands are sorted:
+halt -> command halts the system and then stops the CPU
+poweroff -> halts and shutdown the system via ACPI (Advanced Configuration and Power Interface)
+reboot -> it reboots the system after shutdown
+
+
+LPIC-1-011 FHS FileSystem Hierarchy Standard (came from Unix)
+in linux stystem all direcotories after partition level are standardized in FHS system
+the base and most importat files are:
+bin: Essential command binaries 
+boot: Static files of the boot loader
+dev: Device files
+etc: Host-specific system configuration ( which many conf files are there)
+home: Home directory of the users
+lib: Essential shared libaries and kernel modules
+media: Mount point for removable media
+mnt: Mount point for mounting a filesystem temporarily 
+opt: Add-on application software packages 
+root: Home directory of the root user 
+sbin: Essential system Binaries ( more important commands root only)
+srv: Data for services provided by this system
+tmp: Temporary files, sometimes purged on each boot
+usr: Secondary hierarchy
+var: Varibale Data (logs, ...)
+for learning more about directories simply type ls or ls -ltrh in root directory to observe all directories
+/ ls -ltrh
+
+bin -> if ls is takken inside /bin folder, all regular commands will be shown
+
+
+LPIC-1-012 - Partitions 
+this part is about how much volume is dedicated to each part and why boot and /home are seperated from each other. Also what is swap and how the LVM (Logical Volume Management) really works. 
+LVM: that we can connect multiple hardisks and build up a groupvirtual disk that functions as a single harddisk
+swamp: Swamp is firstly invented in unix systems which makes a small part of hardisk to be dedicated to memory usage 
+it is recommended to be parted in such order: memory + 2GB or memory * 2GB it depends on tpye of Hard Disk
+
+gparted => is a command to initial the graphical interface of partition section
+
+What is RAID: when same data is written on 2 seperated hard disk volumes
+
+
+LPIC-1-013 Bonus SWAP
+Swapon -> to see the status of our swap part
+parted dev/sda -> to see the all the partitions
+
+what is the difference of Zram and diffult swap
+Zram is new future of the linux that is developed in redhat and fedura distro(distribution) that it takes part of the RAM and zip the kernel of linux in it (zip means to compress the data of it). same as swap but from inside (expanding)
+
+Swap file: same as partitional Swap but it take a folder and use it as a swap Volume debian based OS uses this kind of swap structure
+
+it is recommended to use Temp folder to use as swap but it is new inventon
+
+
+LPIC-001-014 GRUB and Bootloader installation part 1 GRUB legacy
+MBR (Master Boot Record): Legacy BIOS -> 0,0,1 (Clander 0, Side 0 , Sector 1) is the first location of Hard disk that is around 512 byte and contains information about boot loading. but in modern computer and more advanced boot loader the small part of the loader is placed in that location and computer reads from it and initiate the rest of boot loader in other locations. the memory that is being used Is called ?MBR?
+
+GRUB (Grand Unified Bootloader): started to replace the older LILO. the first version (1) is GRUB legacy and started in 1999 the second version started in 2005 and is a complete rewrite of version 1. its menu based system which Kernerl or Chainloader is being selected to boot. it is also possible to edit the menu on the fly or give direct commands from a command line.
+Grub configuration is possible via grub config file
+
+
+LPIC-001-015
+Installation and configuration of Boot and Boot loader part2 GRUB2
+
+It is possible to change the configuration of GRUBs in linux systems but it depends on firmware and type of Bios or UEFI
+to do so we can check out /boot/grub/grub.cfg file or with similar name.
+in the file most of configuration and options are avialable and by changing the we can change the GRUB behaviour. it is possible to add new menuentry for it and config sda location and more changes.
+all GRUB2 configurations are not placed inside a single file so for more conviniences grub-mkconfig file is created to implement changes to grub interfaces.
+so in etc/default/grub or etc/grub.d there is a grub-mkconfig and you need to issue it and take an output form changes to it into another file:
+grub2-mkconfig -o (or >) boot/grub2/grub.cfg
+
+sometimes when new menuentry is being created for linux system if the sda location does not come with proper place it will redirect you to a busybox environment which is a small linux system and can run some basic commands 
+
+
+LPIC-001-016 Managing Shared Libraries
+ldd
+ldconfig
+/etc/ld.so.conf
+LD LIBRARY PATH
+when a programmer is developing a new app it is more convinient to use other libraries in  order to develop its program instead of reinventing the wheel. for example for window design qt lib may want to be used.
+2 ways of using library is common.
+Static: in static form the application is big and all the libs are included inside the app but its works independently. however, for example if a lib is 500mg and 2 similar app run simultaneously. then its like 1gb of that lib is being run. also if update comes for the library in 1 application all the others should be update manually. but it synced in dynamic usage
+Dynamic: in dynamic the application is much smaller but it is dependent to the lib. however for instance when app wants to use the lib. lib is install on the machine and all application only need to call it. and when a the lib updates it applies to all application because they are all using the same lib from a same location.
+
+libs are located in /etc or in user it depends on the applications. or programs
+ldd
+the ldd command helps you find:
+ . if a program is dynamically or statically linked.
+ . what libraries
+ 
+ example : ldd user/lib/ldconfig
+
+Bonus: hacking tip
+ld-linux and how it execute a file that may not be able to be executed.
+by readelf -W1 command can see which program requested as a interpreter
+
+
+LPIC-001-017 use Debian Package Manager 
+
+package manager is the way linux distortions use the official repositories to install application instead of downloading an executable file and install it out of the standards.
+
+dpkg: depackage does not work with repository. it gets a package and install it. but apt-get works with repository
+in sources.list.d we add repository that we want to add out of the other repositories instead of adding them in sources.list. however, a new file should be created
+why do we update apt?
+apt is like a cache somewhere that hold all the address of program sources inside itself. so when we upate the apt via apt-get update. it actually updates those links.
+cache is placed inside /var/cache/apt
+to install, sudo apt-get install (program name) is being used. so the program checks the source and then install it.
+
+LPIC-001-018 configuration and managing packages
+
+in this section we more prone to survey the commands to control packages
+
+installation:
+apt-get install (program name) : to download the app
+apt-get --simulate install (program name): to simulate the installation
+apt-get install --download-only : to only download the app without installation
+apt-get downloda (program name): to download only the for exmaple debian package
+
+remove: 
+apt-get remove (file name - program name): to remove the file or program
+apt-get autoremove: it removes other dependencies that came by installation and have no usage
+
+search:
+because apt file is located inside the /var/cache repo so we use get-cache for searching
+apt-cache search (program name): it shows all the packages that include the programname:
+for instance: apt-cache search "tiny window" (tiny window is seperated so it is put inside cotation)
+
+apt alone can contain all: apt search , apt install, apt remove ...
+
+apt-get update: updates the apt-file in cache to check the repositories
+apt-get upgrade: reads from update and checks whether system needs upgrade for application. so it reads from cache not online.
+
+apt-get dist-upgrade: upgrade the distortions
+
+Package information with dpkg
+the underlying tool to work with .deb files is the dpkg. It us your to-go tool if you want to do manual action on a deb package. 
+dpkg [OPTION] ACTION PACKAGE
+
+some useful swiches:
+-c or --contents: shows the contents of a package 
+-C or --audit: search for broken installed packages and propose solutions
+--configure:  reconfigure an installed package
+-i or --install
+-I or --info
+-l or --list
+-P or --Purge: uninstall the package but it removes it configuration with it.
+purge can be used in apt-get as well.
+and ...
+
+
+LPIC-001-019 Other package managers like YUM , Zypper and RPM
+LPIC-001-020 RPM packages in Red hat distortions such as Fedora 
+
+LPIC-001- Module 102.6 Linux as a Guest Virtual Machine
+Virtual machines are simulate computer that are created on top of an OS.
+to run a virtual machine we need a hyporvisor (or virtual machine manager) like virtual box that we can simply create our own VM.
+
+when a virtual system is being cloned or copied it should be consider that some specific attirbutes should not be similar if it is NOT going to be used in isolated environment.
+Host Name, NIC MAC Address (Network Ip Controller) , NIC IP (if not using DHCP) , Machine ID (delete the /etc/machine-id and var/lib/dbus/machine-id and run dbus-uuidgen --enusre. these two files may have soft links to each other)
+encryption KEys like SSH fingerprints and PGP keys
+HDD UUIDs
+Any other UUIDs on the system
+
+Containers vs Virtual Machines:
+
+as it was discussed virtual Machine handles the whole guest Os and prepare libs and bins for specific app and then runs it. os it takes all the OS files and some other files that can be counted as redundencies.
+but Containers only keep the libs/bins of an app and only app can see thos libs and if the container need any file from OS it may take it directly from the OS which is being run on it.
+
+LPIC-001-working in command line - SHELLS
+
+
+LPIC-001- working in command line - variables
+
+variables are like some names that hold values inside themselves.
+such as this example:
+NAME=SOMETHING (remember if you are writing this in shell, should know that shell is very sensitive thats why we didn't make any space between something and NAME if you want to use spacing then should put the word in double quotation "")
+
+then with echo $NAME (we use $ to say that we want to echo NAME variable not just word NAME) we return that SOMETHING word
+
+also some environment variables are present in system
+by typing 
+" env or set " inside the terminal we cans see all of them
+check out all other stuff in variable like PS1 and ... in the book
+
+PATH variable: bash or shell repository check whenever a command is set and its not an internal command.
+by typing echo $PATH all path of commands can be seen to add a new location for command simply can export new one:
+export PATH = $PATH:/desiredlocation/
+shell does not execute any variable in dir that is been. but windows does. because it has securities issues. for example simply hackers can abuse it by executing that variable directly form that directory. so ./ is used like ./ping
+
+bash histories can be save inside the .bash_history or history. it can be used for security inssurance 
+
+
+LPIC-001-024- GNU based Filter Streaming 1/4
+Streams: in UNIX world a lot of data is in Text format it means unlike for instance word office that some text can only be read by the word app and all the data is not in text format, all the data is editable and readable in a text format. so streams are like ls cat or other commands that can be used to edit input and output
+
+modern programming environments and shells used three different standards for I/O streams:
+stdin: is the standard input streams,which provides input for command
+stdout: is the stadard output stream, to display output from command
+stderr: standard to display error stream
+
+veiw commands: like cat can help to see any files streams and data. also cat has some relatives too :) check the LPIC book
+less: is for long data to make that data in pagination format.
+shift + G goes to the end of list or data. if want to check any line simply that line of code can be written in less (:1000) then shift+G to see that line.
+with / anything. like /chesh /name
+n for next search result
+?name to search backward
+
+od: this command do the octalDump (showing in base 8)
+like od /filename
+-t in od tells what format to print -t a or -t c (summerized -c , -a)
+
+
+LPIC-001-025 stream filtering - spliting 2/4
+important by tail -f which f means follow we can see the end of each file and if any thin new happens it will show it. it is very common to use it for reading logs from an ongoing app
+
+LPIC-001-026 stream filtering - sorting 3/4
+sort and uniq are very useful for sorting and check uniq words in data importat to chech man of each command.
+sort LPIC.text | uniq => it sort the LPIC.text and then send it to be checked by uniq
+tr - paste are useful to boot
+sed is one of the most powerful stream editors check out sed one-liner for more information.
+for example: sed 's/USD/USDT/' logs.txt it replaces USD with USDT in log file
+
+LPIC-001-027 Stream filtering - module 103.2 4/4 data hash and analysic data
+wc -> word counter and paragraph counter.
+
+hashing:
+A hash function is any function that can be used to map data of arbitrary size to fixed-size values. There are different hashes and we use them for different purposes. For example, a site may hash your password in its database to keep it secure (and check the hash of provided password with a hash it already has in DB during logins) a site may provide the hash of a file so you can be sure that you've downloaded the correct file...
+type of hashing.
+md5sum is the oldest one 
+sha256sum
+sha512sum
+
+
+LPIC-001-028 Perform Basic File Managment - Important 1/3
+
+wild cards and globing 
+files globbing is shell capability which letws you tell things like: All files - everything  which starts with A - all files with 3 letter names whic hend in A or B...
+
+to do so you need to know about these characters:
+* means any string 
+? means any single character
+[ABC] matches A ,B and C
+[a-k] matches a,b,c ... k (both lower-case and capital)
+[0-9a-z] matches all digits and numbers 
+[!x] means NOT x
+
+ls with absolute path or certain commands
+ls -r : recursive listing it list the inner of repositories as well
+ls -ltrh: human readable listing
+
+cp : it copies files 
+cp -rv : copy recursively and verbose 
+cp -rv * /etc/: copy everything to /etc/ dir
+
+mv: is rename and also move. however moving and renaming is almost similar in memory usage.
+mv directory/* .: move everything from directory to where I am.
+rm -r: for removing recursively for repository
+
+mkdir: to make directory
+rmdir: to remove directory
+mkdir -p folder/newfolder/newerfolder: to make directory recursively
+
+
+LPIC-001-029 File Management Commands 2
+touch: is a way to change time stamp but if that file does not exist then it will make a new one.
+touc -r referencefile filname: it will make the reference of that file's time to the file we want to
+
+file: checks the type of the file and in itself
+
+dd: is similar to copy but its more powerful and has greater features and accessibilities. it also contains of and if(input file) and of(output file)
+
+
+LPIC-001-030 File Management compressing and zipping files 
+in linux base system compressing and gathering files together obey different algorithms and each of them have their own programms.
+
+gzip:
+is one of the common ways for compressing files. but remember if the file is so small after compressing the file may increase in size due to incoding and meta datas. so zipping and compressing are better to be used for large data.
+gunzip: is for unzipping the zipped file
+
+other algorithms for compressing and zipping. sometime they are links to each other
+bzip2, bunzip2
+xz , unxz
+ 
+tar:
+TapeArchive or tar is the most common archiving tool. In automatically create an archive file from a directroy and all its subdirs.
+
+switches of tar is little bit different because they can work without hyphen(-)
+example:
+tar cf (desired name for tarfile) (filename) (filename) ...
+tar cf myfiles.tar info.txt task.txt my-tasks
+
+tar xf (tar filename): to extract tar file
+
+tar cfzv compressedAndArchived.gz *
+this command create gz file with tar and zip it with (z) command and is verbose 
+
+cpio:
+another legacy way of archiving files together
+keep in my that cpio does not look inside the folders. So mostly we use it with find
+example:
+find . -name "*" | cpio -o > myarchivefind.cpio
+
+
+LPIC-001-031 Streams, pipes and redirects
+redirecting standard IO
+as it was mentioned before about stdin ,stdout and stderr which are standard input output and error. it is also possilbe to redirect them and choose which device or source become input or output. for example a monitor is an output and keyboard is a input but a program or a file also can be an input or an output too.
+
+note that 0, 1 & 2 numbering. the are called file descriptors. if you want to redirect the error, you can do 2> and only the error will be redirected
+
+redirection use commands:
+> redirect STDOUT to a file; overwrite if exists
+>> redirect stdout to a file; append if exists
+2> redirect stderr to a file; overwrite if exist
+2>> // ; append
+&> redirect both STDOUT and STDERR; overwrite if exsit
+&>> //
+< redirect STDIN from a file
+<> redirect STDIN from the file and send the STDOUT to it
+
+example:
+ls j* x* >> output 2> errors
+
+it is also possible to use &1 and &2 &0 to refer to the target of STDOUT, STDERR and STDIN in this case ls > file1 2>&1 means redirect output to file1 and output stderr to the same place as stdout
+
+Here-Documents is also a useful input that can be used for redirecting inputs. checkout the original LPICDOC
+
+
+LPIC-001-032 streams pipes and redirections 2/2
+
+Pipes: with Pipe (|) you can redirect STDOUT , STDIN and STDERR between multiple commands all on one command line.
+when you do command1 | command2; command1 is executed but its STDOUT is redirected as STDIN into the COMMAND2
+example: ls -1 | wc -
+
+xargs: this utility read space, tabs ,newline and end-of-file delimited strings from the standard input and executes the provided utility with the strings as arguments.
+
+example ls | echo -I HERE these are files: HERE. Finish
+
+tee: 
+the tee utility save the file and also send the data to STDOUT to demonstrate the procedure or saved files.
+it can be useful for monitoring the work flow or data management.
+example: ls -1 | tee allfiles
+the command above ls the files and sent the output to a allfiles also show the result in terminal
+
+
+LPIC-001-033 Process Management Create Monitor and Kill Processes.
+
+when  a process is run by shell its impossible to run another app with that shell until that process is stopped paused or killed
+
+some commands for managing processes.
+
+ctrl + z: can stop a process in terminal
+fg : starts all process (ForeGround)
+jobs: show the all process that being stopped
+fg %(number of process): to start that specific process
+bg : starts the process but in background and only can be seen by jobs
+and to stop or ctl+C them we need to send them to fg with fg command
+& : when we add & in the end of for example xeyes, shell sends it to bg
+jobs -l: show the process id (PID) 
+PPID: Parent Process ID
+nohup: nohup lets you  run your command even after terminal bein closed.
+also the output of the process will be written in nohup.out file
+and by command tail -f nohup.out we can see the tail of that file (useful for ping)
+example : nohup script.sh > mynohub.out 2> &1 &
+
+Kill: is the way to terminate the processes. but this command has some important signals that can be read by man kill and its manual.
+some important signals:
+1: it means hub. it sends signal that your PPID is closed so be end
+15: it stands for TERM. Terminate the processes
+9: it stands for KILL: it kills the processes forcefully
+SUDO: use sudo to terminate others processes as well. it can be useful in servers or SSH commands
+Killall (processes name): it kills and send -15 signal to all process names 
+pkill (xe): is for killing the name files that have xe inside of them
+
+
+LPIC-001-034 Process Management 
+ps: is to demonstrate the process that are running on the shell
+but if all processes are wanted to be watched,
+ps -e: shows all process in system
+ps -ef: shows the full data
+ps -aux | head: shows more data
+
+sometimes we monitor the system for such use we can use:
+top: it mintors the processes
+
+load average in top, what does it mean.
+the  0 , 0 , 0 stand for 1min , 5min , 15min and it means that how many process are in queue to be processed and if it becomes more that the CPU threads it means there is a problem with process load.
+
+in top panel we can use keys such as m for manual or k for killing
+
+free -h : shows the memory accecibility
+uptime: is to see the uptime of the system
+uptime -p: pretty , uptime -s: since
+
+watch: is the way to minotor a process by giving it a command like watch uptime
+watch df -h
+
+du -hs: disk usage 
+
+
+LPIC-001-035 Process Management - MutliPlexer - Tmux - Screen
+Screen is like shell that help to manage multi processes it is much easier than nohup and multi screens can be used
+for using screen and its command usually:
+ctrl + A is pressed and then the option can be selected 
+D: for example D means to detach the process
+-r: it means to reattach the process by the id 
+screen -ls: shows the list of processes
+| : it splits the screen
+tap: change the tap (remember to ctrl+A before)
+
+Tmux: is another tool like screen but it is more advance
+ctrl+B: is its shortcut for using comands instead of ctrl+A in screen
+shift + %: it splits the screen
+shift + ": splits vertically 
+tmux -ls: to see all tmux screens
+tmux is very important check out the jadi full course about it 
+
+
+LPIC-001-036 Modify Process Execution Priorities
+nice: The NI column in Top shows how nice this process is. The nicer the process, the less CPU it asks. The nice values can be from -20 to 19. 
+
+ps -l | head can also show niceness
+
+zombie processes are like parent process that has run a child process but still did not read the value of the child's return value. so its ended but still its value is present lin OS memory. nice = -20 is ANGRY and gets more priority for CPU and RAM while a process with nice = 19 is SUPER NICE and lets other processes use the resources before it.
+
+renice: to rearrange the niceness of a process
+example: renice -n 5 (PID)
+r in top command can do the same for renice
+
+
+LPIC-001-037 Search Text files using Regular expressions - Regex - searching with grep
+
+regex: is one of the ways to filter out text and find out any specific items that is clarified.
+
+for example: 
+^.{2,5},(.*@): ^ means that in the first of each line. . means that anything and {2,5} means to be between 2 to 5 words. () it means more emphasize on that.
+$ means the end of the line
+regex is a vast topic that can be discussed but some useful expression are:
+The * that means repeating the previous character for 0 to more times {0,...}
+the + means repeating the previous character for 1 or more times {1,...}
+the ? means zero or one repeats {0,1}
+| : it is fore or like a|b
+
+regex is case sensitive 
+
+Range: [: :]
+[:alnum:]
+[:blank:]
+[:digit:]
+
+grep is also another useful command for searching
+grep also has switches 
+-c: just show the count
+-v: rveerse the search ( for example looking for things that are not similar)
+-n: show line numbers
+-l: show only file names
+-i: case sensitive
+-r: read all files under each directory recursively
+
+extended grep: egrep is a way to use regex with grep 
+
+Fixed grep:fgrep if you need to search for exact string
+
+pymol
+clc main or genomics work 
+bench 23 
+excel 
+wrod office
+
+
+LPIC-001-037 vim SUPER IMPORTANT
+vi
+vim is vi Imporved
+in VIm we have some hotkeys
+i: for inserting and insert mode
+a: for appending the text in that current line. good for end of lines
+r: is for replace the current position of cursor
+o (for bottom) O(for top): it opens line
+x: for deleting the current from left to right
+X: same as x bur reverse
+dd: for cutting
+Pp: for pasting 
+cw: copy the word
+dw: cut the word
+xp: for changing to words position beside eachother
+use these keys in command form for:
+h: left
+l: right
+j: down:
+k: up 
+w: next word on current line
+e: next end of the word on current line
+can use digits for frequent of commands
+3 e: jumps 3 time to next word
+4 k: it means 4 times jump 
+ctrl+f: scroll one page forward
+ctrl+b: scroll one page backward
+G:(go) without number, it will jump to the end & 10G jump to line 10
+H: 2H 2 line from top of the page high
+L: 2L 2 line from bottom of the page low
+
+searching:
+/: for searching
+n: for next
+?: for searching backward
+u: undo
+
+:q for quiting but :q! is for overriding the quit
+:qw : quite and write
+:w [path]: write in a specific path
+
+
+LPIC-001-039 Creating Partions and filesystems with F-disk G-disk Parted
+
+to observe the disks:
+fdisk (for bios based systems): 
+fdisk /dev/sdb -l (l will list information)
+
+blocked devices: is a nonvolatile mass storage devices whose information ca be accessed in any order: like hard disks, USB memories, floppy disks, and CD-ROMs.
+
+in older computers that have BIOS that use MBR (master boot record) we use f-disk for managing the blocked devices and disk
+but in UEFI(unified extended firmware inteface) we use GPT (GUID Partition Table) and we use G-disk
+
+LPIC-001-040 partions and disk managment 2/2
+
+file formats are the way that computer 
+ext (extended file systems)
+fat (file allocation table)
+
+ext2:second extended filesystem was developed to address shortcomings in the older Unix/Minix filesystem used in early versions of Linux. It has been used extensively on Linux for many years. There is no journaling in ext2, and it has largely been replaced by ext3 and more recently ext4.
+
+ext3:ext2 + journaling, max file size is 2TB and max filesystem size is 16TB
+
+ext4:current version of ext, max file size is 16TB and max filesystem size is 1EB (1000*1000TB)
+
+XFS:journaling, caches to RAM, great for uninterruptible power supplies, Max file and filesystem size is 8EB
+
+swap:Swap is used when the system needs to use more ram than what is has. It's like an extra ram on disk
+
+VFAT:FAT32, no journaling, good for data exchange with windows, does not understand permissions and symbolic links
+
+exFAT:Extended FAT. A newer version of FAT which is used mainly for extended device which should work on all machines; like USB disks
+
+btrfs:A new high performance file system. Max file and filesize is 16 EB. Has its own form of RAID and LVM and build-in snapshots and fault tolerance and data compression on the fly.
+
+be careful when formating a file thats why some computers and OS do not recognize other disk or blocked devices
+
+
+LPIC-001-041 Maintain the integrity of filesystems - checking filesystems
+du: disk usage
+df: disk free
+this two are used for checking the condition of disk
+ inodes: is the way that contain information about disk and spaces of blocked devices such as the owner and access and .... inodes are like the index page of a book that can be filled and hold information about each chapter
+ 
+ df -i -h shows the inode of disk free
+ du
+ du -h --max-depth 1 : this command shows the depth of 1 of where the user is and shows the usage of data
+ 
+ 
+LPIC-001-042 changing and checking filesystem
+sometime datas can be damaged or not be completed due to inconcistency and disorder like power outage or due to bad sectors in disk. for solving this problems we can use fsck
+fsck (file system check): when a disk is going to be check by fsck, that disk should not be mounted.
+
+/etc/fstab : is location where system read where should each partion be mounted and gives information.
+fsck -A: checks the fstab and set for trouble shooting
+fsck -N: similate the process of file checking
+fsck -i: makes checking interaction
+fsck -y: assume yes for all integration
+
+tune2fs -l: give much more information about a disk 
+debugfs: for changing and debugging data
+superblock: writes like raid for backup or restoring
+xfs_fsr: file system reorganizer: it is similar to defrag the hard
+xfs_info: gives information
+ 
+
+LPIC-001-043 Mounting and unMounting filesystems
+
+when a new blocked devices like a USB is connected to the Unix system device it does not indicate it same as windows like C: D: E: it send it to the tree structure of Unix system such as /mnt or /media
+
+
+
