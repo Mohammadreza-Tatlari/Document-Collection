@@ -111,14 +111,14 @@ runlevels: is like when the system is in live section or in what level the syste
 systemctl status => gives all the information about all status of different process
 
 commands that put the system in some special target
-rescue: local file systems are mounted, there can be no etworking and only root user 
+rescue: local file systems are mounted, there will be only root user 
 emergency: only the root file system and in read only mode, no networking and only root 
 reboot: it reboot the system
 halt: stops all processes and halts CPU activities
 poweroff: like halt but also sends an ACPI shutdown signal (no lights)
 
 systemctl isolate emergency: set and isolate the target level in emergency target
-we can check them in each target via 
+we can check them in each target via: 
 systemctl is-system-running command
 
 this is how we can isolate each level target for ourselves to work with
@@ -130,6 +130,8 @@ for example after that if we write
 init 6
 then the system read fro rc.6 and reboot the system 
 
+id:5:initdefault => this command used to exist in inittab(deprecrated) which was for setting the default init runlevel of system. thats why when system is restarted it returns to graphical interface 
+
 
 +LPIC-1-010 Runlevel - Targets - how to shutdown a system properly
 when we are working with linux or unix system multiple users may be working on it but the admin somehow wants to shutdown the system/server so for doing such an action the admin should send a command that halt and stop processor in proper and step by step way. the procedure is like this -> the system sends for example a 15 code command to processes and the procedures stop there work programaticaly
@@ -140,6 +142,8 @@ halt -> command halts the system and then stops the CPU
 poweroff -> halts and shutdown the system via ACPI (Advanced Configuration and Power Interface)
 reboot -> it reboots the system after shutdown
 
+who -T shows the message condition of users in system
+MOTD (message of the day)
 
 LPIC-1-011 FHS FileSystem Hierarchy Standard (came from Unix)
 in linux stystem all direcotories after partition level are standardized in FHS system
@@ -152,9 +156,9 @@ home: Home directory of the users
 lib: Essential shared libaries and kernel modules
 media: Mount point for removable media
 mnt: Mount point for mounting a filesystem temporarily 
-opt: Add-on application software packages 
+opt: Add-on application software packages (for example if want to install a package that is not part of the distro so it's better to be installed in opt directory)
 root: Home directory of the root user 
-sbin: Essential system Binaries ( more important commands root only)
+sbin: Essential system Binaries ( more important commands. root only)
 srv: Data for services provided by this system
 tmp: Temporary files, sometimes purged on each boot
 usr: Secondary hierarchy
@@ -162,10 +166,13 @@ var: Varibale Data (logs, ...)
 for learning more about directories simply type ls or ls -ltrh in root directory to observe all directories
 / ls -ltrh
 
-bin -> if ls is takken inside /bin folder, all regular commands will be shown
+bin -> if ls is taken inside /bin folder, all regular commands will be shown
 
 
 LPIC-1-012 - Partitions 
+tip before top:
+it is possible to dedicate a partition for instance 25GB for / directory (which means all the files) and 250MB for root and 950GB for /home directory. then if distro is needed to be change the only partition that will be overhauled will be the 25GB and the /home directory will be mounted on the new distro.
+
 this part is about how much volume is dedicated to each part and why boot and /home are seperated from each other. Also what is swap and how the LVM (Logical Volume Management) really works. 
 LVM: that we can connect multiple hardisks and build up a groupvirtual disk that functions as a single harddisk
 swamp: Swamp is firstly invented in unix systems which makes a small part of hardisk to be dedicated to memory usage 
@@ -179,23 +186,35 @@ What is RAID: when same data is written on 2 seperated hard disk volumes
 LPIC-1-013 Bonus SWAP
 Swapon -> to see the status of our swap part
 parted dev/sda -> to see the all the partitions
-
+command: 
+top => shows status of processses
+swapon => shows the location of swap if it exists
+free -h => to show memory and swap storage
+fdisk -l => to see all disk partitions and drives
+ 
 what is the difference of Zram and diffult swap
 Zram is new future of the linux that is developed in redhat and fedura distro(distribution) that it takes part of the RAM and zip the kernel of linux in it (zip means to compress the data of it). same as swap but from inside (expanding)
+
+debian has partition that is dediacted to Swap
+Ubuntu has file that is dedicated to Swap
+Fedora36 has Zram that it compresses files and act like swap
 
 Swap file: same as partitional Swap but it take a folder and use it as a swap Volume debian based OS uses this kind of swap structure
 
 it is recommended to use Temp folder to use as swap but it is new inventon
 
 
-LPIC-001-014 GRUB and Bootloader installation part 1 GRUB legacy
++ important:  LPIC-001-014 GRUB and Bootloader installation part 1 GRUB legacy
 MBR (Master Boot Record): Legacy BIOS -> 0,0,1 (Clander 0, Side 0 , Sector 1) is the first location of Hard disk that is around 512 byte and contains information about boot loading. but in modern computer and more advanced boot loader the small part of the loader is placed in that location and computer reads from it and initiate the rest of boot loader in other locations. the memory that is being used Is called ?MBR?
 
 GRUB (Grand Unified Bootloader): started to replace the older LILO. the first version (1) is GRUB legacy and started in 1999 the second version started in 2005 and is a complete rewrite of version 1. its menu based system which Kernerl or Chainloader is being selected to boot. it is also possible to edit the menu on the fly or give direct commands from a command line.
 Grub configuration is possible via grub config file
 
+UEFI uses stages to boot the system and these stages are like checking the security of OS and ...
 
-LPIC-001-015
+definition of chainloading: when a boot loader, load another boot loader. for example when linux bootloader needs to start a windows system
+
+* important LPIC-001-015
 Installation and configuration of Boot and Boot loader part2 GRUB2
 
 It is possible to change the configuration of GRUBs in linux systems but it depends on firmware and type of Bios or UEFI
@@ -205,6 +224,14 @@ all GRUB2 configurations are not placed inside a single file so for more convini
 so in etc/default/grub or etc/grub.d there is a grub-mkconfig and you need to issue it and take an output form changes to it into another file:
 grub2-mkconfig -o (or >) boot/grub2/grub.cfg
 
+options of grub2:
+menuentry: defines a new menueentry
+set root: defines the root where /boot located
+linux,linux16: defines the location of the linux kernel on BIOS systems
+linuxefi: defines the Linux kernel on UEFI systems
+initrd: defines the initramfs image for BIOS systems
+initrdefi: defines the initramfs imafge for EUFI systems
+
 sometimes when new menuentry is being created for linux system if the sda location does not come with proper place it will redirect you to a busybox environment which is a small linux system and can run some basic commands 
 
 
@@ -213,8 +240,9 @@ ldd
 ldconfig
 /etc/ld.so.conf
 LD LIBRARY PATH
-when a programmer is developing a new app it is more convinient to use other libraries in  order to develop its program instead of reinventing the wheel. for example for window design qt lib may want to be used.
+when a programmer is developing a new app it is more convinient to use other libraries in  order to develop its program instead of reinventing the wheel. for example for window design qt lib may be require to be used.
 2 ways of using library is common.
+Linking:
 Static: in static form the application is big and all the libs are included inside the app but its works independently. however, for example if a lib is 500mg and 2 similar app run simultaneously. then its like 1gb of that lib is being run. also if update comes for the library in 1 application all the others should be update manually. but it synced in dynamic usage
 Dynamic: in dynamic the application is much smaller but it is dependent to the lib. however for instance when app wants to use the lib. lib is install on the machine and all application only need to call it. and when a the lib updates it applies to all application because they are all using the same lib from a same location.
 

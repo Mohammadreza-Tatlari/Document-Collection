@@ -44,8 +44,9 @@ ctrl+D => it tells that the process inputs are over and is over, then comes out
 sudo su - : for being in root
 dmesg: for see all the logs and anything that happened before the kernel is being booted. (all the logs behind the splash screen) (kernel ring buffer)
 
-
-
+for configing the default terminal:
+after the below commnad select the prefered terminal from the menu
+sudo update-alternatives --config x-terminal-emulator
 
 
 
