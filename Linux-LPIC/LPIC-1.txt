@@ -1,9 +1,9 @@
-LPIC-1
+### LPIC-1 ###
 This note is dedicate for jodging down information about LPIC and fundamentals of Linux system.
 WEBSITE: https://linux1st.com/archives.html
 GIT REPO:https://github.com/jadijadi/lpic1book
 
-LPIC-1-005 - Hardware and Concepts
+### LPIC-1-005 - Hardware and Concepts ###
 sysfs: its a folder/file that contains information about all hardware devices and kernels and other elements that our system has and it illustrate all of them to user and let the system use the information in order to function. all this information are located in kernerl
 to have access:
 cd /sys/ -> direct to sysfs folder
@@ -22,7 +22,7 @@ Important: it is a sudo file system: which it means that it mock the result of f
 how ever if you want to change some information directly it is essential to modify the /etc directory.
 
 
-LPIC-1-006 - Understanding of hardware functionality
+### LPIC-1-006 - Understanding of hardware functionality ###
 some commands like ls
 lsusb: listing for usb devices
 lspci: for pci devices
@@ -43,7 +43,7 @@ fun thing:
 Linux Kernel is looklike saying mashin benz (mashin = kernel , benz= linux)
 
 
-LPIC-1-007 - Boot procedure & Stages - each level and stages and introduction
+### LPIC-1-007 - Boot procedure & Stages - each level and stages and introduction ###
 the procedure of booting the system
 1. the motherboard firmware does the POST processed (PowerOnSelfTest)
 2.motherboard loads the bootloader for loading the OS on 
@@ -64,7 +64,7 @@ ESP is a FAT and mounted in boot/efi and bootloader files have .efi suffixes/ ex
 you can check these files in /sys/firmware/efi
 
 
-LPIC-1-008 Boot Procedure & Stages - journal and logs
+### LPIC-1-008 Boot Procedure & Stages - journal and logs ###
 dmesg:
 when we boot our system after the booatloading process the linux kernel gives a log about how its loading and booting. so it is possible to check it and analys the process if any problem occurs.
 but this log happens behide a splash screen so to see it we can simply use ecs button or after the boot process we can use dmesg command to see the logs
@@ -105,7 +105,7 @@ systemctl is-running -> give you status on the way that system is working or if 
 systemctl --failed -> shows the faild processes
 
 
-+LPIC-1-009 Runlevel - Targets - expression and definitions
+### +LPIC-1-009 Runlevel - Targets - expression and definitions ###
 runlevels: is like when the system is in live section or in what level the system can do certain things
 
 systemctl status => gives all the information about all status of different process
@@ -133,7 +133,7 @@ then the system read fro rc.6 and reboot the system
 id:5:initdefault => this command used to exist in inittab(deprecrated) which was for setting the default init runlevel of system. thats why when system is restarted it returns to graphical interface 
 
 
-+LPIC-1-010 Runlevel - Targets - how to shutdown a system properly
+### +LPIC-1-010 Runlevel - Targets - how to shutdown a system properly ###
 when we are working with linux or unix system multiple users may be working on it but the admin somehow wants to shutdown the system/server so for doing such an action the admin should send a command that halt and stop processor in proper and step by step way. the procedure is like this -> the system sends for example a 15 code command to processes and the procedures stop there work programaticaly
 or sends code 9 that shutdown the whole process suddenly
 
@@ -145,7 +145,7 @@ reboot -> it reboots the system after shutdown
 who -T shows the message condition of users in system
 MOTD (message of the day)
 
-LPIC-1-011 FHS FileSystem Hierarchy Standard (came from Unix)
+### LPIC-1-011 FHS FileSystem Hierarchy Standard (came from Unix) ###
 in linux stystem all direcotories after partition level are standardized in FHS system
 the base and most importat files are:
 bin: Essential command binaries 
@@ -169,7 +169,7 @@ for learning more about directories simply type ls or ls -ltrh in root directory
 bin -> if ls is taken inside /bin folder, all regular commands will be shown
 
 
-LPIC-1-012 - Partitions 
+### LPIC-1-012 - Partitions ###
 tip before top:
 it is possible to dedicate a partition for instance 25GB for / directory (which means all the files) and 250MB for root and 950GB for /home directory. then if distro is needed to be change the only partition that will be overhauled will be the 25GB and the /home directory will be mounted on the new distro.
 
@@ -183,7 +183,7 @@ gparted => is a command to initial the graphical interface of partition section
 What is RAID: when same data is written on 2 seperated hard disk volumes
 
 
-LPIC-1-013 Bonus SWAP
+### LPIC-1-013 Bonus SWAP ###
 Swapon -> to see the status of our swap part
 parted dev/sda -> to see the all the partitions
 command: 
@@ -204,7 +204,7 @@ Swap file: same as partitional Swap but it take a folder and use it as a swap Vo
 it is recommended to use Temp folder to use as swap but it is new inventon
 
 
-+ important:  LPIC-001-014 GRUB and Bootloader installation part 1 GRUB legacy
+### + important:  LPIC-001-014 GRUB and Bootloader installation part 1 GRUB legacy ### 
 MBR (Master Boot Record): Legacy BIOS -> 0,0,1 (Clander 0, Side 0 , Sector 1) is the first location of Hard disk that is around 512 byte and contains information about boot loading. but in modern computer and more advanced boot loader the small part of the loader is placed in that location and computer reads from it and initiate the rest of boot loader in other locations. the memory that is being used Is called ?MBR?
 
 GRUB (Grand Unified Bootloader): started to replace the older LILO. the first version (1) is GRUB legacy and started in 1999 the second version started in 2005 and is a complete rewrite of version 1. its menu based system which Kernerl or Chainloader is being selected to boot. it is also possible to edit the menu on the fly or give direct commands from a command line.
@@ -214,7 +214,7 @@ UEFI uses stages to boot the system and these stages are like checking the secur
 
 definition of chainloading: when a boot loader, load another boot loader. for example when linux bootloader needs to start a windows system
 
-* important LPIC-001-015
+### * important LPIC-001-015 ###
 Installation and configuration of Boot and Boot loader part2 GRUB2
 
 It is possible to change the configuration of GRUBs in linux systems but it depends on firmware and type of Bios or UEFI
@@ -235,7 +235,7 @@ initrdefi: defines the initramfs imafge for EUFI systems
 sometimes when new menuentry is being created for linux system if the sda location does not come with proper place it will redirect you to a busybox environment which is a small linux system and can run some basic commands 
 
 
-LPIC-001-016 Managing Shared Libraries
+### LPIC-001-016 Managing Shared Libraries ###
 ldd
 ldconfig
 /etc/ld.so.conf
@@ -247,30 +247,49 @@ Static: in static form the application is big and all the libs are included insi
 Dynamic: in dynamic the application is much smaller but it is dependent to the lib. however for instance when app wants to use the lib. lib is install on the machine and all application only need to call it. and when a the lib updates it applies to all application because they are all using the same lib from a same location.
 
 libs are located in /etc or in user it depends on the applications. or programs
-ldd
+ldd (list dynamic dependencies)
 the ldd command helps you find:
  . if a program is dynamically or statically linked.
  . what libraries
- 
- example : ldd user/lib/ldconfig
+commands:
+ldd (file/directory) => this command will show all the depending library that the software needs to be run
+example : ldd user/lib/ldconfig
+
+symbolic links: its the way that a file which a name is link and run another file which is the file that needs to be target. think of it as a file that leads to a file that do the work but with a different name
+
+Dynamic library configs and cache: for instance files that are located  in /etc/ld.so.conf.d/*.conf will get updated to changed in updates or you want to change or add new configuration but also want to keep them after updates so simply it include your new file and keep them organized there.
+
+command: 
+ldconfig: creates a temporary cache file that contains all the information about libraries in /etc/ld.so.cache~
+
+where OS finds dynamic libraries:
+the system will search files in this order:
+1. LD_LIBRARY_PATH environment variable
+2. Programs PATH
+3. /etc/ld.os.conf (which might load more files from /etc/ld.os.conf.d
+4. /lib , /lib64 , /usr/lib ...
+
 
 Bonus: hacking tip
 ld-linux and how it execute a file that may not be able to be executed.
 by readelf -W1 command can see which program requested as a interpreter
+command:
+readelf -W1 (filename)
 
-
-LPIC-001-017 use Debian Package Manager 
+###LPIC-001-017 use Debian Package Manager ###
 
 package manager is the way linux distortions use the official repositories to install application instead of downloading an executable file and install it out of the standards.
 
 dpkg: depackage does not work with repository. it gets a package and install it. but apt-get works with repository
 in sources.list.d we add repository that we want to add out of the other repositories instead of adding them in sources.list. however, a new file should be created
 why do we update apt?
-apt is like a cache somewhere that hold all the address of program sources inside itself. so when we upate the apt via apt-get update. it actually updates those links.
+apt is like a cache somewhere that hold all the address of program sources inside itself. so when we update the apt via apt-get update. it actually updates those links.
 cache is placed inside /var/cache/apt
 to install, sudo apt-get install (program name) is being used. so the program checks the source and then install it.
+in /etc/apt/sources.list all the main source to find links and files are located
+in /sources.list.d you can simply add your own links 
 
-LPIC-001-018 configuration and managing packages
+###LPIC-001-018 configuration and managing packages ###
 
 in this section we more prone to survey the commands to control packages
 
@@ -278,7 +297,7 @@ installation:
 apt-get install (program name) : to download the app
 apt-get --simulate install (program name): to simulate the installation
 apt-get install --download-only : to only download the app without installation
-apt-get downloda (program name): to download only the for exmaple debian package
+apt-get download (program name): to download only the for exmaple debian package
 
 remove: 
 apt-get remove (file name - program name): to remove the file or program
@@ -286,7 +305,7 @@ apt-get autoremove: it removes other dependencies that came by installation and 
 
 search:
 because apt file is located inside the /var/cache repo so we use get-cache for searching
-apt-cache search (program name): it shows all the packages that include the programname:
+apt-cache search (program name): it shows all the packages that include the program name:
 for instance: apt-cache search "tiny window" (tiny window is seperated so it is put inside cotation)
 
 apt alone can contain all: apt search , apt install, apt remove ...
@@ -310,12 +329,41 @@ some useful swiches:
 -P or --Purge: uninstall the package but it removes it configuration with it.
 purge can be used in apt-get as well.
 and ...
+apt-get install -f (fix broken): looks for dependencies that were required but haven't installed
+apt-get dpkg -l: shows all installed dependencies
+dpkg-reconfigure tzdata: uses debconf for reconfiguration of an app after it is being installed like installing and reconfiguring time zone of a timing app
+apt info: shows the information of a package 
 
+###LPIC-001-019 Other package managers like YUM , Zypper and RPM###
 
-LPIC-001-019 Other package managers like YUM , Zypper and RPM
-LPIC-001-020 RPM packages in Red hat distortions such as Fedora 
+RPM(RedHat Package Manager), YUM (YellowDog Update Manager) are used by Fedora, RedHat, RHEL, CentOS and RockOS to manage packages
 
-LPIC-001- Module 102.6 Linux as a Guest Virtual Machine
+In fedora recent package manager yum.conf is not present any more because this distro is using DNF package manager so yum commands are being translated to DNF commands
+
+yum commands:
+update: update the repositories and update the names packages, or all if nothing is named - it can update and upgrade simultanously
+install: install a package
+reinstall: reinstall a package
+list: show a list of all packages or can show installed packages by --installed switch
+info (important): it shows information about packages
+remove: removes an installed package
+search: search the repository packages
+provides: check which packages provies an specific file
+upgrade: upgrade packages and removes the obsolete ones
+localinstall: install from a local rpm file
+localupdate: updates from a local file
+deplist (package name): shows the dependency list of a package
+groupinstall:
+histroy: shows all the history of using the yum
+
+wildcards also can be used for package update
+yum update 'cal*'
+
+yum download --resolve (package name): also download the packages will all dependencies
+
+###LPIC-001-020 RPM packages in Red hat distortions such as Fedora ###
+
+### LPIC-001- Module 102.6 Linux as a Guest Virtual Machine ###
 Virtual machines are simulate computer that are created on top of an OS.
 to run a virtual machine we need a hyporvisor (or virtual machine manager) like virtual box that we can simply create our own VM.
 
