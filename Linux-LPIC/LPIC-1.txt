@@ -363,26 +363,44 @@ yum download --resolve (package name): also download the packages will all depen
 
 ###LPIC-001-020 RPM packages in Red hat distortions such as Fedora ###
 
+RPM command can run actions on inidividual RPM files.
+command
+rpm ACTION [OPTION] rpm_file.rpm
+
+rpm2cpio
+cpio is an archive format. you can use the rpm2cpio command to conver rpm files to cpio and then use cpio tool to extract them
+
+the SUSE Linux and openSUSE uses Zypp as their package manager engine. you can use YAST or Zypper tool to communicate with it
+command:
+zypper [options] or [swtiches]
+
+https://linux1st.com/1025-use-rpm-and-yum-package-management.html
+
+
 ### LPIC-001- Module 102.6 Linux as a Guest Virtual Machine ###
 Virtual machines are simulate computer that are created on top of an OS.
-to run a virtual machine we need a hyporvisor (or virtual machine manager) like virtual box that we can simply create our own VM.
+to run a virtual machine we need a hypervisor (or virtual machine manager) like virtual box that we can simply create our own VM.
 
-when a virtual system is being cloned or copied it should be consider that some specific attirbutes should not be similar if it is NOT going to be used in isolated environment.
+for running hypervisor on a OS first should be checked whether the OS can support the hypervisor. for instance 64bit operating system are more likely to be able to support it and should check for vmx (for intel CPUs) or svm (for AMD CPUs) in /proc/cpuinfo to find out.
+
+There are two types of Hypervisor
+hypervisor 1: like hyper-V or KVM and Xen that need to be installed on hardware and then to mange OS.
+Hypervisor 2: like VMware and VirtualBox that are able to be installed on OS and run other Operating Systems inside of them
+
+Cloning: can be used in hypervisor to clone an exact operating system with same configuration over and over
+Open Virtualization Format (OVF): can transfer machines between hypervisors. it acts like template as well
+
+when a virtual system is being cloned or copied it should be consider that some specific attributes should not be similar if it is NOT going to be used in isolated environment.
 Host Name, NIC MAC Address (Network Ip Controller) , NIC IP (if not using DHCP) , Machine ID (delete the /etc/machine-id and var/lib/dbus/machine-id and run dbus-uuidgen --enusre. these two files may have soft links to each other)
-encryption KEys like SSH fingerprints and PGP keys
+encryption Keys like SSH fingerprints and PGP keys
 HDD UUIDs
 Any other UUIDs on the system
 
 Containers vs Virtual Machines:
+as it was discussed virtual Machine handles the whole guest Os and prepare libs and bins for specific app and then runs it. os takes all the OS files and some other files that can be counted as redundencies.
+but Containers only keep the libs/bins of an app and only app can see those libs and if the container need any file from OS it may take it directly from the OS which is being run on it.
 
-as it was discussed virtual Machine handles the whole guest Os and prepare libs and bins for specific app and then runs it. os it takes all the OS files and some other files that can be counted as redundencies.
-but Containers only keep the libs/bins of an app and only app can see thos libs and if the container need any file from OS it may take it directly from the OS which is being run on it.
-
-LPIC-001-working in command line - SHELLS
-
-
-LPIC-001- working in command line - variables
-
+###LPIC-003-1 working in command line -variables - SHELLS ###
 variables are like some names that hold values inside themselves.
 such as this example:
 NAME=SOMETHING (remember if you are writing this in shell, should know that shell is very sensitive thats why we didn't make any space between something and NAME if you want to use spacing then should put the word in double quotation "")
@@ -391,7 +409,7 @@ then with echo $NAME (we use $ to say that we want to echo NAME variable not jus
 
 also some environment variables are present in system
 by typing 
-" env or set " inside the terminal we cans see all of them
+" env or set " inside the terminal we can see all of them
 check out all other stuff in variable like PS1 and ... in the book
 
 PATH variable: bash or shell repository check whenever a command is set and its not an internal command.
@@ -399,10 +417,31 @@ by typing echo $PATH all path of commands can be seen to add a new location for 
 export PATH = $PATH:/desiredlocation/
 shell does not execute any variable in dir that is been. but windows does. because it has securities issues. for example simply hackers can abuse it by executing that variable directly form that directory. so ./ is used like ./ping
 
+uname give you data about the system. Swtiches:
+-s: prints the kernel name it is the default
+-n: prints the node name or the host name
+-r: print the release of the kernel
+-v: print the version of kernel
+-m: prints the machines hardware
+-o: prints the operating system name
+-a: all the information
+
+man => use it for get the manual of each command
+in manual or man command it is possible to man the man and it will give guidance about the man each section thus it can help to find and learn more about all the system
+for instance
+man passwd => will show manual of passwd execution command instruction but
+man 5 passwd => will show the file format of it
+
+for using the special characters ( * ? [ ] ' " \ $ ; ( ) | ^ < > ) in command or if want to print them we need to escape them by \ (backslash)
+for example:
+echo \* => to print *
+echo \$NAME => to print $NAME not the variable one
+
+for using the escape method for example as \n new line we need to active it by typing 
+echo -e "\n\n"  (check out the manual of echo)
 bash histories can be save inside the .bash_history or history. it can be used for security inssurance 
 
-
-LPIC-001-024- GNU based Filter Streaming 1/4
+###LPIC-001-024- GNU based Filter Streaming 1/4 ###
 Streams: in UNIX world a lot of data is in Text format it means unlike for instance word office that some text can only be read by the word app and all the data is not in text format, all the data is editable and readable in a text format. so streams are like ls cat or other commands that can be used to edit input and output
 
 modern programming environments and shells used three different standards for I/O streams:
