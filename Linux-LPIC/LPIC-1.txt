@@ -400,22 +400,8 @@ Containers vs Virtual Machines:
 as it was discussed virtual Machine handles the whole guest Os and prepare libs and bins for specific app and then runs it. os takes all the OS files and some other files that can be counted as redundencies.
 but Containers only keep the libs/bins of an app and only app can see those libs and if the container need any file from OS it may take it directly from the OS which is being run on it.
 
+
 ###LPIC-003-1 working in command line -variables - SHELLS ###
-variables are like some names that hold values inside themselves.
-such as this example:
-NAME=SOMETHING (remember if you are writing this in shell, should know that shell is very sensitive thats why we didn't make any space between something and NAME if you want to use spacing then should put the word in double quotation "")
-
-then with echo $NAME (we use $ to say that we want to echo NAME variable not just word NAME) we return that SOMETHING word
-
-also some environment variables are present in system
-by typing 
-" env or set " inside the terminal we can see all of them
-check out all other stuff in variable like PS1 and ... in the book
-
-PATH variable: bash or shell repository check whenever a command is set and its not an internal command.
-by typing echo $PATH all path of commands can be seen to add a new location for command simply can export new one:
-export PATH = $PATH:/desiredlocation/
-shell does not execute any variable in dir that is been. but windows does. because it has securities issues. for example simply hackers can abuse it by executing that variable directly form that directory. so ./ is used like ./ping
 
 uname give you data about the system. Swtiches:
 -s: prints the kernel name it is the default
@@ -441,8 +427,71 @@ for using the escape method for example as \n new line we need to active it by t
 echo -e "\n\n"  (check out the manual of echo)
 bash histories can be save inside the .bash_history or history. it can be used for security inssurance 
 
+## PART TO OF THE FOLLOWING TOPIC ##
+variables are like some names that hold values inside themselves.
+such as this example:
+NAME=SOMETHING (remember if you are writing this in shell, should know that shell is very sensitive thats why we didn't make any space between something and NAME if you want to use spacing then should put the word in double quotation "")
+
+then with echo $NAME (we use $ to say that we want to echo NAME variable not just word NAME) we return that SOMETHING word
+
+also some environment variables are present in system
+by typing 
+" env or set " inside the terminal we can see all of them
+check out all other stuff in variable like PS1 and ... in the book
+
+commands:
+whereis ping: shows all the executable files that are related to ping
+which ping: shows the file that is being executed as default
+
+environemnt name and functions:
+USER: the name of the logged-in user
+PATH: list of directories to search for commands, colon separated
+EDITOR: default editor
+HISTFILE: where bash should save its histroy (normally ,bash_history)
+PS1 (fun): The Prompt
+UID: the numeric user id of the logged-in user
+HOME: the users' home directory
+PWD: current working directory
+SHELL: the name of the shell
+$: the process id or PID of the running bash shell or process
+PPID: the process id of the process that started this process
+?: the exit code of the last command
+
+fun practice for promt: you can simple change the promp style by changing the PS1
+for instance:
+echo $PS1 will show the default structure of the ps1. but by typing PS1='->' turn the whole command indicator to the ->
+
+export $NAME: export let the variable to be used in other level of programing or processes and not just in the level that is defined
+
+PATH variable: bash or shell repository check whenever a command is set and its not an internal command.
+by typing echo $PATH all path of commands can be seen to add a new location for command simply can export new one:
+export PATH = $PATH:/desiredlocation/
+shell does not execute any variable in dir that is been. but windows does. because it has securities issues. for example simply hackers can abuse it by executing that variable directly form that directory. so ./ is used like ./ping
+
+useful hotkeys for .bash_history
+ctrl+R: for reverse search in command
+!!: run the last command
+!7: run command number 7
+use cautiously by history command
+history: shows the command history
+
+if you want to clear history:
+HISTSIZE=0
+
 ###LPIC-001-024- GNU based Filter Streaming 1/4 ###
 Streams: in UNIX world a lot of data is in Text format it means unlike for instance word office that some text can only be read by the word app and all the data is not in text format, all the data is editable and readable in a text format. so streams are like ls cat or other commands that can be used to edit input and output
+
+command
+cat: is for concatenating files and have options
+zcat: can open a gz file can print it on standard output
+less: can paginate the file or long text
+od: do the octal dump of a file it can also show the structure of file and it can be used to get more in depth detail about the file
+od -a or od -c
+
+
+notes:
+ctrl+D end the app properly
+ctrl+C exit forcefully
 
 modern programming environments and shells used three different standards for I/O streams:
 stdin: is the standard input streams,which provides input for command
@@ -461,18 +510,48 @@ like od /filename
 -t in od tells what format to print -t a or -t c (summerized -c , -a)
 
 
-LPIC-001-025 stream filtering - spliting 2/4
-important by tail -f which f means follow we can see the end of each file and if any thin new happens it will show it. it is very common to use it for reading logs from an ongoing app
+### LPIC-001-025 stream filtering - spliting 2/4 ###
+commands:
+split: this command can split a file in to different way and it can be declared by using its options (use man for further instruction)
+for instance:
+split -l 2 file.txt => it split the file.txt base on 2 line and export them in different files
 
-LPIC-001-026 stream filtering - sorting 3/4
+cat filenames * > (desired-file) => it can simple attach all the files together and export them to desire-file name as a single file
+
+head (filename): shows the first lines of a file
+tail (filename): shows the last line sof a file
+
+cut: print selected parts of lines for each FILE to standard output
+for instance:
+cut -f1,3,5-8 -d: filename.txt
+ 
+important by tail -f which f means follow we can see the end of each file and if any thing new happens it will show it. it is very common to use it for reading logs from an ongoing app
+
+### LPIC-001-026 stream filtering - sorting 3/4 ###
+commands:
+nl (filename): shows the line numbers of a file
+sort: sorts the file conent (sort -n filename: sorts by number)
+uniq: works only on sorted files and ingore repeated content
+uniq also can count number of repeated works by -c option
+paste: paste contents of a file to another
+tr: translates indicated file to something that is indicated as well. it works like replacing
+instance: cat filename | tr '1234567' '۱۲۳۴۵۶۷': it replace these numbers in whole file and replace it with persian one
+
+sed: stream editor for filtering and transfroming text
+search "sed one-liner" for handy commands in sed  
+
 sort and uniq are very useful for sorting and check uniq words in data importat to chech man of each command.
 sort LPIC.text | uniq => it sort the LPIC.text and then send it to be checked by uniq
 tr - paste are useful to boot
 sed is one of the most powerful stream editors check out sed one-liner for more information.
 for example: sed 's/USD/USDT/' logs.txt it replaces USD with USDT in log file
+also s/a/b/g (the g in the end do the switch globaly) becuase sed changes line by line
 
-LPIC-001-027 Stream filtering - module 103.2 4/4 data hash and analysic data
-wc -> word counter and paragraph counter.
+### LPIC-001-027 Stream filtering - module 103.2 4/4 data hash and analysic data ###
+wc -> word counter and paragraph counter or number of lines as well it depends on given option
+for instance: wc filename
+if you put - instead of filename the data will be replaced  from the pipe (stdin)
+wc -l data | cat data - data
 
 hashing:
 A hash function is any function that can be used to map data of arbitrary size to fixed-size values. There are different hashes and we use them for different purposes. For example, a site may hash your password in its database to keep it secure (and check the hash of provided password with a hash it already has in DB during logins) a site may provide the hash of a file so you can be sure that you've downloaded the correct file...
@@ -480,12 +559,12 @@ type of hashing.
 md5sum is the oldest one 
 sha256sum
 sha512sum
+hash is really important for security and double checking the file validity
 
+### LPIC-001-028 Perform Basic File Managment - Important 1/3 ###
 
-LPIC-001-028 Perform Basic File Managment - Important 1/3
-
-wild cards and globing 
-files globbing is shell capability which letws you tell things like: All files - everything  which starts with A - all files with 3 letter names whic hend in A or B...
+wild cards and globbing 
+files globbing is shell capability which let's you declare things like: All files - everything  which starts with A - all files with 3 letter names which end in A or B...
 
 to do so you need to know about these characters:
 * means any string 
@@ -496,8 +575,8 @@ to do so you need to know about these characters:
 [!x] means NOT x
 
 ls with absolute path or certain commands
-ls -r : recursive listing it list the inner of repositories as well
-ls -ltrh: human readable listing
+ls -R : recursive listing it list the inner of repositories as well
+ls -ltrh: human readable listing (-r stands for reverse)
 
 cp : it copies files 
 cp -rv : copy recursively and verbose 
@@ -512,20 +591,40 @@ rmdir: to remove directory
 mkdir -p folder/newfolder/newerfolder: to make directory recursively
 
 
-LPIC-001-029 File Management Commands 2
+### LPIC-001-029 File Management Commands 2 ###
+
 touch: is a way to change time stamp but if that file does not exist then it will make a new one.
-touc -r referencefile filname: it will make the reference of that file's time to the file we want to
+touch -r: referencefile to filname: it will make the reference of that file's time to the file we want to
+practical use for -r: for instance changing the file's time to be redeployed by a processor
 
-file: checks the type of the file and in itself
+file: checks the type of the file and in itself (very useful)
 
-dd: is similar to copy but its more powerful and has greater features and accessibilities. it also contains of and if(input file) and of(output file)
+dd: is similar to copy but its more powerful and has greater features and accessibilities. it also contains of and if(input file) and of(output file) can be useful for changing data of a file
+it can also convert and format a file (manual should be checked)
+for instance: 
+dd if=/var/zero of=zeros count=100 (record) bs=1 (block size)
+practical use:
+sudo dd if=ubuntu.iso of=/dev/sdc bs=2048 => burn an iso file to a flash disk 
 
+find: let you search for a file 
+find . -iname "name that we are looking" => it searchs all for files that have desired name inside them
+find . -iname "*png" => looks for png files 
+find . -type d => find all directory type results
+find . -size 100c => looks for all images with 100 character images
+find . -empty or -size 0b => looks for all empty files
 
-LPIC-001-030 File Management compressing and zipping files 
+swtiches for find that are related to time changes
+-amin +10 => shows files that are changed more than 10 minutes before
+-cmin -1 => shows files that are changed less than 1 day ago
+instance:
+find . -type f -mmin -30 -ls => shows files that are changed less than 30min ago and then lists them
+find . -name "*.htm" -exec mv '{}' '{}l' \; => it will find all .htm files and rename them to html by adding a l to the end of the file exntension name
+
+### LPIC-001-030 File Management compressing and zipping files  ###
 in linux base system compressing and gathering files together obey different algorithms and each of them have their own programms.
 
 gzip:
-is one of the common ways for compressing files. but remember if the file is so small after compressing the file may increase in size due to incoding and meta datas. so zipping and compressing are better to be used for large data.
+is one of the common ways for compressing files. but remember if the file is so small after compressing the file may increase in size due to incoding and meta datas. so zipping and compressing are reliable in order to be used for large data.
 gunzip: is for unzipping the zipped file
 
 other algorithms for compressing and zipping. sometime they are links to each other

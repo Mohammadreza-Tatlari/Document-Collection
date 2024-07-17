@@ -129,8 +129,7 @@ for removing a specific file history from repository
 
 git filter-branch --index-filter 'git rm -rf --cached --ignore-unmatch path_to_file' HEAD
 
-
-92b4a82
+git stash => return everything to first commited changes
 
 
 
