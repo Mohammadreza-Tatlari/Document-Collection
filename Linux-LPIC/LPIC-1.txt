@@ -632,7 +632,7 @@ bzip2, bunzip2
 xz , unxz
  
 tar:
-TapeArchive or tar is the most common archiving tool. In automatically create an archive file from a directroy and all its subdirs.
+TapeArchive or tar is the most common archiving tool. It automatically creates an archive file from a directroy and all its subdirs. it actually attachs files together
 
 switches of tar is little bit different because they can work without hyphen(-)
 example:
@@ -651,7 +651,7 @@ example:
 find . -name "*" | cpio -o > myarchivefind.cpio
 
 
-LPIC-001-031 Streams, pipes and redirects
+### LPIC-001-031 Streams, pipes and redirects ###
 redirecting standard IO
 as it was mentioned before about stdin ,stdout and stderr which are standard input output and error. it is also possilbe to redirect them and choose which device or source become input or output. for example a monitor is an output and keyboard is a input but a program or a file also can be an input or an output too.
 
