@@ -654,6 +654,11 @@ find . -name "*" | cpio -o > myarchivefind.cpio
 ### LPIC-001-031 Streams, pipes and redirects ###
 redirecting standard IO
 as it was mentioned before about stdin ,stdout and stderr which are standard input output and error. it is also possilbe to redirect them and choose which device or source become input or output. for example a monitor is an output and keyboard is a input but a program or a file also can be an input or an output too.
+stdin = 0 code
+stdout = 1 code >
+
+for instance:
+ls > report.txt => this command will redirect ls output into report.txt
 
 note that 0, 1 & 2 numbering. the are called file descriptors. if you want to redirect the error, you can do 2> and only the error will be redirected
 
@@ -661,9 +666,9 @@ redirection use commands:
 > redirect STDOUT to a file; overwrite if exists
 >> redirect stdout to a file; append if exists
 2> redirect stderr to a file; overwrite if exist
-2>> // ; append
+2>> redirecrt stderr to a file and append if exists
 &> redirect both STDOUT and STDERR; overwrite if exsit
-&>> //
+&>>redirect both stdout and stderr and append if exists
 < redirect STDIN from a file
 <> redirect STDIN from the file and send the STDOUT to it
 
@@ -672,14 +677,18 @@ ls j* x* >> output 2> errors
 
 it is also possible to use &1 and &2 &0 to refer to the target of STDOUT, STDERR and STDIN in this case ls > file1 2>&1 means redirect output to file1 and output stderr to the same place as stdout
 
+/dev/null = works like a black hole (kernel gets it and release it to nowhere) and can be used for uninterested stdout
+
 Here-Documents is also a useful input that can be used for redirecting inputs. checkout the original LPICDOC
 
 
-LPIC-001-032 streams pipes and redirections 2/2
+### LPIC-001-032 streams pipes and redirections 2/2 ###
 
 Pipes: with Pipe (|) you can redirect STDOUT , STDIN and STDERR between multiple commands all on one command line.
 when you do command1 | command2; command1 is executed but its STDOUT is redirected as STDIN into the COMMAND2
 example: ls -1 | wc -
+another instance:
+cut -f1 -d, filename.txt | sed -e 's/ //g' | sort | uniq -c
 
 xargs: this utility read space, tabs ,newline and end-of-file delimited strings from the standard input and executes the provided utility with the strings as arguments.
 
@@ -692,16 +701,16 @@ example: ls -1 | tee allfiles
 the command above ls the files and sent the output to a allfiles also show the result in terminal
 
 
-LPIC-001-033 Process Management Create Monitor and Kill Processes.
+### LPIC-001-033 Process Management Create Monitor and Kill Processes. ###
 
 when  a process is run by shell its impossible to run another app with that shell until that process is stopped paused or killed
 
 some commands for managing processes.
 
 ctrl + z: can stop a process in terminal
-fg : starts all process (ForeGround)
-jobs: show the all process that being stopped
-fg %(number of process): to start that specific process
+fg : start the default chosen process (ForeGround)
+jobs: show all processes that are being stopped
+fg %(number of process): to start that specific process in foreground
 bg : starts the process but in background and only can be seen by jobs
 and to stop or ctl+C them we need to send them to fg with fg command
 & : when we add & in the end of for example xeyes, shell sends it to bg
@@ -722,62 +731,83 @@ Killall (processes name): it kills and send -15 signal to all process names
 pkill (xe): is for killing the name files that have xe inside of them
 
 
-LPIC-001-034 Process Management 
+### LPIC-001-034 Process Management ###
 ps: is to demonstrate the process that are running on the shell
 but if all processes are wanted to be watched,
 ps -e: shows all process in system
 ps -ef: shows the full data
 ps -aux | head: shows more data
+ps -ef | head => to see head of processes
+
+pgrep => it is equivalent of ps -e | grep "process name"
 
 sometimes we monitor the system for such use we can use:
 top: it mintors the processes
 
-load average in top, what does it mean.
+load average in top, what does it mean?
 the  0 , 0 , 0 stand for 1min , 5min , 15min and it means that how many process are in queue to be processed and if it becomes more that the CPU threads it means there is a problem with process load.
+load means the number of processes queued to be run
 
+note: if number of loads are more than number of cores it means that something is wrong
+top commands:
+shift + m => in top, shift+m shows memory and process usage of each process
+c => shows the full execution path and full information
 in top panel we can use keys such as m for manual or k for killing
 
-free -h : shows the memory accecibility
+commands:
+free -h : shows the memory accecibility 
 uptime: is to see the uptime of the system
 uptime -p: pretty , uptime -s: since
 
-watch: is the way to minotor a process by giving it a command like watch uptime
+watch: is the way to monitor a process by giving it a command like watch uptime
 watch df -h
+watch uptime
+watch  df -h | grep sda1
 
 du -hs: disk usage 
 
 
-LPIC-001-035 Process Management - MutliPlexer - Tmux - Screen
+### LPIC-001-035 Process Management - MutliPlexer - Tmux - Screen ###
 Screen is like shell that help to manage multi processes it is much easier than nohup and multi screens can be used
 for using screen and its command usually:
 ctrl + A is pressed and then the option can be selected 
 D: for example D means to detach the process
+ctrl + D => terminate the screen
 -r: it means to reattach the process by the id 
 screen -ls: shows the list of processes
-| : it splits the screen
-tap: change the tap (remember to ctrl+A before)
+ctrl+A, | : it splits the screen
+ctrl+A, tap: change the tap (remember to ctrl+A before)
+after ctrl+A , Tab you can say ctrl+A, C to use the splitted screen
 
 Tmux: is another tool like screen but it is more advance
 ctrl+B: is its shortcut for using comands instead of ctrl+A in screen
 shift + %: it splits the screen
 shift + ": splits vertically 
 tmux -ls: to see all tmux screens
-tmux is very important check out the jadi full course about it 
+ctrl+B, C => it creates new screen
+tmux attach -t (tmux screen number) => switches to that screen
+ctrl+B , (tmux number) => it will switch to desired screen for watching processes
+tmux is very important check out jadi full course about it 
+multiplexers lets you do multiple monitoring or multiple screening for convinient use.
+cause it is based on terminal so it can be run on every system that has CLI
 
-
-LPIC-001-036 Modify Process Execution Priorities
+### LPIC-001-036 Modify Process Execution Priorities ###
 nice: The NI column in Top shows how nice this process is. The nicer the process, the less CPU it asks. The nice values can be from -20 to 19. 
 
 ps -l | head can also show niceness
 
-zombie processes are like parent process that has run a child process but still did not read the value of the child's return value. so its ended but still its value is present lin OS memory. nice = -20 is ANGRY and gets more priority for CPU and RAM while a process with nice = 19 is SUPER NICE and lets other processes use the resources before it.
+Process state Codes ( can be seen in manual of ps)
+zombie processes are like parent process that has run a child process but still did not read the value of the child's return value. so its ended but still its value is present in OS memory. nice = -20 is ANGRY and gets more priority for CPU and RAM while a process with nice = 19 is SUPER NICE and lets other processes use the resources before it.
 
 renice: to rearrange the niceness of a process
+default nice is 0
+nice -n ([-20,19]) command => will run the command with that niceness value
 example: renice -n 5 (PID)
 r in top command can do the same for renice
 
+using nice can be efficient for times that we are taking backup from files or doing processes that do not have top priority it helps resources to be well used. thus for example taking backup will not decrease midnight efficiencies :)
 
-LPIC-001-037 Search Text files using Regular expressions - Regex - searching with grep
+### LPIC-001-037 Search Text files using Regular expressions - Regex - searching with grep ###
 
 regex: is one of the ways to filter out text and find out any specific items that is clarified.
 
