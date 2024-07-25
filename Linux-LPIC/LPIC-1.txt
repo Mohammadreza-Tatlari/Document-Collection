@@ -796,7 +796,7 @@ nice: The NI column in Top shows how nice this process is. The nicer the process
 
 ps -l | head can also show niceness
 
-Process state Codes ( can be seen in manual of ps)
+Process state Codes ( can be seen in manual of ps):
 zombie processes are like parent process that has run a child process but still did not read the value of the child's return value. so its ended but still its value is present in OS memory. nice = -20 is ANGRY and gets more priority for CPU and RAM while a process with nice = 19 is SUPER NICE and lets other processes use the resources before it.
 
 renice: to rearrange the niceness of a process
@@ -810,6 +810,9 @@ using nice can be efficient for times that we are taking backup from files or do
 ### LPIC-001-037 Search Text files using Regular expressions - Regex - searching with grep ###
 
 regex: is one of the ways to filter out text and find out any specific items that is clarified.
+it is called regular expression and is super useful for extracting data or modifying in large scale
+https://regex101.com/
+https://regexone.com/
 
 for example: 
 ^.{2,5},(.*@): ^ means that in the first of each line. . means that anything and {2,5} means to be between 2 to 5 words. () it means more emphasize on that.
@@ -819,24 +822,32 @@ The * that means repeating the previous character for 0 to more times {0,...}
 the + means repeating the previous character for 1 or more times {1,...}
 the ? means zero or one repeats {0,1}
 | : it is fore or like a|b
+[^ ] (negation): everything but... for example ^session => everything but session
+\d => for finding all digits
 
+note
 regex is case sensitive 
 
 Range: [: :]
 [:alnum:]
 [:blank:]
 [:digit:]
+https://www.youtube.com/watch?v=Pm7baDkoeiE&ab_channel=JadiMirmirani
 
 grep is also another useful command for searching
 grep also has switches 
 -c: just show the count
--v: rveerse the search ( for example looking for things that are not similar)
+-v: reverse the search ( for example looking for things that are not similar)
 -n: show line numbers
 -l: show only file names
 -i: case sensitive
 -r: read all files under each directory recursively
-
+instance
+grep -rl 192.168 /etc => shows all files that contain 192.168
 extended grep: egrep is a way to use regex with grep 
+
+by typing -r in sed we can add regex to it for instance:
+sed -r "s/(Z|R|J)/starts with ZRJ/" file.txt
 
 Fixed grep:fgrep if you need to search for exact string
 
@@ -844,12 +855,15 @@ pymol
 clc main or genomics work 
 bench 23 
 excel 
-wrod office
+word office
 
 
-LPIC-001-037 vim SUPER IMPORTANT
+### LPIC-001-037 vim SUPER IMPORTANT ###
 vi
 vim is vi Imporved
+vim has two mode: command and insert
+insert (i) is when we type script and command is when we use keys to navigate, copy and move between lines
+
 in VIm we have some hotkeys
 i: for inserting and insert mode
 a: for appending the text in that current line. good for end of lines
@@ -889,18 +903,20 @@ u: undo
 :w [path]: write in a specific path
 
 
-LPIC-001-039 Creating Partions and filesystems with F-disk G-disk Parted
+### LPIC-001-039 Creating Partions and filesystems with F-disk G-disk Parted ###
 
 to observe the disks:
 fdisk (for bios based systems): 
 fdisk /dev/sdb -l (l will list information)
 
-blocked devices: is a nonvolatile mass storage devices whose information ca be accessed in any order: like hard disks, USB memories, floppy disks, and CD-ROMs.
+blocked devices: is a nonvolatile mass storage devices that information can be accessed in any order, like hard disks, USB memories, floppy disks, and CD-ROMs.
 
-in older computers that have BIOS that use MBR (master boot record) we use f-disk for managing the blocked devices and disk
+in older computers that have BIOS that use MBR (master boot record) we use f-disk for managing the blocked  devices and disk
 but in UEFI(unified extended firmware inteface) we use GPT (GUID Partition Table) and we use G-disk
+gdisk for UEFI
+parted and gparted(graphical parted): are used for more advanced disk parting
 
-LPIC-001-040 partions and disk managment 2/2
+### LPIC-001-040 partions and disk managment 2/2 ###
 
 file formats are the way that computer 
 ext (extended file systems)
