@@ -785,6 +785,7 @@ shift + %: it splits the screen
 shift + ": splits vertically 
 tmux -ls: to see all tmux screens
 ctrl+B, C => it creates new screen
+ctrl+B , O or ; => it will switch to different tabs
 tmux attach -t (tmux screen number) => switches to that screen
 ctrl+B , (tmux number) => it will switch to desired screen for watching processes
 tmux is very important check out jadi full course about it 
@@ -908,6 +909,10 @@ u: undo
 to observe the disks:
 fdisk (for bios based systems): 
 fdisk /dev/sdb -l (l will list information)
+lsblk => to list block devices
+note in commands:
+in fdisk menu after v( verification)
+w will write the disk partition modification
 
 blocked devices: is a nonvolatile mass storage devices that information can be accessed in any order, like hard disks, USB memories, floppy disks, and CD-ROMs.
 
@@ -918,11 +923,13 @@ parted and gparted(graphical parted): are used for more advanced disk parting
 
 ### LPIC-001-040 partions and disk managment 2/2 ###
 
-file formats are the way that computer 
+file formats are the way that computer write down data
 ext (extended file systems)
 fat (file allocation table)
 
 ext2:second extended filesystem was developed to address shortcomings in the older Unix/Minix filesystem used in early versions of Linux. It has been used extensively on Linux for many years. There is no journaling in ext2, and it has largely been replaced by ext3 and more recently ext4.
+
+journaling: its a way that writing on disk works. it checks the journal list where it has been writing data or if the data that is for example interupted is completed or its incomplete thus it will rewrite it or keep up the rest of procedure
 
 ext3:ext2 + journaling, max file size is 2TB and max filesystem size is 16TB
 
@@ -937,41 +944,108 @@ VFAT:FAT32, no journaling, good for data exchange with windows, does not underst
 exFAT:Extended FAT. A newer version of FAT which is used mainly for extended device which should work on all machines; like USB disks
 
 btrfs:A new high performance file system. Max file and filesize is 16 EB. Has its own form of RAID and LVM and build-in snapshots and fault tolerance and data compression on the fly.
+btrfs is one of the most popular file formats
 
 be careful when formating a file thats why some computers and OS do not recognize other disk or blocked devices
 
+creating filesystem
+commands:
+mkfs => it makes a file system with desired type (for example after sdb and sda1 are created)
+mksf -t ext3 /dev/sdb1
 
-LPIC-001-041 Maintain the integrity of filesystems - checking filesystems
+note:
+-t in mkfs actually calls mksf relevant commands
+ls /sbin/mkfs* => will list all mkfs relatives
+
+mkswap => it makes swap format for our partition 
+sudo fdisk /dev/sdb -l
+sudo mkswap /dev/sdb2 (if the sdb2 is the swap formated disk)
+
+system uses UUID for partition not the sdb or sda cause partitions can be transported into other OS systems or computers.
+
+blkid /dev/sdb => will show the UUID of the disk
+
+### LPIC-001-041 Maintain the integrity of filesystems - checking filesystems ###
 du: disk usage
 df: disk free
+
 this two are used for checking the condition of disk
- inodes: is the way that contain information about disk and spaces of blocked devices such as the owner and access and .... inodes are like the index page of a book that can be filled and hold information about each chapter
+inodes: is the way that contain information about disk and spaces of blocked devices such as the owner and access and .... inodes are like the index page of a book that can be filled and hold information about each chapter
+ext has this problem that the index page can be filled but we still have empty pages to write but its so rare to happen
+
+df -i -h =>shows the inode of disk free
+df -TH => print its type and make it human readable 
+du
+du -h --max-depth 1 => this command shows the depth of 1 of where the user is and shows the usage of data
+
+for instance to show users disk usage:
+du /home -h --max-depth 1
  
- df -i -h shows the inode of disk free
- du
- du -h --max-depth 1 : this command shows the depth of 1 of where the user is and shows the usage of data
- 
- 
-LPIC-001-042 changing and checking filesystem
+### LPIC-001-042 changing and checking filesystem ###
 sometime datas can be damaged or not be completed due to inconcistency and disorder like power outage or due to bad sectors in disk. for solving this problems we can use fsck
 fsck (file system check): when a disk is going to be check by fsck, that disk should not be mounted.
 
-/etc/fstab : is location where system read where should each partion be mounted and gives information.
+cat /etc/fstab : is the location where system read where should each partion be mounted and gives information.
+
+*remember:
+you should format a file to for example ext3 or ... in order to be able to use fsck or tune2fs
+steps:
+fdisk.(format) /dev/(targeted sdb) => format desired file to selected format
+similar to mkfs, fsck has its own sub commands like e2fsck or fsck.ext3
 fsck -A: checks the fstab and set for trouble shooting
 fsck -N: similate the process of file checking
 fsck -i: makes checking interaction
 fsck -y: assume yes for all integration
+fsck -a: makes everything automatic
+
+mk2efs: it also create ext2, ext3 or ext4 filesystem
 
 tune2fs -l: give much more information about a disk 
+instance:
+
 debugfs: for changing and debugging data
 superblock: writes like raid for backup or restoring
+
 xfs_fsr: file system reorganizer: it is similar to defrag the hard
 xfs_info: gives information
  
 
-LPIC-001-043 Mounting and unMounting filesystems
+### LPIC-001-043 Mounting and unMounting filesystems ###
 
-when a new blocked devices like a USB is connected to the Unix system device it does not indicate it same as windows like C: D: E: it send it to the tree structure of Unix system such as /mnt or /media
+when a new blocked devices like a USB is connected to the Unix system device it does not indicate it as same as windows like C: D: E: it send it to the tree structure of Unix system such as /mnt or /media
+
+mount (blocked device) (repository) => it will mount the blocked devices where it is indicated
+instance:
+mkdir /tmp/username
+mount /dev/sdb3 /tmp/username => this will mount sdb3 to /tmp/username
+therefore all data in filesystem of sdb3 will be shown in /tmp/username
+
+(man umount) -o will show options
+umount (path): it will unmount
+instance:
+umount /dev/sdb3
+
+mount => it will show all mounted drivers
+
+also swapon and swapoff have there own commands
+
+### LPIC-001-044 Mounting and UUID and fstab
+UUID is used to make a disk to be unique universally and it can be mounted on any other devices thus its name will be changed but it does not affect on functionality
+
+command:
+blkid => it will read UUIDs directly
+lsblk -o +UUID => It will show all UUID of disks
+mount UUID=(uuid) /media => it will mount the disk with relevant UUID to /media
+umount /media => to unmount what is mounted
+disk can be mounted by its uuid instead of its name 
+
+fstab: its a file that modify which file should be mounted and not be mounted
+cat /etc/fstab
+we can simply add script to it in order to mount or unmount a disk with special options for example
+/dev/sdb2 /media/mydisk ext4 rw,user 0 0 => by adding this script to it will will mount /dev/sdb2 to media/mydisk in ext4 format with read and write and even normal user can mount or unmount it. 0 0 have two other options 1 which it means have backup from it and 2 which it means what modification should disks have 
+
+systemd has its own .mount file in which indicate filesystem mount point controlled and supervised by systemd
+
 
 
 
