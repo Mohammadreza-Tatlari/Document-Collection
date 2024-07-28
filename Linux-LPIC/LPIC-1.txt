@@ -1046,6 +1046,76 @@ we can simply add script to it in order to mount or unmount a disk with special 
 
 systemd has its own .mount file in which indicate filesystem mount point controlled and supervised by systemd
 
+### LPIC-001-046 Manage File Premission and Ownership (Users, Group) ###
+in linux permissions can be categorize in groups and individual users thus we use these terms in order to give privileges
+commands:
+whoami => shows the user name that is currently in use
+groups => shows groups that the user is involed
+id => shows the user ID, and group ID and other information
+
+this information come from:
+cat /etc/passwd
+cat /etc/group
+
+each file also has its own information about user and group permissions of it in ls -ltrh can be seen
+in -ltrh you may see somethi like this:
+drwxr-xr-x => it is seperated in 4 parts 1.d 2.rwx 3.r-x 4.r-x
+1. it means it is a directory. if it is - it means its a file
+2. owner privileges
+3. group privileges
+4. other privileges
+r: read, w:write, x: execute, d: directory, l: link , -: file
 
 
+### LPIC-001-047 Changing permission, unmask ###
+
+command:
+chmod => is used for changing permission accesss 
+2 ways of giving permission
+with symbolic or octal
+rwx = 7
+rw- = 6
+r-x = 5
+r-- = 4
+-wx = 3
+-w- = 2
+--x = 1
+--- = 0
+
+trick: 0 means nothing 1 means execute 2 means write and 4 means read => sum them up and find the best privilege :)
+
+for example:
+777 => -rwxrwxrwx
+660 => rw-rw----
+chmod 775 -v bash.src => change to rwxrwxr-x 
+chmod +x  bash.src => add executable permission
+chmod u+x bash.src => give user executable permission
+chmod g+rw,u+rwx,o+rx => multiple permission giving
+chmod g-rw,o-x => to remove permission
+
+be careful when changing permission cause it can be remotely abused!
+
+chown => change the owner
+chown username:groupname (file) => for changing file ownership
+chgrp (groupname) (file) => change group permission
+newgrp (groupname) => to create new group
+
+access mode
+ls -ltrh /usr/bin/passwd => simply can use which passwd or whereis passwd to find it
+-rwsr-xr-x => s stands for SUID(set uid)
+set UID means the usr that runs the command will only access it by the user specific previleges and will happen for that user not for anyone
+actually it runs with user access level and also it has root access as the user that is running it
+access modes:
+suid = 4000 u+s -s
+guid = 2000 g+s -s
+sticky = 1000 +t -t
+sticky means only the declared user can delete it. example => drwxrwxrwt
+
+umask: to example it we should first consider why the default permission access is -rw-rw-r--.
+with normal user whe we use command umask it returns 0002 (with sticky) the default of permission giving is 666 so when 666 - 002 it returns 664 and it stand for -rw-rw-r--.
+thus if umask changes the octal and therfore the permission changes as well.
+umask can be changed.
+
+command:
+umask 0066 => it will change umask from 0002 to 0066 so it takes away many permissions
 
