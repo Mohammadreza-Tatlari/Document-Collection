@@ -1119,3 +1119,88 @@ umask can be changed.
 command:
 umask 0066 => it will change umask from 0002 to 0066 so it takes away many permissions
 
+### LPIC-001-048 Create and change hard and symbolic links ###
+
+links act like shortcuts to access a file from another place inside our storage it is called hard link.
+hardlink acts as another entry to the program.
+soft link is 
+
+command:
+ln (realfile) (hardlink) => ln make a link from firstfile to hardlink file
+ln -s (realfile) (softlink) => it creates softlink from realfile and save it as softlink file 
+ls -i => shows inode of files (can be used to see if inodes indicate to same location)
+
+note: actually soft link is just an indicator to the file thus it can have different inode and even size
+by using ls -l these links can be identified
+
+command:
+unlink or rm => removes the link
+
+due to property of soft link and hard link, when file is removed hardlink still exists but softlink breaks
+
+hardlink cannot link a directory. also hardlink cannot link through two different filesystem. but softlink can
+
+practicall instance:
+cd /usr/bin
+sudo ln -s python3 python => thus whenever python is run the python3 will be run and python3 shortcuts to python3.10 for instance
+
+
+### LPIC-001-049 FHS (File Hierarchy System) in UNIX and Linux ###
+more advanced topic of LPIC-1-011
+note:
+commands:
+cd /var/log , ls -ltrh => it will show all recently changed files so we can find out what has happenede
+
+commands:
+which, whereis, type => commands to find out where program and file are located and get more data
+which -a ping => show all ping files
+whatis ping => reads first line of manual of ping and prints it
+
+find (filename) => helps to find a file
+-user and -group: specifies user or group
+-matdepth :  how deep should search directories
+
+find . ! -user jack => it will search users but do NOT include jack user in query
+find /etc -iname "includedname"
+
+but find is slow thus we can use other commands like locate 
+locate => it runs updatedb every 24h and then looks for files inside that database to improve performance. updatedb search through system and gather information about location of files
+in debian it is called plocate
+its configuration files are located in /etc/updatedb.conf or /etc/sysconfig/locate
+
+### LPIC-001-050 Customize use the shell environment ###
+environment variables are used in shell to hold specific values
+
+commands:
+env => it prints environment variables in system 
+set => allows you to change the value of shell options or to display names and values it is more detailed. also set has its own options
+unset => it is used to unset a variable
+unset NAME => it will unset the NAME variable ($NAME)
+
+export:
+because processes like ping works as subprocess in bash, when a variable is set in bash it only works in that environment so when a new bash is run the new subprocesses only obey the bash that is above them (thats why bash can be run inside itself). thus when a variable is declared in bash. it won't be accessible inside another bash. therefore we export variables.
+for example:
+export NAME=Mohammadreza
+$NAME will be exported to all sub processes
+
+source (program name) => it is used when a child process set values and wants to keep its environment variables inside the parent environment as well.
+example
+source bash script.sh (with shebank)
+_______
+for script.sh
+#!/bin/bash (shebank)
+
+NAME=Mohammad
+_______
+
+alias: it is short name (can be access inside .bashrc) and we can add shortcut for bash.
+example:
+alias testingping='ping 8.8.8.8' => thus when testingping is type it will ping 8.8.8.8
+alias => will list all aliases
+
+functions : can act similar to aliases 
+example:
+listmystuff (){
+ls -ltrh
+echo "all your stuff is listed :) "
+}

@@ -43,6 +43,7 @@ ctrl+C => it breaks the process and comes out
 ctrl+D => it tells that the process inputs are over and is over, then comes out
 sudo su - : for being in root
 dmesg: for see all the logs and anything that happened before the kernel is being booted. (all the logs behind the splash screen) (kernel ring buffer)
+ctr+A in terminal => it will lead to beginning of the line
 
 find /user -name "sdk" -type d => for find a file or repo name 
 
