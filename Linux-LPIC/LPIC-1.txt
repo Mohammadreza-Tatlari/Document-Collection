@@ -1185,10 +1185,10 @@ $NAME will be exported to all sub processes
 
 source (program name) => it is used when a child process set values and wants to keep its environment variables inside the parent environment as well.
 example
-source bash script.sh (with shebank)
+source bash script.sh (with shebang)
 _______
 for script.sh
-#!/bin/bash (shebank)
+#!/bin/bash (shebang)
 
 NAME=Mohammad
 _______
@@ -1204,3 +1204,216 @@ listmystuff (){
 ls -ltrh
 echo "all your stuff is listed :) "
 }
+
+
+### LPIC-001-051 Different shell envs ###
+
+different between interactive shell and login shell.
+when an app or terminal is opened it is actually an interaction with that but its not login shell.
+login shell is when you define your username and password to work with that environment
+the procedure of checking user profile is like this
+1. etc/profile is run
+2.a line in etc/profile runs /etc/profile.d/
+now the global profile is loaded and system checks for user specifics
+3.1 /home/USERNAME/.bash_profile
+3.2 /home/USERNAME/.bash_login
+3.3 /home/USERNAME/.profile
+finally 
+4. /home/USERNAME/.bashrc will be run
+if environment variable or PATH are going to  be set for that specific user .bashrc in USERNAME can be used to define them
+export NAME="username"
+export PATH=$PATH:/desiredpath
+
+note: regular ls does not show file with "." in their first name
+ls -ltrha should be used
+
+etc/skel => it contains the template and skeleton of each user. a new created user will use this directory by default
+
+.bash_logout => clears the console after users log out
+
+
+### LPIC-001-052 customise or write simple script ###
+semicolon in command line will cause to execute each line after each other
+example:
+cd /tmp ; ls  => change directory to /tmp and then list items
+_ ; _ ; _ => step by step
+cd /tmp && ls => this one is more often used because and stands for if the first command was successful.
+_ || _ || _ => this way of commanding is same as using "OR" logic
+exmaple:
+backup || tar cf => get backup or get tar
+
+shell scripts:
+shell files are mostly start with #!/bin/bash (shebang) and are name filename.sh
+example:
+
+vi myscript.sh
+	ls 
+	cd /tmp
+	touch $1
+	echo "done"
+
+chmod 755 myscript.sh => to give permissions (important) 
+
+./myscript.sh myfile => 
+myfile is a parameter and will be placed in code as $1
+if another parameter was added, simple by using $2 in code it would be accessible and could be used.
+
+./myscript.sh myfile == bash myscript.sh myfile. however shebang in myscript.sh is the way to not use bash myscript.sh 
+
+vim parametercount.sh
+	#!/bin/bash
+	echo " number of parameter is equal to $#" => $# shows number of parameters given to the script file.
+chmod +x parametercount.sh => gives executable permission
+
+command substitution:
+we can give result of a command to a variable in shell
+example:
+FILES=$(ls) => it will save result of ls in FILES variable
+FILES=`ls` => it also do the same but instead we use backtick "`"
+for instance:
+
+FILENAME= `date +'%Y-%m-%d - %H:%m'`
+bash myscript.sh $FILENAME => result of the touch will be with date name
+
+exec myscript.sh => it executes the file and not like bash (which creates subprocess for that and in the end return to itself) it replaces it environment with itself.
+
+### LPIC-001-053 shell scripting conditions and loops ###
+
+if logic is going to be added to our shell scripting we can use if conditioning.
+example:
+
+#!/bin/bash
+
+if [ $# -ne 1 ] (-ne: not equal to, eq: equal to)
+then
+	echo "file needs exactly 1 parameter
+	exit 1
+else 
+	cd /desktop
+	touch `date +'%y-%m-%d-%s'` -$1
+	ls -ltrh | tail -5
+	echo "done"
+	exit 0
+fi
+
+exit 0, exit 1, exit 2
+in linux script due to its base on C, each function or condition should return something. exit 0 means that program has been run without error. and exit 1 means it had an error
+exit 2 for example can mean that it got number instead of string ( it can be defined and be placed in documents)
+
+echo $? => it displays the variable of the last executed program in bash
+
+test condition = [ condition ]
+
+conditions:
+"a" = "b"  => if two string are equal (in this case it returns false)
+"a" != "b" => string is a not equal to string b
+4 -lt 40 => if 4 is lower that 40 (true)
+g -gt 15 => if 5 is greater than 15 (false)
+5 -ge 5 => if 5 is greater or equal to 5
+5 -le 3 => if 5 is lesser or equal to 3
+9 -ne 2 => if 9 is not equal to 2 (true)
+-f FILENAME => if FILENAME exists
+-s FILENAME => if file exists and its size is more than 0
+-x FILENAME => if file exists and is executable
+
+to read the user input, " read " can be used:
+read NAME => bash will wait to type something then it will give it to $NAME
+
+example in script
+#!/bin/bash
+
+echo "what is your name"
+read NAME
+echo "hello $NAME"
+
+if [ $NAME = "currentUsername" ]
+then
+	echo "I know this user"
+else
+	echo "I wish I knew this user"
+fi
+echo "cya"
+
+practical example:
+
+if read -t 10 -p "Server adddress?" SERVER ( it will wait 10 second for it )
+then 
+	echo "Connecting to the $SERVER ... "
+else
+	echo
+	echo "Too late!"
+fi
+_______________________________________
+
+
+loops
+for loops and while loops are used in bash scripting
+
+for syntax:
+for NUM in 1 2 3 4 5 6:
+do 
+	echo $NUM
+done
+
+seq => we can use seq to apply sequence numbering in our script
+seq 1 3 10 => it will count 1 to 10 and increase in 3 
+
+______________________________________
+for NUM in `seq 1 10`:  (for V in {1..10};)
+do 
+	echo $NUM
+done
+_____________________________________
+for FILENAME in `ls`:
+do 
+	echo "the name of file is $FILENAME"
+done
+_____________________________________
+using let for mathematic calculation in script
+
+VAR=52
+
+while [ $VAR -gt 42 ]
+do 
+	echo "VAR is $VAR and it is stil greater than 42"
+	let VAR=VAR-1
+done
+____________________________________
+
+
+mailing the root user
+for sending mail, mailutils needs to be installed. then the mail command will send emails. mail can be sent to the root by this command:
+
+mail root
+Cc:
+Subject: Hi root its an email
+hellooow, this email is just a test
+
+root can read it by using mail command
+
+sending email in script
+echo "Body" | mail -s "Subject" root
+
+practical example:
+backup.sh || echo "error" | mail -s 'backup error' root => it will prepare a backup and if it fails it will send an email to root or admin
+
+### LPIC-001-054 Install and configuration of X11
+
+after hardware architecture and kernel, the next layer is display server. some programs such as X11, wayland and xorg have duty to process the dsiplay server. after that we have desktop manager(GNOME,KDE,...) and window manager(OpenBox, i3, dwm, awesome) and both are connected to user end.
+
+X window system is a network transparent window system which run on wide range of computing and graphical machines.
+
+Xorg configuration file is not  easily reachable in latest linuxes but by Xorg -configure we can see it's configuration files.
+
+common use for configurating file:
+instead of for example, etc/X11/xorg.config/ we can use etc/X11/xorg.config.d/
+config.d is a directory for adding new scripts and configuration that will not conflict with updates
+
+error logs go to ~/.xsession-errors
+
+xhost: it controls the access of X server  and can be controlled for clients
+example:
+xhost +92.168.45.5 => it will give access of xhost to this specific ip
+
+xauth: we display and show the x server depend on special authority signiture
+it file is located in XAuthority
