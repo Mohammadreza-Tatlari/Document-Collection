@@ -125,3 +125,67 @@ command:
 SVI can be created for vlan by this command:
 interface vlan 10
 note: in some cases no shutdown for SVIs are required
+
+
+__Lab Day-19__
+ do show interface (interface name) switchport => checking administrative and operational mode
+
+SW1(config-if)# switchport mode trunk => to create a trunk 
+
+SW1(config-if)# switchport nonegotiate => switches the negotiation to off
+
+SW1(config) # do show vtp status => it shows vtp status
+
+SW1(config) # vtp domain (domani-name) => to set a domain name for vtp
+ note: other swiches will follow the vtp domain of first switch that is advertising its table
+
+SW1(config)# vtp mode transparent => set the switch vtp mode to transparent.
+adding another vlan to transparent vtp will not effect other switches
+
+SW1(config)# vtp mode client =>  it will set switch vtp to client mode thus if a new vlan is created inside the client mode switch it should also be created in vtp switch so it can be advertised and be updated on others
+
+
+__Lab Day-20__
+SW1 #show spanning-tree => shows STP information about that switch
+
+SW1 #show spanning-tree Vlan 1 => shows information about the vlan no.1
+
+SW1 #show spanning-tree detail => shows more detailed information about STP
+
+SW1 #show spanning-tree summary => shows the summary of STP
+
+note: alternate and non-designated have same meaning in cisco
+
+__Lab Day-21__
+
+SW1(config) #Spanning-tree vlan 1 root primary => to create vlan 1 as root primary ( such action cab be used for load balancing)
+
+SW1(config) #Spanning-tree vlan 2 root secondary => sets vlan 2 as the secondary root
+
+SW2 # show spanning-tree vlan 1 => only shows vlan 1 configuration
+
+SW4(config-if) #spanning-tree vlan 1 cost 100 => it changes the cost of selected interface for VPST
+
+SW1(config-if)# spanning-tree vlan 1 port-priority <0-240> => changes port-priority of selected interface in switch
+
+SW3(config-if) #spanning-tree portfast => it enables the portfast for interfaces that are connected to end-hosts
+
+SW3(config-if) # spanning-tree bpduguard enable => enables bpdu guard for selected interface
+
+shutdown and then no shutdown will return the interface up that is being disabled due to bpdu guard
+
+__Lab Day-23__
+
+ASW1(config-if-range) # channel-group 1 mode active => activates selected interfaces to act as ethernetchannel number 1 and LACP
+
+ASW1(config-if-range) # interface po1 => it will set a portchannel1 then ->
+switchport mode trunk => will set that portchannel as trunk
+by using `show run` you can see the result of trunking interfaces
+
+ASW1(config-if-range) #do show etherchannel summary => shows information of etherchannel that is created
+
+#show interface trunk => shows trunk information about interface
+
+DSW2(config-if-range)# channel-group 2 mode on => recommended to use "mode on" for static channel
+
+for multilayer switches, we need to enable IP routing to build a routing table 
