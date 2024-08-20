@@ -44,6 +44,8 @@ ctrl+D => it tells that the process inputs are over and is over, then comes out
 sudo su - : for being in root
 dmesg: for see all the logs and anything that happened before the kernel is being booted. (all the logs behind the splash screen) (kernel ring buffer)
 ctr+A in terminal => it will lead to beginning of the line
+ls -ld => to see privileges of directory
+drwx--x--x: d stands for directory. The first set of three represent the owners permissions, the second set of three represent the group permissions (the use of group permissions varies from system to system. They are not generally used on UW Uniform Access systems), and the third set of three representing the "other" permissions.
 
 find /user -name "sdk" -type d => for find a file or repo name 
 
