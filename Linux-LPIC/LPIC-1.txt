@@ -1226,6 +1226,7 @@ export PATH=$PATH:/desiredpath
 
 note: regular ls does not show file with "." in their first name
 ls -ltrha should be used
+ls -a => shows hidden files in a directory
 
 etc/skel => it contains the template and skeleton of each user. a new created user will use this directory by default
 
@@ -1416,4 +1417,82 @@ example:
 xhost +92.168.45.5 => it will give access of xhost to this specific ip
 
 xauth: we display and show the x server depend on special authority signiture
-it file is located in XAuthority
+it's file is located in XAuthority
+
+### LPIC-001-055 Graphical Desktop ### 
+Login Environments:
+when system is booted, after that a graphical Login interfaces appears which is an interface protocol between X and Desktop, and it is called XDMCP (X Displayer manager Control Protocol). other program such as GDM (for Gnome), SSDM (KDE) and XDM handles the theming and other parts of login
+
+Desktop Environments
+GNOME: Focuses on productiviy and Accessibility. is used by most of GNU/Linux distros
+KDE (Kool Desktop Environment) (Plasma): Highly Customisable, CERN uses KDE
+XFCE: Lightweight and Modular
+
+Remote Connection to GUIs
+
+X Forwarding: it is a process of forwarding process of a remote machine to in used machine.
+for instance if X11Forwading yes if configured in /etc/ssh/sshd_config and if command of:
+$ ssh -X server_ip.address.net
+$ xeyes
+are commanded then xeyes will be forward to the desktop that is connecting to remote desktop. actually the graphical interface of remote machine will be forwarded to connected desktop
+
+Protocols for remote desktop
+VNC (Virtual Network Computer): old. multi-platform and uses RFB protocol. its default port is 5900 and it's not secure.( its password is kept in plaintext for example).
+also it is versatile and flexible 
+
+Spice (Simple Protocol for Independent Computing Environment):
+KVM machines use this protocol and it has fast speed and low CPU usage.
+
+RDP (Remote Desktop Protocol):
+most common Remote Protocol and is used on port 3389 by default. also, the traffic is encrypted by default. it uses softwares like Xrdp.
+
+
+### LPIC-001-056 106.3 Accessibility ###
+Linux is for Everyone.
+
+1.AccessX helps people with Physical problems to use keyboard/mouse. 2.Visual settings help with vision problems by magnifying the screen. 3. assistive technologies are thing like text-to-speech (TTS).
+
+
+### LPIC-001-057 107.1 Manage user and group accounts and related system files. ### IMPORTANT
+
+Password
+command:
+passwd => it changes password of the user.
+how ever root can change password without any old password request. for example:
+sudo passwd (username)
+
+Manage Users
+commands:
+whoami and who are used for checking users.
+useradd (new_username)=> to add new user
+
+important switches are:
+-d: home directory (-d /home/user) 
+-m: create home directory
+-s: specify shell
+-G: add to additional groups
+-c: to add a comment
+
+adduser => it is similar to useradd but it uses information and ask question about procedure of creating new user.
+
+Modifying users
+usermod => modifies users	
+usermod -s /bin/csh (username) => it will change default bash for username
+
+swtiches
+-L => will lock the user
+-U => unlock the user
+-aG => add to more groups for example usermod -aG wheel (username)
+-G alone will remove all previous groups and add chosen groups instead
+
+userdel -r (username) => to delete user (-r is used to delete home directory too)
+
+Manage Groups
+commands:
+groupadd, groupdel , groupmod
+example:
+groupadd -g 1200 newgroup => it will make a new group with id 1200 and name of newgroup
+
+note: in linux OS group and user ids for normal users and groups start from 1000
+
+
