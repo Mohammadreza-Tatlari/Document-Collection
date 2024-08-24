@@ -1496,3 +1496,91 @@ groupadd -g 1200 newgroup => it will make a new group with id 1200 and name of n
 note: in linux OS group and user ids for normal users and groups start from 1000
 
 
+### LPIC-001-058 107.1 File managing users and groups ###
+
+/etc/passwd => this file contains all the information about users in system
+
+each user can have a primary group and lots of secondary users
+in /etc/passwd file, username:x:1002 , the x indicates that the user has a password.
+
+password are kept in /etc/shadow
+
+in /etc/shadow some password are encrypted in such order: 16737:0:99999:7:::
+fields and their meaning:
+16737: when was the last time this password changes
+0: user won't be able to change the password 0 days after each changes
+99999: after this many days, the user have to change hus password
+7:  user will be informed 7 days before the expiration to change his password
+
+/etc/shadow can only be read by root.
+
+command:
+chage (username) => it is used to change password age and pass information of user
+chage -l (username) => shows information of user's password
+
+in etc/passwd the ' ! ' sign means that the user is locked
+
+commands:
+id (username) => shows information about username
+getent [option] (username) => getent is used for getting entry of each user and by using specific option it can be defined which part is needed to be shown from database
+
+
+### LPIC-001-059 107.2 Automate system administration tasks by scheduling jobs ###
+
+there are cases that a command needs to be scheduled to be executed at certain time so scheduling programs are used to take over such actions
+
+Crontab format: works with a configuration file which tells it when to run a command.
+
+commands:
+crontab -l (username - root) => shows scheduled programs for each users
+crontab -e => is used to edit crontab 
+
+crontab structure =>
+#	M		H		DOM		MON		DOW	 	command
+	*/15		1		2			*			1,2,3			/root/backup.sh
+	42		3		*			*			0			ls
+ 
+* => it means whenever or all the values. it can be used for when we want to only set the hours or want to set sundays to do scheduling and don't want to specify exact day of month or week.
+
+1,2,3 in DOW => it means to run it on monday, tuesday and wednesday.
+
+*/15 => it means each 15 minutes 
+M: minute => values:(0-59)
+H: hour => values:(0-23)
+DOM: day of the month => values:(1-31)
+MON: month => values:(1-12 or names)
+DOW: day of week => values:(0-7 0 or 7 is sunday, name also can be used)
+
+note: if inserted values are wrong or have mismatch, cron will throw an error and indicate the problem to be fixed thats why crontab -e is used.
+
+note result of cron is send via email to the defined user
+also result can be redirect to not have messy mailbox
+by for instance:
+$HOME/bin/daily.job >> $HOME/tmp/out 2>&1
+
+crons files for each user are kept in /var/spool/cron/tabs or /var/spool/crontabs
+
+/etc/crontab => it is the file of the crontab and by catting it more information will be shown
+
+system hourly, daily, weekly,... crons
+system level crontab files also can be find in /etc/cron.d (tab needed) . general crontabs exist there but they are not much determined as exact timing. note that scripts are placed there and some programs keep their logs or scripts there.
+
+at
+at is used to run a command only once for set time.
+command:
+at now + 1 min 
+> touch /tmp/logfilewithAt
+(ctrl+D) => to write down the script
+=> the command will execute touch command 1 minute after current time.
+also in some systems at process is not active in systemctl so 
+' systemctl start atd ' needs to be run
+
+atq => will show queue of commands in at
+atrm (number) => will remove job of that number 
+
+cron and at access can be defined for users by modifying or creating these files:
+/etc/cron.allow 
+/etc/cron.deny
+
+/etc/at.allow
+/etc/at.deny

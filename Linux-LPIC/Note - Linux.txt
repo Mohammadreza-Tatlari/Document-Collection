@@ -25,6 +25,7 @@ su - ( I forgot the password of my su I will search for it)
 cd var/log cat syslog: to see systems log
 sudo command: runs command with root access
 su - -> become the root! ( perilous )
+sudo su - => to switch to root user
 less (file) -> show a huge file (or small file) page by page with control
 lsb_release -a -> to show version of linux			
 mount -> to see the information of hard disk
