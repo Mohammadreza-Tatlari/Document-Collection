@@ -1584,3 +1584,65 @@ cron and at access can be defined for users by modifying or creating these files
 
 /etc/at.allow
 /etc/at.deny
+
+
+## Systemd & Systemd-run ## 
+systemd has its own timer to control scheduling.
+
+for example
+cat /etc/systemd | find . -iname "*timer" => will show all files that are related to timer
+
+same as cron systemd timer has similar structure to take schedule and run any process.
+for instance 
+in /etc/systemd/system/myservice.timer:
+
+default structure of OnCalendar:
+OnCalendar=DayofWeek Year-Month-Day Hour:Minute:Second
+
+[Unit]
+Description = run specific service
+
+[Timer]
+OnCalender = Sat *-*-1..7 02:42:00 => it means on Satureday of whenever month and whenever year between first day to seventh day of that month (literally finding the first Satureday of each month) and at 02:42:00
+Persistent = true
+
+[Install]
+WantedBy=timers.targert
+
+OnCalender also has routingly scheduling to set for eaxmple:
+daily:
+weekly
+monthly
+yearly
+
+Monotonic timers:
+activate after a specific time that has elapsed from a certain starting point. for example when system is booted.
+
+Config & the meaning
+OnActiveSec: time after unit activation
+OnBootSec: time after system boot
+OnStartupSec: time aftert the service manager is started (use this for user services when the service manager is started at user login
+OnUnitActiveSec: time after the corresponding service was last activated 
+OnUnitInactiveSec: time after the corresponding service was last deactivated.
+
+note:
+similar to other services, the service needs to be enabled after being added.
+#systemctl enable myservice.timer
+#systemctl start myservice.timer
+also deamon-reload is needed.
+#systemctl daemon-reload
+
+command:
+systemctl list-timers  (--all) => lists all the scheduled jobs (--all shows all active timers)
+journalctl => is used for checking timer's output
+
+systemd --user => to check activity of current user or specific user and not in systemwide level
+
+systemd-run => can start transcient service or scope and run commands in it
+example:
+systemd-run --on-active="2hours" --unit="helloworld.service" => it runs helloworld.service for 2hourse 
+
+sudo systemd-run --on-active="2hours" /usr/loca/bin/helloworld.sh --language=en_US => will run that specific script with shown parameters every 2 hours
+
+
+ 
