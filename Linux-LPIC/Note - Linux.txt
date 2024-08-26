@@ -49,7 +49,7 @@ ls -ld => to see privileges of directory
 drwx--x--x: d stands for directory. The first set of three represent the owners permissions, the second set of three represent the group permissions (the use of group permissions varies from system to system. They are not generally used on UW Uniform Access systems), and the third set of three representing the "other" permissions.
 useradd (username) -m => to add new user with a directory related to the user.
 use userdel (username) to delete the user name.
-
+vimtutor => let you get more comfortable with vim
 ---------------------------------------------------------------------
 
 find /user -name "sdk" -type d => to find a file or repo name 
