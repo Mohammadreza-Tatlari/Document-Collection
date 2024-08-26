@@ -1645,4 +1645,53 @@ systemd-run --on-active="2hours" --unit="helloworld.service" => it runs hellowor
 sudo systemd-run --on-active="2hours" /usr/loca/bin/helloworld.sh --language=en_US => will run that specific script with shown parameters every 2 hours
 
 
- 
+ ### LPIC-001-060 10.7.3 Localisation and Internationalisation ###
+commands:
+date => shows the machine's locations date and current time
+date +'%Y' => shows only the year in base 4
+practical example: 
+we can use date to name files in unique order:
+touch /tmp/`date +'%Y%m%d%H%M' ` -backup
+
+cal => demonstrate a calender on current month in terminal
+cal -3 => shows previous and next month beside current month
+cal 2002 => shows calender of 2002
+jcal => shows Jalali Calender
+
+timedatectl => shows how timing of the system and clock is working and all information about local time
+
+tzselect or tzconfig => used to configure timezone
+after finishing the configuration simply can export the result in 
+TZ='Atlantic/Bermuda' ; export TZ
+
+or check timezone in specific city by:
+env TZ='Asia/Tokyo' date
+
+/usr/share/zoneinfo => timezone data files are located in here and files are in binary format
+
+/etc/localtime: it is a link to whenere local time zone that is in /usr/share/zoneinfo and for changing the system time zone we can first unlink it and then:
+ln -s /usr/share/zoneinfo/Africa/Lagos  /etc/localtime
+them system will show another time
+
+configuring Languages
+command:
+
+locale = to check the status of current selected system language
+for instance:
+LC_PAPER='en_US.UTF-8' : it is an indication of paper and letter format for printing so it can be change to other formats
+
+export LANG=C => this command is used as standard customize command in order to sort stuff in different computers
+
+desire language config can be added to ~/.bash_profile or ~/.profile
+
+Character Encoding:
+ASCII => 128 to 256 character for bit
+ISO-8859: it has Thai,ARabic and other langues
+UTF-8 (Unicode Transformation format): it is much larger and is included with many more characters
+
+iconv is used for converting specific character encoding into something else:
+iconv -l: shows alternative available codings
+example:
+icnov -f WINDOWS-1258 -t UTF-8 /tmp/myfile.txt => convert WINDOWS-1258 to UTF-8 in myfile.txt
+
+
