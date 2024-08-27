@@ -1678,7 +1678,7 @@ command:
 
 locale = to check the status of current selected system language
 for instance:
-LC_PAPER='en_US.UTF-8' : it is an indication of paper and letter format for printing so it can be change to other formats
+LC_PAPER='en_US.UTF-8' : it is an indication of paper and letter format for printing so it can be changef to other formats
 
 export LANG=C => this command is used as standard customize command in order to sort stuff in different computers
 
@@ -1693,5 +1693,49 @@ iconv is used for converting specific character encoding into something else:
 iconv -l: shows alternative available codings
 example:
 icnov -f WINDOWS-1258 -t UTF-8 /tmp/myfile.txt => convert WINDOWS-1258 to UTF-8 in myfile.txt
+
+### LPIC-001-061 108.1 Maintain system time 1/2 ###
+how a computer keeps its time:
+there is a hardware clock on motherboard and has its own battery that keeps the time even when the computer is off. when the system is booted it reads the time from that clock and configure its time base on that and it can also change that clock's time.
+hwclock => shows the based time on hardware clock
+however the clock has its own inaccuracy, thus NTP protocol is used to update the timer from NTP servers across the globe.
+
+crony and ntpd are two NTP based programs that allow users to configure the timer. crony is much generally used and it's main purpose is to be used for systems that are disconnected are reconnected frequently. on the other hand, ntpd is more security base and has some advance features. in addition, NTPD ask different servers in broadcast for NTP request but chrony needs to have define NTP server to request time.
+
+changing time with command:
+date -s "Jan 22 22:10:04 2025" => it will set the time to January 22 of 2025 22:10:04 (however it won't affect on hwclock thus system has two separated times)
+
+note:
+in linux hardware clock is set by UTC and OS knows that time should be set base on timing of the localzone for instance add +3:30 for Iran(tehran) to that UTC time.
+however in windows base systems, the hardware used to be set as same as local clock.
+
+config file are in:
+/etc/timezone
+/etc/localtime => which is a short link to /usr/share/zoneinfo
+
+hardware clock can be set by this commands:
+hwclock --localtime --set --date='01/05/2023 22:04:00' => it will set the hwclock base on localtime.
+
+hwclock -u -w => will reset the hwclock: -w: write current system time -u: base on UTC.
+this action will create /etc/adjtime
+
+
+### LPIC-001-062 maintain timezone NTP and Chrony 2/2 ###
+one of the most important servers that serves NTP protocol is pool.ntp.org. also note that big corporations have their own NTP servers.
+
+NTP procotol is using many ways to give the most accurate time due to latency in communication between servers and clients. it is important for satelites as well.
+
+commands:
+nptdate (pool.ntp.org) => it will ask pool.ntp.org servers for ntp time and set systems ntp time base on that. also it shows the off set and change in seconds.
+
+ntpq => it queries the ntp service and it can print all ntp pools that are requested:
+ntpq -p => prints the pools
+
+chronyc tracking =>(chrony commandline interface) shows in depth information about how chrony is working
+systemctl status chrony => shows status and service updates for chrony
+
+note:
+leap second formula.
+
 
 
