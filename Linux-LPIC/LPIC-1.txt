@@ -1738,4 +1738,51 @@ note:
 leap second formula.
 
 
+### LPIC-001-063 108.2 System logging ###
+
+all processors and programs save and write their logs in linux world thats why it is much more preferred rather than windows.
+
+logserver: any progam that wants to write or save its log it requests to logserver and give instruction to that. so logserver will be responsible to write logs.
+
+old logservers are 
+syslog, and syslog-ng (new generations)
+nowadays: rsyslog is used for syslog and can be modified
+
+logroate: its purpose is to clean up the older logs and make log files better sorted. main configuration is in /etc/logrotate.conf
+/etc/logrotate.d/ => specific services use this directory to hold their own configuration of log generating and cleaning
+in some distros logrotate has a daily schedular inside etc/crony.daily/
+
+dev/log: processes need to send their messages to /dev/log in devices. for example rsyslog uses /dev/log to process the logs based on its configs.
+
+boot process logs and Kernel Ring buffer:
+when system is booting up its logs are saved inside Kernel Ring buffer and it can be accessed by using dmesg command
+
+one of the common ways to check whether a problem is happened or not:
+ls -ltrh /var/logs => it shows all files that are generated inside logs folder than by checking the latest logs clues can be found
+
+system important logs:
+
+/var/log/auth.log: authentication processes log here
+
+/var/log/syslog: centralised log place for files that do not have specific logfile. it is provided by /etc/rsyslog.conf
+
+/var/log/debug: Debug information from programs
+
+/var/log/kern.log: Kernel messages
+
+/var/log/messages: informative messages from services. also default logs for remot client
+
+
+/var/run/utmp & /var/log/wtmp: successful logins and this files are in binary format and should be opened by last
+last | less => shows all logins in system
+
+/var/log/btmp: Failed logins, you can check this to see if anyone is trying to guess your password
+lastb  | less => shows all wrong logins (VERY USEFUL FOR security)
+
+/var/log/faillog: failed authentication attempt
+
+/var/log/lastlog: Date and time of recent user logins
+
+
+
 
