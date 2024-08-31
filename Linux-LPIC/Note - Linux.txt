@@ -50,6 +50,15 @@ drwx--x--x: d stands for directory. The first set of three represent the owners 
 useradd (username) -m => to add new user with a directory related to the user.
 use userdel (username) to delete the user name.
 vimtutor => let you get more comfortable with vim
+
+
+terminator split screen hotkeys:
+ctrl+shift+O => horizontal split
+ctrl+shift+e => vertical split
+ctrl+Tab => next window
+ctrl+shift+Tab => privous window
+
+
 ---------------------------------------------------------------------
 
 find /user -name "sdk" -type d => to find a file or repo name 
@@ -57,7 +66,6 @@ find /user -name "sdk" -type d => to find a file or repo name
 for configuring the default terminal:
 after the below command select the preferred terminal from the menu
 sudo update-alternatives --config x-terminal-emulator
-
 
 
 PS1 was:
