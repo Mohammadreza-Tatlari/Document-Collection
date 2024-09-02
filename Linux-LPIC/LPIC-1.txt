@@ -1748,7 +1748,7 @@ old logservers are
 syslog, and syslog-ng (new generations)
 nowadays: rsyslog is used for syslog and can be modified
 
-logroate: its purpose is to clean up the older logs and make log files better sorted. main configuration is in /etc/logrotate.conf
+logrotate: its purpose is to clean up the older logs and make log files better sorted. main configuration is in /etc/logrotate.conf
 /etc/logrotate.d/ => specific services use this directory to hold their own configuration of log generating and cleaning
 in some distros logrotate has a daily schedular inside etc/crony.daily/
 
@@ -1786,8 +1786,8 @@ lastb  | less => shows all wrong logins (VERY USEFUL FOR security)
 
 ### LPIC-001-064 108.2 2/3 logs in system and configuration ###
 
-rsyslog: its the newer generation of syslogs and its manin configuration is located in /etc/rsyslog.conf.
-its job is to get logs from different processes and give an output base on set configuration. for example if logs come from kernel it will save them in kerl.log
+rsyslog: its the newer generation of syslogs and its main configuration is located in /etc/rsyslog.conf.
+its job is to get logs from different processes and give an output based on set configuration. for example if logs come from kernel it will save them in kerl.log
 
 rsyslog is a service so can be monitored by 'systemctl status rsyslog'
 
