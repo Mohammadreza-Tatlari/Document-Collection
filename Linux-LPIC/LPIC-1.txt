@@ -2037,7 +2037,7 @@ sudo ifconfig enp0s25 down => it will shutdown network card with name (enp0s25) 
 
 ifconfig -a => shows all network interface cards even the shutdown ones
 
-however some configuration are not permanent so for making them persisent, configuration files should be modified
+however some configuration are not permanent so for making them persisent, configuration files should be modified. (maybe because of remote connections and misconfigurations that can happen for that)
 network interface configuration are present in /etc/network/interface on Debian based. /etc/sysconfig/network-scripts/ in RPM based computers. RPM based distros have separated configuration files but Debian based distros have them all in single files
 
 recent distors are using ip commands
@@ -2064,7 +2064,7 @@ NetworkManager & nmcli
 NetworkManger service can "watch" the status of network and various configuration and configure the network cards (specially the wifi ones) accordingly.it makes our laptop connected whenever we open it in an area with a known WiFi or ask for IPs.
 
 nmcli => shows networkmanager configuration in CLI screen
-swtiches for nmcli
+switches:
 general		NetworkManager's general status and operations
 networking	Overall networking control
 radio		NetworkManager Radio switches
@@ -2081,9 +2081,43 @@ nmcli device wifi connect (devicename) password (password) => for connecting to 
 
 note: by using --help for each section can explore features of nmcli commands
 
+### LPIC-001-072 109.2 Persistent Configuration on Network and Host Names ###
 
+hostname: using names for remembering them instead of using IPs and hostnames are saved in:
+/etc/hostname. also by typing hostname it will show hostname of your computer.
+commadns:
+sudo hostnamectl set-hostname (hostname) => can change the hostname permanently
+hostname (hostname) => it can also change hostname but temporary
 
+with hostnamectl status => all data related to our host will be shown. some attributes are:
+pretty hostname: it is used for networks that are using more featured and more patterned illustrators.
+sudo hostnamectl hostname --pretty 'name of hostname as pretty name'
+transient hostname: the current temporary hostname
 
+sometime hostnames are needed to be customise for example having an IP that does not required a hostname but for custome usage we need to give it a name.
+for such functionality a file exist that can be modified:
+/etc/hosts
+command line to add an IP with desired hostname in that hosts file:
+(IP) (hostname) --> 192.168.2.10 mydearFriendSystem.
+or for example can be used for redirection:
+127.0.0.1 badsite.com
+
+DNS configuration
+DNS file is used for translating human readable domains to the corresponding IP. that is broad and should be more focus on how it is worked cause it can also be modified on other ways to change DNS and NS server.
+this configuration exists in.
+note: resolve.conf can be overwritten by network managers. 
+/etc/resolve.conf
+nameserver: it tells the computer to use each ip as nameserver for example: nameserver 4.2.2.4
+domain: it tells the computer which domains should system look for for specific subdomain or CNames: domain techguy.net
+search: it informs computer what it should search if the name is not completed for example: search techguy.net company.net if these words are half written.
+
+nsswitch file
+it indicates for computer the sequence and order for Name service switch functionality.
+this file exist in /etc/nsswitch.conf. for example
+hosts: 		files	mdns4_minimal [NOTFOUND=return] dns => it says for hostname, first look for your files. and in the end ask from dns server
+also can check man nsswitch.conf for more detailed informations
+
+it is important to know that networkd and systemd also can configure DNS and network configurations
 
 
 
