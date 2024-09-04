@@ -1937,4 +1937,153 @@ echo -e 'email body' | mail -s 'email subject' (domain name or username)
 local forwards:
 email aliases can be created localy for each user by creating .forward file in ./home and write emails inside it.
 
+chapter 109 needs foundamental knowledge about network+ and CCNA
+### LPIC-001-068 109.1 Fundamentals of internet protocols 1/3 ####
+
+basic information about structure of ipv4 and 4 octets. also instruction of 0-255 in each octet which is 2^8 and how TCP/IP works and network protocols.
+
+IP classes
+Class			First Octet			Range
+A				1-126				1.0.0.0 to 126.255.255.255
+B				192-191				128.0.0.0 to 191.255.255.255
+C				192-223				192.0.0.0 to 223.255.255.255
+
+Private IP that are regulated in global netwroking
+Range					Number of IPs in this Range
+192.168.0-255.0-255		65k IPs
+172.16-31.0-255.0-255		1M IPs
+10.0-255.0-255.0-255		16M IPs
+
+also IPs used NAT (network address translate) for routing between local areas to world wide networks.
+
+### LPIC-001-069 109.1 introduction to network and subnetting  2/3  ###
+
+The CIDR /24 method and Decimal Netmask (255.255.255.0) method. In CIDR we are saying how many bits are 1 (the network section of an IP address) and in Decimal method, we are representing these 1 bits in an IP address format
+
+255.0.0.0		/8	11111111.00000000.00000000.00000000
+255.255.0.0	/16	11111111.11111111.00000000.00000000
+255.255.255.0	/24	11111111.11111111.11111111.00000000
+
+note:
+the network address is a logcial AND between the IP address and the network mask. the broadcast is to take the network and change all mask 0 bits to zero.
+
+IP:       		 11000000.10101000.00000100.00001100 (192.168.4.12)
+Netmask:         11111111.11111111.11111111.00000000 (255.255.255.0)
+Network:  	 11000000.10101000.00000100.00000000 (192.168.4.0)
+Broadcast:       11000000.10101000.00000100.11111111 (192.168.4.255)
+
+
+### LPIC-001-070 109.1 TCP, UDP, ICMP and IPv6 protocl 3/3 ###
+
+TCP
+Transmission Control Protocol or TCP is designed to make sure that both parties are speaking with each other without loosing any information. In this protocol the receiver will get anything the sender sends, exactly as it is sent. 
+
+UDP
+User Datagram Protocol. UDP is less reliable: the sender sends packets without communicating much and hearing back from the receiver and receiver listens for packets without negotiating the exact details with the sender
+
+ICMP
+Internet Control Messaging Protocol or ICMP is a specific purpose protocol used to check the connectivity of the servers by the ` ping ` command.
+
+Ports:
+Ports are numbers where a program LISTENS to. For example port 80 is reserved for webservers so if I connect to 5.1.23.1:80. any computer has an address but there are many programs running on that computer. By using an IP address you can tell the Internet the destination of your packets and by ports each program can listen to that specific port to listen and respond to different request:
+most used Ports are:
+
+port	usage
+20, 21	FTP (one data, one control)
+22		SSH
+23		Telnet
+25		SMTP
+53		DNS
+80		HTTP
+110		POP3
+123		NTP
+139		NetBIOS
+143		IMAP
+161, 162	SNMP
+389		LDAP
+443		HTTPS
+465		SMTPS
+636		LDAPS
+993		IMAPS
+995		POP3S
+
+important
+for getting more information about all Ports in a linux system:
+less /etc/services => will show all ports
+
+IPv6
+IPv6 has 128 bits. They are grouped in 8, 16 bit groups and are normally written in Hex (base 16) format. A sample IPv6 address looks like 2001:0db8:0a0b:12f0:0000:0000:0000:0001 and it can be shortened to 2001:db8:a0b:12f0::1. Here we have decimal numbers from 0000 to FFFF and 8 fields which are separated by :.
+IPv6 provides us around 3.4*(10^38) IPs
+
+
+### LPIC-001-071 109.2 Persistent network configuration 1/2 ###
+
+The NIC (Network Interface Card) is the physical network hardware in computer.
+in linux system eth0, eth1, eth2,... where the name of NICs in OS but it had drawbacks. when system was booting up as it was detecting network cards it gave them numbers base on sequence of time the NICs were detected. so when a new distro or modification to distro happens it will make mismatch. thus a new naming protocol invented. for example wlan0, eno1, ens1, enp3s2. this naming is based on what type of bus the NICs are connected and other type of information on how each operates.
+
+command:
+ip link show => shows NICs in system and information about it.
+
+lo (LOOP_BACK): this is an virtual network card for computer to listen and answer to itself it can be used for example on localhost:80 http protocol.
+
+command:
+ifconfig (not installed primarly on all distros) => it shows configuration and data about traffic of each NICs on OS
+
+ifconfig can be used to change the network configuration
+command:
+sudo ifconfig (NIC name) (ip address) netmask (netmask address) => to change ip and netmask of a network card
+
+sudo ifconfig enp0s25 down => it will shutdown network card with name (enp0s25) ifup or ifdown also can be used to on and off an interface for example: ifup eth0
+
+ifconfig -a => shows all network interface cards even the shutdown ones
+
+however some configuration are not permanent so for making them persisent, configuration files should be modified
+network interface configuration are present in /etc/network/interface on Debian based. /etc/sysconfig/network-scripts/ in RPM based computers. RPM based distros have separated configuration files but Debian based distros have them all in single files
+
+recent distors are using ip commands
+commands:
+ip addr show => shows all network card and information about them.
+ip addr show lo => shows only loopback interface
+
+ip address add 172.19.1.10/24 dev eth2 => temporary adds the ip with its mask 
+on device eth2 (linux can have multiple ip on a single device)
+
+ip address del 172.19.1.10/24 dev eth2 => deletes the Ip address
+
+ip link set eth2 up => brings up NIC eth2
+
+ip route show => shows all routes
+
+ip route add default via 192.168.1.1 => add a default gateway
+
+note: commands with ip are mostly temporary and will be reset after restart.
+for permanent changes the NetworkManager interface configuration should be configured
+
+NetworkManager & nmcli
+
+NetworkManger service can "watch" the status of network and various configuration and configure the network cards (specially the wifi ones) accordingly.it makes our laptop connected whenever we open it in an area with a known WiFi or ask for IPs.
+
+nmcli => shows networkmanager configuration in CLI screen
+swtiches for nmcli
+general		NetworkManager's general status and operations
+networking	Overall networking control
+radio		NetworkManager Radio switches
+connection	controlling the connection
+device		Devices controlled by NetworkManager
+agent		secret or polkit agent
+monitor		Monitor the changes 
+
+example:
+nmcli device (type) => show information about that device
+nmcli device wifi => shows all wifi available in area
+
+nmcli device wifi connect (devicename) password (password) => for connecting to a wifi network 
+
+note: by using --help for each section can explore features of nmcli commands
+
+
+
+
+
+
 
