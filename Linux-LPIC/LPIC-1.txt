@@ -2120,4 +2120,92 @@ also can check man nsswitch.conf for more detailed informations
 it is important to know that networkd and systemd also can configure DNS and network configurations
 
 
+### LPIC-001-073 109.3 Basic Network Troubleshooting 1/2 ###
+
+ping is the most used command for trouble shooting the internet which it uses ICMP for functionality
+ping has switches for different tracking and packet troubleshooting.
+
+for instance using i switch for making rapid pinging (can be used for attacking)
+ping -i 0.1 4.2.2.4 => it will ping 4.2.2.4 in 0.1 second.
+ping -s => can change size of the packet
+
+ping6 is used for IPv6
+ping ::1 => it will ping local computer. (with ping alone can IPv6 be pinged)
+
+by using ip route diffault gateway will be ilustrated.
+for adding routing table to system:
+sudo ip route add (IP address ) via (default route or specific route ip).
+
+sudo ip route add default via (default ip address on network card or router).
+
+traceroute (IP address) => shows all ip address that a packet passes to reach the destination
+
+
+### LPIC-001-074 109.3 Network Troubleshooting checking connection 2/2 ###
+
+ss & netstat
+show wide information about status of network. ss is newer version command and can show connections but netstat is not installed primarly on recent distros and needs to be installed by net-tools packages.
+
+command:
+netstat -nr => do not reverse look up and just shows routing table
+nestat -na or ss -na => shows all connections and active connection
+ss or netstat -tulpn => is most used switch combination that contain nesseccary information. (-p for process -t: tcp -u:udp -l:listening n:numberic)
+
+
+netcat or nc can listen and observe interface or traffic interactions:
+one of the common use cases is when you need to check if anyone is requesting over specific port and if the request is reaching to the port.
+nc -l (port number)
+nc localhost (port number) => it will stablish connection with the localhost or any ip on that specific port number. ( it is used for connecting to remote devices)
+
+nc (netcat) can be used for creaing backdoor.
+nc -e /bin/bash => it will execute any command that is being received by bash ( it is removed by default from systems).
+
+dig
+dig is a dns lookup tool for trouble shooting domain names. it is for dnsutils packages. it asks for request and shows result of that.
+example:
+dig google.com
+
+tcpdump & tcpflow
+these two take more advance commands from netcat for listening. for instance tcpflow listens on specific port or destination and saves the result on a file or demostrate it on commandline:
+sudo tcpflow -c port 80 => it will listen to port 80 (so curl can be listened) and show them on cmd via -c switch
+
+in connection table inside netstat -na established means the computers that are connected directly to the system
+
+
+### LPIC-001-075 109.4 Configure Client side DNS ###
+
+DNS server configuration on local computer is located in /etc/resolv.conf and can be checked or changed (temporary).
+cat /etc/resolv.conf
+
+host
+host is a simple program to lookup DNS queries.
+host (yahoo.com) => will show all IP addresses related to yahoo.com and also shows NS servers
+host -t MX (domain name) => will show only MX records from that domain name
+
+dig
+the dig tool is built to query DNS servers. it can do IP lookup for domain names and indicate IP, TTL, and all other information such as caching.
+
+dig @8.8.8.8 yahoo.com => it will ask ip of yahoo.com and records of it from 8.8.8.8 dns server.
+
+/etc/hosts => location where hosts file are configured
+custome host ip can be added to this file for development or easer usecase.
+also it can redirect specific ips to specific ips.
+for example 192.0.0.1 facebook.com => it will redirect facebook.com domain to local for not leting it to be direct to facebook :).
+or
+8.8.8.8 mydefaultns => so whenever mydefaultns is pinged it will actually ping 8.8.8.8. also multiple domain names can be set for a single IP
+
+/etc/nsswitch.conf => this files indicate priority of of lookups and this priority can be modified.
+ 
+for getting domain names or IPs cat /etc/hosts | grep (domain name) or grep (domain name) /etc/hosts can be used but a command is also exist for such use cases:
+
+getent
+getent is a command from utility for getting entries from Name service Switch. and also can be used for getting name entries from libraries such as (/etc/nsswitch.conf) 
+
+command:
+getent hosts (domain name) => shows domain name from hosts file.
+
+systemd-resolved:
+systemd-resolved is a local DNS that is provided by systemd
+
+
 
