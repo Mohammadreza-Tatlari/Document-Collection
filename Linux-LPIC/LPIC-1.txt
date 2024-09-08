@@ -1937,6 +1937,7 @@ echo -e 'email body' | mail -s 'email subject' (domain name or username)
 local forwards:
 email aliases can be created locally for each user by creating .forward file in ./home and write emails inside it.
 
+
 chapter 109 needs foundamental knowledge about network+ and CCNA
 ### LPIC-001-068 109.1 Fundamentals of internet protocols 1/3 ####
 
@@ -1955,6 +1956,7 @@ Range					Number of IPs in this Range
 10.0-255.0-255.0-255		16M IPs
 
 also IPs used NAT (network address translate) for routing between local areas to world wide networks.
+
 
 ### LPIC-001-069 109.1 introduction to network and subnetting  2/3  ###
 
@@ -2080,6 +2082,7 @@ nmcli device wifi => shows all wifi available in area
 nmcli device wifi connect (devicename) password (password) => for connecting to a wifi network 
 
 note: by using --help for each section can explore features of nmcli commands
+
 
 ### LPIC-001-072 109.2 Persistent Configuration on Network and Host Names ###
 
@@ -2208,4 +2211,56 @@ systemd-resolved:
 systemd-resolved is a local DNS that is provided by systemd
 
 
+### LPIC-001-076 110.1 Perform security administration tasks 1/2 ###
 
+sudo vs su
+su switches to other account or users and it stands for 'set user'. and sudo stands for 'set user do' which is used for commiting root based actions with specific user if that user is part of sudo group in that computer.
+example:
+sudo su - => it stands for swtiches to root if '-' is used and dash in here means to set all root environment.
+
+also for commiting something as another user without loging into that user the -u switch is for such purpose:
+sudo su -u (username) touch /tmp/FileCreatedbyTest.txt => it will create that user without loging into that user.
+
+sudo permission can be configured by visudo command. actually, the sudo file is located in /etc/sudoers and editing this file directly is a very bad idea because actually any broken code inside this file can affect the whole OS and recovery may needed.
+in this file by adding user in sudo group a permission to use sudo will be granted to that user.
+for instance in the file the ALL:ALL means that user with that configuration has accesss to all groups and all users so customized permission can be modified.
+also, the reason behide using visudo is that it checks whether the configuration is proper and won't cause damage to OS.
+
+checking users in the system:
+w => using w alone will show all users active on OS
+who => it also shows users but in more brief content.
+last => shows the last logins on the system shows logs from /var/log/btmp
+last -f /var/log/btmp => shows all fails logins
+
+manage password
+by uisng passwd password can be changed for instance:
+passwd [optional: username] => to change user's password or if user is not selected it will change the password of the set user.
+passwd -S => shows information about the password condition:
+L or P or NP: stands for being locked or no password or password
+2023-07-22: date of the last time it has bein changed
+0: minimul time that the password can work. (0 stands for infinite)
+9999: days that the password is valid.
+7: 7 day before the password expiration it will warn.
+-1: if it is not -1 it means whether user doesn't use that person in that certain time it will lock the user.
+
+chage => it is an utility to configure the password condition.
+sudo chage (username) => it will prompt inputs for password configuration for that user.
+
+suid & guid
+when the suid bit is set on an executable file, the user will run with the access level of the owner of the file (and not the runner).
+ls -ltrh /usr/bin/passwd 
+-rwsr-xr-x 1 root root 63K Nov 23  2022 /usr/bin/passwd
+The s on the access rights part, will run the file using the owners (here its root) access.
+So if you are a hacker and get a temporary root access, its enough to copy vi somewhere (with a different unsuspicious name) and give it the suid access. then you will be able to run it with normal users and modify system files when needed.
+
+thus looking for suid executable file in system is mandatory. for such functionally we can use:
+$sudo find / -perm -u+s => it will look for files that have permission of suid
+
+also guid stands for group uid and is similar to suid but for specific group.
+
+user limits 
+all users have certain boundary and limit in OS such as limit in number of opened files or pending task. this can be used for VDI systems or systems that multiple users are working on it simultanously for checking that we use ulimit command:
+ulimit -a => will show all limits and data about limits of the user.
+for changing limits, switches for each attribute can be changed.
+ulimit -t 0 => change process time for user to be 0
+/etc/security/limits.conf
