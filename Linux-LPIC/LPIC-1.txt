@@ -624,7 +624,7 @@ find . -name "*.htm" -exec mv '{}' '{}l' \; => it will find all .htm files and r
 in linux base system compressing and gathering files together obey different algorithms and each of them have their own programms.
 
 gzip:
-is one of the common ways for compressing files. but remember if the file is so small after compressing the file may increase in size due to incoding and meta datas. so zipping and compressing are reliable in order to be used for large data.
+is one of the common ways for compressing files. but remember if the file is so small after compressing the file may increase in size due to incoding and meta data. so zipping and compressing are reliable in order to be used for large data.
 gunzip: is for unzipping the zipped file
 
 other algorithms for compressing and zipping. sometime they are links to each other
@@ -641,7 +641,7 @@ tar cf myfiles.tar info.txt task.txt my-tasks
 
 tar xf (tar filename): to extract tar file
 
-tar cfzv compressedAndArchived.gz *
+tar czvf compressedAndArchived.gz *
 this command create gz file with tar and zip it with (z) command and is verbose 
 
 cpio:
@@ -1935,7 +1935,7 @@ also we can send email via command line:
 echo -e 'email body' | mail -s 'email subject' (domain name or username)
 
 local forwards:
-email aliases can be created localy for each user by creating .forward file in ./home and write emails inside it.
+email aliases can be created locally for each user by creating .forward file in ./home and write emails inside it.
 
 chapter 109 needs foundamental knowledge about network+ and CCNA
 ### LPIC-001-068 109.1 Fundamentals of internet protocols 1/3 ####
@@ -2019,7 +2019,7 @@ IPv6 provides us around 3.4*(10^38) IPs
 ### LPIC-001-071 109.2 Persistent network configuration 1/2 ###
 
 The NIC (Network Interface Card) is the physical network hardware in computer.
-in linux system eth0, eth1, eth2,... where the name of NICs in OS but it had drawbacks. when system was booting up as it was detecting network cards it gave them numbers base on sequence of time the NICs were detected. so when a new distro or modification to distro happens it will make mismatch. thus a new naming protocol invented. for example wlan0, eno1, ens1, enp3s2. this naming is based on what type of bus the NICs are connected and other type of information on how each operates.
+in linux system eth0, eth1, eth2,... are sequence of name from NICs in OS but it had drawbacks. when system was booting up as it was detecting network cards it gave them numbers base on sequence of time the NICs were detected. so when a new distro or modification to distro happens it will make mismatch. thus a new naming protocol invented. for example wlan0, eno1, ens1, enp3s2. this naming is based on what type of bus the NICs are connected and other type of information on how each operates.
 
 command:
 ip link show => shows NICs in system and information about it.
@@ -2094,7 +2094,7 @@ pretty hostname: it is used for networks that are using more featured and more p
 sudo hostnamectl hostname --pretty 'name of hostname as pretty name'
 transient hostname: the current temporary hostname
 
-sometime hostnames are needed to be customise for example having an IP that does not required a hostname but for custome usage we need to give it a name.
+sometime hostnames are needed to be customized for example having an IP that does not required a hostname but for custome usage we need to give it a name.
 for such functionality a file exist that can be modified:
 /etc/hosts
 command line to add an IP with desired hostname in that hosts file:
@@ -2103,7 +2103,7 @@ or for example can be used for redirection:
 127.0.0.1 badsite.com
 
 DNS configuration
-DNS file is used for translating human readable domains to the corresponding IP. that is broad and should be more focus on how it is worked cause it can also be modified on other ways to change DNS and NS server.
+DNS file is used for translating human readable domains to the corresponding IP. that is broad and should be more focused on how it is worked cause it can also be modified on other ways to change DNS and NS server.
 this configuration exists in.
 note: resolve.conf can be overwritten by network managers. 
 /etc/resolve.conf
@@ -2132,7 +2132,7 @@ ping -s => can change size of the packet
 ping6 is used for IPv6
 ping ::1 => it will ping local computer. (with ping alone can IPv6 be pinged)
 
-by using ip route diffault gateway will be ilustrated.
+by using ip route default gateway will be ilustrated.
 for adding routing table to system:
 sudo ip route add (IP address ) via (default route or specific route ip).
 
