@@ -2263,4 +2263,46 @@ all users have certain boundary and limit in OS such as limit in number of opene
 ulimit -a => will show all limits and data about limits of the user.
 for changing limits, switches for each attribute can be changed.
 ulimit -t 0 => change process time for user to be 0
+
+file of limits are in:
 /etc/security/limits.conf
+
+note: 
+type of soft and hard limit means that if it is soft, the warning will be generated but hard limit means that it set constrained limits and can kill process or stop it forcefully.
+nproc means number of processes.
+
+
+### LPIC-001-077 110.1 Perform Security administration Ports and Network Scan 2/2 ###
+
+malwares or hackers open ports to communicate with that. it is important to check your computer for open ports.
+the old command for that is `netstat` using the -na or -ap or -tuna switch:
+netstat -na => shows all ports with processes
+netstat -ap
+netstat -tuna => it only looks for Listen ports which is important
+ss -tuna => same as netstat but its more organized
+note:
+0.0.0.0:(portnumber) in address:port => it means from whatever ip the system can answer and listen to but if an ip is set it means only listen and response to that IP.
+
+lsof & fuser
+lsof shows all the open files on the system and also display open connections too. in linux everything is a file ora process.
+example:
+sudo lsof =i [internet address] => shows processes that the internet address specificed in -i
+
+fuser (file user)  is used to find which user is using an specific port or which process or program is on that port.
+sudo fuser 22/tcp -v => checks who or what is listening on port 22 and with protocol tcp it is actually act like ss -tulpn
+
+nmap
+nmap is a very useful tool and it means network map and it maps the network where the system is located. also it can scans all the ports and look for specific port that it is commanded.
+example:
+nmap localhost => it will look for all ports and find where the localhost is listening 
+nmap  192.168.2.10/24 => it will scan all the ips in subnet mask of 255.255.255.0 and will show open ports.
+
+nmap is a very full-featured and it deserves a whole topic belonged to it. also it can be dangerous so if it is used uncotiously it can lead to being blocked or stopped from the network cause nmap usage can be detected.
+note:
+look for nmap one-liners commands on internet
+nmap even can look for OS detection and fingerprint detection
+
+sudo nmap -O 192.168.2.0/24 => it will check out Operating Systems	
+
+
+
