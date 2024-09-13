@@ -2304,5 +2304,110 @@ nmap even can look for OS detection and fingerprint detection
 
 sudo nmap -O 192.168.2.0/24 => it will check out Operating Systems	
 
+### LPIC-001-078 110.2 Setup host security ###
+
+shadow passwords
+/dev/passwd it contains the passwords of the users but there is a problem. if user wants to change her password she needs to access this file but its not secured so instead /etc/shadow is introduced which holds the real hashed password instead of * in /etc/passwd
+
+/etc/nologin
+if this file exists in /etc directory everytime any users whats to ssh or login to the system it will prevent the action and shows the message inside the /nologin file. however only root can login to the system
+
+super-servers (service dispatchers)
+in Unix system some daemon service such as inetd and xinetd were used to manage ports for other services. they listen for requests there were configured for and starts the target services when needed to answer the request.
+its file used to be in /etc/xinet.d and each file contained data about the server socket_type and attributes of behaviour.
+
+xinetd is replaced by systemd.socket so for example instead of running sshd.service in systemctl, ssh.socket can be run so if the 22/tcp port is going to be checked by fuser 22/tcp -v it will show that the port is being listened by systemd and not directly by sshd
+
+/etc/hosts.allow & /etc/hosts.deny
+if a program contains libwrap liberary inside its dependency it means it repsects to xinetd rules and by used 'ldd (program name) | grep libwrap ' it is possible to find it out. thus two files with names hosts.allow and hosts.deny are used to allow or deny host IPs to have access to those programs.
+for instance by adding script below inside hosts.allow:
+vsftpd: 10.10.100.6 => the IP with 10.10.100.6 can have access to vsftpd file.
+
+removing unused services
+many services doesn't mean a safe Operating system because it contains many 'attack surfaces' so it is important to manage and reduce programs as much as possible.
+by using ss -tuna, lsof -i , or other tools we can modified them. also using systemctl status can guide as well.
+
+other commands :
+sudo service --status-all => shows all services that are working or not working at that current time (debian based)
+
+sudo chkconfig (service name) off => for stoping a service 
+
+sudo update-rc.d (service name) remove => to stop or remove that service in debian machines.
+
+systemctl list-units --state active --type service => using systemd to check / stop or disable a service
+
+system disable (service name) --now => it will disable and stop the service. because disable command alone wont disable the service constantly.
+
+ 
+### LPIC-001-079 110.3 securing data with encryption 1/3###
+
+key pairs:
+in modern encrpyted connectivity 2 set of keys are being used. first is the public key and second is the private key. the public key is the key that everyone can use to encrypt data and send them to the user that has shared her public key to receive data. and the private key which is very important is the key that decrypt the data that is being encrypted via public key. so private key is the key that should not be shared and should be restored cautously.
+
+ssh keys:
+when a device is connecting to another device via ssh the system will ask for keys and also for better assurance the fingerprint of server and SHA encryption will be shown to be sure that the correct device is asked for ssh permission.
+after the exchange each device will hold public key of each other to stablish secure connection.
+if for instance ssh compares the key but data does not match, ssh will not stablish the connection. because maybe the server is hacked and that IP is set to another device for hijacking data.
+
+ssh keys are held in .ssh/known_hosts
+
+ssh-keygen is used to not directly edit the ssh file
+example:
+ssh-keygen -R 192.168.10.3 => it will remove the ssh key for this ip
+
+creating our own ssh key
+ssh-keygen => it will create ssh key for system with default setting
+note:
+man ssh-keygen => for checking other type of ssh-keygen types and switches.
+
+.ssh/od_rsa => is the key that is private and should not be shared.
+.ssh/id_rsa.pub => is the public key and can be shared.
+
+.ssh/ssh_host_rsa => host prefix stands for host ssh-keys
+
+key based / Password less login
+by asking the host to generate a password by its private key and check that password by the public that is sent by your device it is possible to stablish a password less connection.
+
+it is much more safe for admins or clients that are connected to a server from defined devices or when sysadmins don't want to share or use the password.
+
+for stablish such connection we have different ways.
+one is too copy the our ssh to the .shh/authorized_keys file inside the hosts
+or
+ssh-copy-id (ip address of the remote host) => it will copy the ssh id to that remote host. 
+ssh -v => can check which ssh is being copied (*more indepth research needed)
+
+public key authentication in servers can be managed or be disabled
+ssh/sshd_config => this file contains configuration for that and PubkeyAuthetication can be changed.
+
+ssh-agent
+ssh-agent manage the ssh key and keeps private keys in memory and provide them when they are needed. it reduces sequence of password requesting.
+
+ssh-agent are used inside jump-server to manage ssh-keys
 
 
+### LPIC-001-080 110.3 secure data with encryption ssh tunnels 2/3 ###
+
+one of the things that is useful to know is that it is possible to ssh to a server and run a command and just back to the own system:
+ssh (username)@(ipaddress) (command) => it will run that command and just show the result in terminal.
+
+ssh tunneling:
+its a concept which is work connecting to another computer using for example a server in middle for instance this technic is used for jump-server or when an specific port of a server is only open through a single server' terminal but the IT guy needs to have GUI or web interface to that server by her system.
+so the command is similar to:
+local tunnel
+ssh -L 9000:linux1st.com:80 root@192.167.23.56 => in this command first we declare that the the connection is local tunnel by (-L) from machine toward linux1st.com on port 80. now if local device connects to localhost:9000 the request will be sent to 192.167.23.56 and that system will request to linux1st.com:80 and return response to localhost:9000 of the requester system. so by using curl localhost:9000, the content of linux1st.com on port 80 will be shown.
+also this tunneling can be chained to multiple devices.
+
+remote forward
+remote forwarding is reverse of local tunnel which it means that every request to the remote server will be forwarded to our local computer. for instance:
+ssh -R 8000:localhost:80 root@192.168.23.56 => in this command if any request on port 8000 on 192.168.23.56 will be directed to localhost:80 of our computer. by using fuser 8000:tcp on 192.168.23.56 you can see that port 800 is being used by ssh and by nc -l 80 on local computer you can listen to incoming traffic. to test that just telnet to localhost 8000 on remote server. and type something.
+
+reverse tunnels always listen on localhost so for changing that and open all ips to that port we can change configuration on remote device by:
+ssh -R 0.0.0.0:8000:localhost:80 192.168.23.56 => it will receive data from all places from the world however this config can be also specific.
+also it is important that to let clients to bind listening ports to anything other than localhost, the GatewayPorts clientspecificied configuration should be set in the ssh server's config file.
+
+dynamic
+the -D switch is used for stablishing a dynamic ssh connection between devices:
+ssh -D 1080 192.168.23.56 => it works like a proxy. the 1080 port will work as a socks proxy on your machine anad forward all request to the 192.168.23.56 and then simple configure for instance your app to work with localhost:1080 as its socks proxy. it is used when only for instance on system has access to internet in your network.
+/etc/ssh/sshd_config
+
+X forwading also can be used for remote devices to similar to module 106
