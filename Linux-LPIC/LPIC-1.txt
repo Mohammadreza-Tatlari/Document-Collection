@@ -2411,3 +2411,44 @@ ssh -D 1080 192.168.23.56 => it works like a proxy. the 1080 port will work as a
 /etc/ssh/sshd_config
 
 X forwading also can be used for remote devices to similar to module 106
+
+
+### LPIC-001-081 110.3 ecnrypt and sign using gpg  3/3 ###
+
+gpg (gnu pretty good privacy) is based on pgp( pretty good privacy) which was a exclusive product for security. gpg is another implementation of public and private key pair to encrypt or sign messages.
+
+command:
+gpg --list-keys => it list holding keys
+
+gpg --gen-key => it generate a gpg key pair
+
+note: gpg uses entropy stock to generate randomise key. this stock can contain the cpu temperature or even position of cursor on the screen.
+
+keys in gpg are stored in .gnupg/ directory
+
+gpg --export mohammadreza > mohammadreza.pub.key => it will export the public key of mohammadreza user to pub.key file which is a binary file.
+
+gpg -a --export mohammadreza > mohammadreza.pub.key => it will export it in asci code and can be catenated.
+
+gpg --import mohammadreza.pub.key => this is used to import other's public key to gpg key list.
+
+gpg --out file.txt.encrypted --recipient (user with private key) --encrypt -a file.txt => it will create an encrpyted text file with asci code covered and its input is a file.txt also the recipient is the target user.
+
+gpg --out out.txt.decrypted --decrypt file.txt.encrypted => it will decrypted the encrypted file with the user private key( it will find the relevant user from files attributes.) also it will ask for passphrase as well.
+
+
+signing and verifiyng file
+key pairs also can be used to sign or to verify files or documents. for instance someone can uses its private key to sign on a article and share it over internet and everyone can verify the validity of that article by opening it with public key of that person.
+
+gpg --output 	mohammadMessage.txt.signed -a --sign mohammadMessage.txt => it will sign the txt file with private key that my user have.
+
+gpg --verify mohammadrezaMessage.txt.signed => it will verify that message but it won't display the content
+
+gpg --out okaymail.ok --verify mohammadrezaMessage.txt.signed => it will write the content of the message file inside okaymail.ok
+
+gpg --output message.clean.sign --clearsign message.txt => --clearsign will demonstrate the content of file and also shows the signiture other the file. it is used for sending data to people who are not that professional or for public and also include the key to make other people sure that data is genuine.
+actually, --clearsign tells the gpg to include the clear text message in the output file too
+
+gpg --output jadi.revoke.asc --gen-revoke (username with private key) => gen-revoke is for invalidate the public keys in order to create new key pair.
+
+gpg-agent: it is similar to ssh-agent and is used to hold and memorize passwords for managing gpg keys.
