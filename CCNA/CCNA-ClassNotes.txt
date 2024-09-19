@@ -1,0 +1,98 @@
+This note is created to work as a notebook but its possible search through it.
+due to continuing on keeping notes on digital notepad, the data is written after Day 23 but previous days will be covered.
+
+
+### Day 23 EtherChannel ###
+
+(ASW) Access Layer Switch: a switch that end hosts connect to 
+(DSW) Distribution layer Switch: a Switch that access layer switches connect to. 
+
+Oversubscription: when the bandwidth of the interfaces connected to end hosts is greater that the bandwidth of the connection to the distribution switches (DSW). to much of oversubscription causes congestion.
+
+problem can be fixed by ethernetChannel:
+if you connect two switches together with multiple links (say for improving the band width), all except one will be disabled by spanning tree to prevent broadcast storm and layer 2 loops. so other links will be unused unless the active link fails, and then one of the inactive links will start forwarding.
+thus, EtherChannel groups multiple interfaces together to act as a single interface.
+STP will treat this group as a single interface.
+
+in EtherChannel, Traffic is load balanced among the physical interfaces. an Algorithm is used to determine which traffic should be on which physical interface.
+
+some other names for etherChannel:
+Port Channel
+LAG (Link Aggregation Group)
+
+EtherChannel load balance is based on 'Flows'.
+A flow is a communication between two nodes in the network.
+Frames in the same flow will be forwarded using the same physical interface. if frame in the same flow is forwaded using different interface it can cause problem for some applications.
+so, etherchannel uses algorithm to channel different flows from different interfaces.
+
+the two inputs for the selection calculation in etherchannel are based on:
+Source MAC
+Destination MAC
+Source IP
+Destination IP
+and some cases the inputs are on L4 (Transport), the TCP and UDP
+note: inputs are based on type and model of switches.
+
+command:
+show etherchannel load-balance => to see the switch load balancing inputs
+note:
+non-IP: some packet may not be encapsulated in Ethernet frame so there is no IP address to be used so the MAC addresses are used.
+
+command:
+conf t
+port-channel load-balance (method; example:src-dst-mac) => configures method of load-balancing configuration.
+
+three methods for EtherChannel configuration on Cisco Switches:
+1.PAgP (Port Aggregation Protocol): Cisco Proprietary. Dynamically negotiates the creation/maintenance of the EtherChannel (like DTP does for trunks)
+2.LACP (Link Aggregation Control Protocol): Industry standard protocol (IEEE 802.3ad)
+Dynamically negotiates the creation/maintenance.
+3.Static EtherChannel: interfaces are statically configured to form an EtherChannel.
+
+note:
+up to 8 interaces can be formed into a single EtherChannel. however in LACP, 16 are allowed by 8 of them will be in standby mode.
+
+command:
+steps for PAgP configuration
+ASW(config)# interface range g0/0 - 3 => for instance selecting range of interfaces.
+(config-if-range)# channel-group (num to indentify the virtual interface ex:1) mode ( desirable or auto) => to establish PAgP on the selected range of interfaces. 
+
+steps for LACP configuration
+similar to PAgP but,
+(config-if-range)# channel-group (num to indentify the virtual interface ex:1) mode ( active, passive) => active (for LACP unconditionally) and passive (for only if a LACP device is detected) 
+
+steps for Static configuration
+similar to previous ones but,
+(config-if-range)# channel-group (num to indentify the virtual interface ex:1) mode on => on mode only works with on mode on the other side to form static etherChannel.
+
+Manually configure the negotiation protocol by channel-protocol
+command:
+channel-protocol (lacp, pagp) => this command will manually configure interface to prepare for lacp or pagp configuration
+
+show ip interface brief => shows table 
+
+EtherChannel Configuration notes:
+• Members interfaces must have matching configurations:
+	same duplex (half/full)
+	same switch port mode (trunk/access)
+	same speed
+	same allowed VLANs/native VLAN (for trunk interfaces)
+• if an interface's configurations do not match the others, it will be excluded from the EtherChannel
+
+command:
+show etherchannel summary => it will show status of etherchannel of switch
+
+show etherchannel port-channel => shows number of ports and protocol and also channel group mode.
+
+show spanning-tree => by using this command after configuration you can confirm that STP is treating all as a single interface or not.
+
+layer 3 switches (multilayer switches)
+if you take out a multilayer switch from layer 2 switchports there is no need to run spanning-tree at all because routed ports don't forward layer 2 broadcasts, so no layer 2 loops can be formed.
+for such functionality, ' no switchport ' command is used 
+however for layer 3 we need ip address for interfaces and that ip address is set on port-channel interface
+
+
+
+
+
+
+

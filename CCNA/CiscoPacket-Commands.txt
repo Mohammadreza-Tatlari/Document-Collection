@@ -183,9 +183,19 @@ switchport mode trunk => will set that portchannel as trunk
 by using `show run` you can see the result of trunking interfaces
 
 ASW1(config-if-range) #do show etherchannel summary => shows information of etherchannel that is created
-
+ 
 #show interface trunk => shows trunk information about interface
 
 DSW2(config-if-range)# channel-group 2 mode on => recommended to use "mode on" for static channel
 
 for multilayer switches, we need to enable IP routing to build a routing table 
+(config-if) # ip add 10.0.0.1 255.255.255.0
+
+for multilayer switch to be able to have routing table, we need to enable IP routing
+(config) # ip routing => it will enable ip routing
+(config) # do show ip routing => it will show Ip table and status
+
+(config) # do show etherchannel load-balance => it will show the load-balance inputs for the etherchannel load balance
+
+(config)# port-channel load-balance (mode) => it will set the load-balance mode to desired mode.
+
