@@ -199,3 +199,18 @@ for multilayer switch to be able to have routing table, we need to enable IP rou
 
 (config)# port-channel load-balance (mode) => it will set the load-balance mode to desired mode.
 
+
+__Lab Day-24__
+
+for adding a static route to the routing table that acts as a backup we need to config its administrative distance higher that the routing protocol that is being used. for such that we do:
+(config)# ip route (ip of the destination) (subnet mask of destination) (next hop interface ip) (AD metric): ip route 10.0.1.0 255.255.255.0 203.0.113.5 111
+
+by using `do show ip route`, the in used ip route will be shown but if that interface is down the static rout will be present inside the routing table
+
+by shuting down the interface the static route can be verified
+(config) #int g0/1/3
+(config-if) #shutdown
+
+by using `tracert or traceroute` we can check out the next hop over network to check whether the backup link or connection to other hops is stablished correctly or not.
+
+loopback also can be used for simulating a setup on routers for example ping 1.1.1.1 and receiving the result of ICMP

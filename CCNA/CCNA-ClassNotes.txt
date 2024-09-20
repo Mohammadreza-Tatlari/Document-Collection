@@ -92,6 +92,99 @@ however for layer 3 we need ip address for interfaces and that ip address is set
 
 
 
+### Day 24 Dynamic Routing ###
+
+in routing table
+Network route: A route to a network/subnet (mask length < /32) actually shown by C
+
+host routes: host route is a route to a specific host (/32 mask), a single address. it is shown by L
+
+routes can be adveritsed by the router that has that subnet. however if the router that is advertising the route is out of reach the table will be updated and the route will be removed to prevent sending data to dead-end
+
+routers can used dynamic routing protocols to advertise information about the routes they know.
+they form adjacencies/ neighbor relationships/ neighborships with adjacent routers to exchange this information.
+
+if mutliple routes to a destination are learned, the router determines which router is superior and adds it to the routing table.
+it uses 'metrics' of the route to decide which is superior (lower metric = superior)
+
+dynamic routing protocls can be devided into two main categories:
+IGP (Interior Gateway Protocol) = used to share routes within a single autonomous system (AS), which is a single organization ( for example routers inside a compnay A)
+EGP (Exterior Gateway Protocol) = used to share routes between different Autonomous systems ( example connection of a router inside company A to router inside ISP A )
+
+Algorithm types in Dynamic routing Protocols (processes each protocol uses to share route information and choose te best route)
+
+IGP:
+1. Distance Vector. example:
+	Routing Information Protocol (RIP) ,
+	Enhanced Interior Gateway Routing Protocol (EIGRP)
+2.Links State. example:
+	Open shortest Path First (OSPF)
+	Intermediate System to Intermediate System (IS-IS)
+EGP:
+Path Vector. example: 
+	Border Gateway Protocol (BGP)
+
+DIstance Vector Routing Protocols:
+this protocol were invented before links state. Distance vector operates by sending the following information to their directly connected neighbors
+	their known destination networks
+	their metric to reach their known destination network
+this method of sharing route information is often called 'routing by rumor'
+this is because the router doesn't know about the network beyond its neighbors. it only knows the information that its neighbors tell it.
+
+Link State Routing Protocols:
+in Link State protocols, every router creates a 'connectivity map' of the network
+to allow this each router advertises information about its interfaces (connected to network) to its neighbors. these advertisment is passed along until all routers in the newtork develop the same map of the network.
+each router independenly uses this map to calculate the best route to each destination
+Link State protocol uses more resource (CPU) on the router because more information is shared.
+however, link state tend to be faster in reacting to changes in the network than distance vector.
+
+Metrics in Dynamic Routing
+metric values are used for the routes to be determined which is the best. A low metric is better.
+each routing protocl uses a diffrerent metric to determine which route is the best.
+
+if a router learns two (or more) routes via the same protocol and same destination ans same metric, all will be added to the routing table and the traffic will be load-balanced over both routes.
+this is called ECMP (Equal Cost Multi-cast)
+
+note:
+Static routes don't use metrics and in routing table the metric is 0 and administrative distance is also 1.
+
+Protocl metrics:
+Protocol			Metric
+RIP 				Hop Count
+EIGRP			Metric based on Bandwith & delay (by default)
+OSPF			Cost
+IS-IS			Cost
+
+
+RIP:Hop count = each router in the path counts as 1 hop. the links of all  speeds are equal.
+
+EIGRP: bandwith & delay = the bandwidth of the slowest link in the route and the total delay of all links in the route are used.
+
+OSPF:Cost = the cost of each link is calculated based on bandwidth the total metric is the total cost of each link in the route.
+
+IS-IS:Cost = the total is the total cost of each link in the route. the cost of each link is not automatically calculated by default and all links have a cost of 10 by default.
+
+Administrative Distance:
+different routing protocol use different metrics, so they cannot be compared. so the administrative distance (AD) is used to determine which routing protocol is preferred.
+a lower AD is preferred and indicates that the routing protocl is considered more trustworthy.
+
+Route protocol/type			AD
+Directly connected				0
+Static						1
+External BGP(eBGP)			20
+EIGRP						90
+IGRP						100
+OSPF						110
+IS-IS						115
+RIP							120
+EIGRP(external)				170
+Internal BGP (iBGP)			200
+Unusable route				255
+ 
+note:
+AD can be changed for static router or other protocols
+
+
 
 
 
