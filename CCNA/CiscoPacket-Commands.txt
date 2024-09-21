@@ -214,3 +214,41 @@ by shuting down the interface the static route can be verified
 by using `tracert or traceroute` we can check out the next hop over network to check whether the backup link or connection to other hops is stablished correctly or not.
 
 loopback also can be used for simulating a setup on routers for example ping 1.1.1.1 and receiving the result of ICMP
+
+__Lab Day-25__
+
+how to enable loopback on an interface
+1. go to the global configuration by `configure terminal`
+2. add the loopback interface: 
+(config) # interface loopback (number example:0)
+3. then on that interface (loopback interface) add the ip:
+(config-if) #ip address 1.1.1.1 255.255.255.255
+4. check it out by `do show ip interface brief`
+
+enable eigrp with Administrative Distance
+(config) #router eigrp 100 =>enable the eigrp on router and the 100 is for AD
+
+for enabling EIGRP on all interface we can do:
+(config-router) #network 0.0.0.0 255.255.255.255
+note that it is not recommended to do it on real networking
+
+or to be more responsible
+(config-router) #network 10.0.13.0 0.0.0.3(wildcard of /30)
+(config-router) #network 10.0.34.0 0.0.0.3
+
+note: remember to enable passive-interface for loopback interfaces because the router will include EIGRP advertisment on them and waste resources.
+(config-router) # 1.1.1.1 0.0.0.0
+(config-router) #passive-interface loopback 0
+(config-router) # no auto-summary => for disabling classful summary
+
+(config-router) #do show ip protocol => to check out the configuration
+
+for better checking out the neighbor for the EIGRP protocol:
+(config-router) # do show ip eigrp neighbors
+
+(config-router) #do show ip route eigrp => it will filter the routes to only the eigrp advertised routes.
+or
+(config-router) #do show ip route connected => it will show the connected routes
+
+(config-router) #do show ip router eigrp topology => it will show more information about the EIGRP routes that the router has received
+

@@ -186,6 +186,111 @@ AD can be changed for static router or other protocols
 
 
 
+### Day 25 RIP & EIGRP ###
+RIP: Routing information Protocol (industry standard)
+RIP is a distance vector routing ( uses routing-by-rumor to learn/share routes)
+it uses hop count as its metric. one router = one hop (bandwidth is irrelevant)
+the maximum hop count is 15 and more that that is considered unreachable so the RIP is not used in large network and also it is not used in nowadays network alot.
+has three version: RIPv1 RIPv2 for IPv4 and RIPng(next generation) for IPv6
+it uses two massage types:
+Request: to ask RIP-enabled neighbor routers to send their routing table
+Response: to send the local router's routing table to neighboring routers
+by default information is shared every 30 seconds
+
+RIPv2 (improved version of v1) for instance:
+it supports VLSM, CIDR and not just classful addresses (class A,B,C)
+it includes subnet mask information in advertisements
+messages are multicast to 224.0.0.9 and not broadcast in 255.255.255.255
+
+multicast: messages are delivered only to devices that have joined that specific multicast group.
+
+RIP configuration
+(config) # router rip => to enable the rip routing protocl
+(config-router) #version 2 => it enables the RIP version 2
+(config-router) # no auto-summary => auto-summary converts the networks to classful network, so needs to be shutdown.
+(config-router) # network 10.0.0.0 => this command is classful, it will automatically conver to calssful network.
+the network command tells:
+look for interfaces with an IP address that is in the specified range.
+active RIP on the interfaces that fall in the range
+form adjacencies with connected RIP neighbors
+advertise the network prefix of the interface (not the prefix in the network command)
+note: the OSPF and EIGRP network commands operate in the same way
+also note that the network commadn doesn't tell the router which networks to advertise. it tells the router which interfaces to activate RIP on, and then the router will advertise the nwtwork prefix of those interfaces.
+
+(config-router) # passive-interface g2/0 => if there are no RIP neighbors to the interface (G2/0), the router will send RIP advertisment out of that interface so it cause unnecessary traffic, so passive interface tells to stop advertising on that interface.
+
+advertise a default route into RIP:
+(config) # ip route 0.0.0.0 0.0.0.0 (next hop interface IP) 
+(config-router) # default-information originate => it will advertise the default route to the internet.
+
+note:
+RIP also do load-balancing, if the hops are equal.
+
+show ip protocols:
+R1#show ip protocls => it will give information about protocl being used in that router.
 
 
+Enhanced Interior Gateway Routing Protocol (EIGRP)
+it was Cisco proprietary, but Cisco has now published it.
+EIGRP is considered an 'advanced/hybrid distance vector routing protocol
+much faster than RIP in reacting to changes over network
+does not have the 15 hop-count limits so it can be used in larger networks.
+send messages using multicast address 224.0.0.10
+it is the only IGP that can perfom unequal-cost load-balancing (by default it performs ECMP load-balancing over 4 paths like RIP)
 
+EIGRP configuration:
+(config) #router eigrp 1
+(config-router) # no auto-summary
+(config-router) #passive-interface g2/0
+(config-router) # network 10.0.0.0
+(config-router) # network 172.16.1.0. 0.0.0.15
+
+EIGRP uses a wildcard msak instread of a regular subnet mask
+a wildcard mask is basically an 'inverted' subnet mask.
+all 1s in the subnet mask are 0 in the equivalent wildcard mask. all 0s in the subnet mask are 1 in the equivalent wildcard mask.
+
+11111111.11111111.11111111.00000000
+255.255.255.0
+it will become:
+00000000.00000000.00000000.11111111
+0.0.0.255
+/24
+shortcut is to subtract each octet of the subnet mask from 255
+
+'0' in the wildcard mask = must match
+'1" in the wildcard mask = don't have to match
+if it matches the EIGRP will be activated on the interface
+
+10101100.00010000.00000001.00001110 => 172.16.1.14
+EIGRP network command:
+10101100.00010000.00000001.00000000 => 172.16.1.0
+00000000.00000000.00000000.00001111 => 0.0.0.15
+
+router ID order priority in EIGRP
+1.manual configuration
+2.Highest IP address on a loopback interface
+3.Highest IP address on a physical interface
+
+in show ip route the EIGRP is shown by 'D'
+
+Lab Notes:
+
+EIGRP metric is actually a formula that include the bandwidth and delay, in simple word:
+it is actually bandwidth of the slowest link + the delay of all links
+
+EIGRP terminology:
+Feasible Distance (FD) = this router's metrics value to the route's destination.
+Reported Distance (aka Advertised Distance) = the neighbor's metric value to the route's destination
+Successor = the route with the lowest metric to the destination ( the best route)
+Feasible Successor = an alternate route to the destination ( not the best route)
+a route is considered feasible successor if it's reported distance is lower than the successor route's feasible distance.
+
+EIGRP unequal-cost load-balancing
+
+example
+EIGRP maximum metric variance 1
+Variance 1 = only ECMP load-balancing will be performed.
+Variance 2 = feasible successor routes with an FD up to 2x the successor route's FD can be used to load-balance
+
+note:
+EIGRP will only perform unequal-cost load-balancing over feasible successor routes, regardless of the variance.
