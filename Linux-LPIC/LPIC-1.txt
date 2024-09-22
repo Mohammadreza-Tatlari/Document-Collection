@@ -1123,7 +1123,27 @@ umask 0066 => it will change umask from 0002 to 0066 so it takes away many permi
 
 links act like shortcuts to access a file from another place inside our storage it is called hard link.
 hardlink acts as another entry to the program.
-soft link is 
+soft link points to the pathname of the original file. its like a shortcut that directs the system to the actual file location
+Hard-link and soft links attributes:
+
+Target file: 
+Hard Link: hard link a hard link points directly to the original file's data blocks on the disk its esentially an alternate name for the same file
+Soft Link (symbolic Link): a soft link points to the pathname of the original file. its like a shortcut that directs the system to the actual file locations.
+
+File Count:
+Hard Link: each hard link to a file increases the file's link count this means that multiple hard can refer to the same file and deleting one hard link doesn't affect the other or the original file as long as at least one hard link remains.
+Soft link: a soft link doesn't affect the original file's link count. it's just a reference to the file's pathname. and deleting the soft link doesn't affect the original file.
+
+File Location:
+Hard Link: Hard links must reside on the same filesystem as the original file. They cannot be used to link files across different filesystems.
+Soft Link: Soft links can be created on any filesystem, regardless of the original file's location. They can even point to files on different machines if the network is properly configured.
+
+File Modification:
+Hard Link: Changes made to a hard link are reflected in all other hard links and the original file, as they all point to the same data blocks.
+Soft Link: Changes made to a soft link only affect the link itself. They don't affect the original file or other soft links pointing to it.
+
+Hard Links: Useful for creating backups of important files, sharing files between users without duplication, and conserving disk space.
+Soft Links: Useful for creating shortcuts to frequently accessed files or directories, organizing files logically across different directories, and providing symbolic names for files with long or complex pathnames.
 
 command:
 ln (realfile) (hardlink) => ln make a link from firstfile to hardlink file
