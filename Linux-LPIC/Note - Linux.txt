@@ -85,5 +85,13 @@ systemctl enable ssh (for enable permanently the system)
 
 
 
+for using rpm(redhat package manager) in debian based distro alien also needs to be installed because .rpm packages make incompatibility on debian base distros and can cause instability.
+
+sudo apt install alien
+Convert the RPM Package:
+sudo alien --to-deb package.rpm
+Install the Converted Package:
+sudo dpkg -i package.deb
+
 
 				
