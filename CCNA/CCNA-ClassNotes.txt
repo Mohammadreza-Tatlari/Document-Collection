@@ -294,3 +294,100 @@ Variance 2 = feasible successor routes with an FD up to 2x the successor route's
 
 note:
 EIGRP will only perform unequal-cost load-balancing over feasible successor routes, regardless of the variance.
+
+
+
+### Day 26 OSPF Part 1 ###
+
+OSPF (Open Shortest Path First) is a Link state routing protocol which it means that it creates a map of network connectivity.
+
+OSPF uses the shortest path first algorithm which is known as Dijkstra's algorithm
+
+Version of OSPF:
+OSPFv1: not in use any more
+OSPFv2 used for ipv4
+OSPFv3 (2008): used for IPv6
+
+Routers store information about the network in LSAs (Link State Advertisements), which are organized in a structure called the LSDB (Link State DataBase)
+
+Routers will flood LSAs untill all the routers in the OSPF area develope the same map of the network (LSDB)
+
+Basic information in LSA:
+RID (Router ID): 4.4.4.4 (it can be a loopback or manually configured and became RID)
+IP: 192.168.4.0/24 (ip of the route)
+Cost: 1
+
+procedure of LSA and LSDB in OSPF:
+1.OSPF is enable on Router interface
+2.Router creates an LSA to tell its neighbors about the network of that interface
+3.LSA is flooded throughout the network until all routers have received it
+4. this results in all routers sharing the same LSDB
+5.each router then uses the SPF algorithm (dijkstra) to calculate its best route to that route.
+note:
+LSA has 30min by default the LSA will be flooded  again after the timer expires.
+
+
+OSPF Area:
+OSPF uses areas to divide up the network
+small networks can be single-area without any negative effects on perfomance.
+
+In larger networks, a single-area design can have negative effects:
+-the SPF algorithm takes more time to calculate routes
+- the the SPF algorithm requires exponentially more processing powerr on the routes
+- the larger LSDB takes up more memory
+- any small change in the network causes every router to flood LSAs and run the SPF algorithms again.
+
+by dividing a large OSPF network into several smaller areas, you can avoid the above negative effects
+
+OSPF Areas:
+• Area 0 (Backbone) 
+• an Area is a set of router and lins that share the same LSDB.
+• the backbone area (area 0)  is an area that all the other areas must connect to.
+• Routers with all interfaces in the same area are called internal routers.
+• Routers with interfaces in multiple areas are called Area Router Borders (ARBs)
+note: ABRs maintain separate lSDB for each areas connected to. it is recommended to connected ABRs to maximum of 2 areas, cause more that that can cause overburden the router.
+• Routers connected to the backbone area (area 0) are called backbone routers.
+• An intra-area route is a route to destination inside the same OSPF area.
+• an interarea route is a route to a destination in a different OSPF area.
+
+OSPF important rules:
+• OSPF areas should be contiguous. it means that areas should not be divided or splitted up into different parts.
+• All OSPF ares must have at least one ABR connected to the backbone area.
+• OSPF interfaces in the ame subnet must be in the same area.
+
+
+Basic OSPF Configuration
+1. R(config) # router ospf (process id) => a router can run multiple process at once and this OSPF is one of them. and this command will enable OSPF process on the router
+note: the OSPF process ID is locally significant nad routers with different process IDs can become ISPF neighbors. (unlike EIGRP which uses AS (autonomous system id) to work)
+
+2. R(config-router) #network 10.0.12.0 0.0.0.3 area 0 => OSPF uses wildcard mask just like EIGRP and also the area should be defined.
+
+• R(config-router) #passive-interface g2/0 => the passive-interface command tells the router to stop sending OSPF 'hellow' messages out of the interface.
+however the router will continue to send LSAs informing it's neighbors about the subnet configured on the interface.
+use this command on interfaces which don'y have any OSPF to stop wasting resources.
+
+advertise a default route into OSPF
+• R(config) #ip route 0.0.0.0 0.0.0.0 (ip interface of the next hop to default route example: 203.0.113.2) 
+
+• R(config-router) #default-information originate => the command to advertise the default route into OSPF. it causes the router to create a new LSA to flood it.
+by show ip route it can be checked.
+
+• show ip protocol => to check out the protocol information.
+
+Router ID order of Priority:
+1. Manual configuration
+2. Highest IP address in a loopback interface
+3. Highest IP address on a physical interface
+
+to change router id:
+• R(config-router) #router-id (the ip)
+and then use Reload or `clear ip ospf process` (not recommended in real network) to clear the previous id and set the new id.
+
+in show ip protocol:
+the field "autonomous system boundary router (ASBR) is an OSPF router that connects the OSPF network to an external network. for instance the Router that is connected to the internet and has `default-information originate` is a ASBR.
+
+note:
+OSP doesn't support unequal-cost load-balancing but it does support ECMP (equal cost multiple path) load-balancing.
+in show ip protocols for OPSF, "maximum path: 4" it means the ECMP load balancing
+• R(config-router) #maximum-paths (number of paths) => it will change the maximum paths for OSPF router.
+
