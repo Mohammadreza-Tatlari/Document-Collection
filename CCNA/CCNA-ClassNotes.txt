@@ -391,3 +391,1028 @@ OSP doesn't support unequal-cost load-balancing but it does support ECMP (equal 
 in show ip protocols for OPSF, "maximum path: 4" it means the ECMP load balancing
 • R(config-router) #maximum-paths (number of paths) => it will change the maximum paths for OSPF router.
 
+
+
+### Day 27 OSPF part 2 ###
+
+OSPF's metric is called cost. it is based on the bandwidth (speed) of the interface and calculated by dividing a refrence bandwidth value by the interfcae's bandwidth.
+
+the default reference bandwidth is 100 mbps:
+	Reference 100 mbps/Interface 10mbps = 10 cost
+	Reference of 100 mbps/ Interface 100 mbps = 1 cost
+	Reference of 1000 mbps/Interface 1000 mbps = 1 cost
+All values less than 1 will be converted to 1. therefore FastEthernet, Gigabit Ethernet, 10Gig Ethernet. are equal and all ave a cost of 1 by default.
+
+command to check for cost of an interface on the router:
+• R#show ip ospf interface (interface)
+
+due to this calculation over interfaces on OSPF protocol the cost of each interface should be change.
+to change the reference bandwidth:
+• R1(config-router)# auto-cost reference-bandwidth (megabits-per-second)
+note: the command is entered megabits per second (default is 100) thus for better calculate that number should be increase to more in order to make distinction between interfaces cost.
+for example:
+	100000 / 100 mbps interface = 1000
+	100000 / 1000 mbps (1Gbps) interface = 100
+you should configure a reference bandwidth greater than the fastest links in your network (for future upgrades in bandwidth)
+note that same reference should be configured on all OSPF networks.
+
+loopback interfaces have cost of 1. for example:
+if a router with 1Gbps and reference of 10000 is connected to loopback 4.4.4.4 of another router interface the cost will be:
+1Gps interface (100) + loopback interface (1) = 101
+
+
+cost can also be manually changed by:
+• R(config) #interface g0/0
+• R(config-if) #ip ospf cost (cost 1-65535)
+
+then the cost can be checked by:
+• show ip ospf interface (interface)
+
+one more option to change the OSPF cost of an interface is to change bandwidth of that interface. by command `bandwidth`.
+bandwidth is used because the calculation is reference bandwidth / interface bandwidth = cost
+keep in mind that changing the bandwidth does not affect over speed of that interfaces.
+the bandwidth is just a value that is used to calculate OSPF cost and etc.
+• R1(config-if)# bandwidth (<1-100000000> kilobits) => kilobits is used for changing the bandwidth
+
+to change the speed at which the interface operates, use `speed` command.
+
+it is not recommended to change the bandwidth value to alter the interface's OSPF cost. because the bandwidth value is used in other calculations.
+
+however it is recommended that you change the reference bandwidth, and then use the `ip ospf cost` command to change individual interfaces.
+
+thus there are three ways to modify interface cost:
+1. by changing the reference bandwidth # R(config-if) # auto-cost reference-bandwidth (mbps)
+2. by manual configuration: R(config-if) #ip ospf cost (cost 1-65535)
+3. by changing the interface bandwidth: R(config-if) #bandwidth (kbps)
+
+for checking the cost of interfaces
+• R #show ip ospf interface brief => shows the cost of each interface on the router
+
+
+OSPF neighbors procedure:
+when OSPF is activated on an interface, the router starts sending OSPF hello messages out of the interface at regular intervals (determined by the hello timer). these are used to introduce the router  to potential OSPF neighbors. the default hello timer is 10 seconds o an Ethernet connection.
+
+Hello messages are multicast to 224.0.0.5 (multicat adress for all OSPF routrs). and OSPF messages are encapsulaed in an IP header, with a value of 89 (0x59 in hexadecimal) in the Protocol field.
+
+
+Process of OSPF neighboring
+
+'Down state'
+1.1 OSPF is activated on the router interface
+1.2 R1 sends an OSPF hello message to 224.0.0.5 
+1.3 it doesn't know about any OSPF neighbors yet, so the neighbor state is "Down" and in hello message the neighbor RID is 0.0.0.0
+
+'Init state'
+2.1 when R2 receives the hello packet, it will add an entry for R1 to its OSPF neighbor table.
+2.2 the R2's neighbor table, the relationship with R1 is now in the "Init" state.
+Init state = Hello packet is received, but destination router ID is not in the hello packet.
+
+'2-way state'
+3.3 R2 will send a hello paket containing the RID of both router. then R1 will insert R2 into its OSPF neighbor table in the 2-way state (after the R2 hello message with RID of R2 is received).
+3.4 R1 will send another Hello message but this time with both RIDs of both Routers. now both routers are in the 2-way state.
+2-way state = it means the router has received a hello packet with its own RID in it.
+3.5 if both routers are in 2-way state it means the condition is met to share LSAs.
+
+'Exstart state'
+the two routers are now prepare to exchange information about their LSDB.
+4.1 before that they have to choose which on will start the exchange. they do this in Exstart state.
+4.2 The router with the higher RID will become the "Master" and initiate the exchange. the router with the lower RID will become the Slave.
+4.3 to decide the Master and Slave, the y exhcnage DBD (Database Description) packets.
+
+'Exchange State'
+5.1in the exchange State the router exchange DBDs which contain a list of the LSAs in their LSDB. the DBDs do not include or load information on each other LSDB, just basic information and exchange of the overall data.
+5.2 the routers compare the information in the DBD they received to the information in their own LSDB to determine which LSAs they must receive form their neighbors.
+
+'Loading State'
+6.1 in the loading state, the routers will send Link State Request (LSR) messages to request that their neighbor send them any LSAs thy don't have. its become possible due to DBDs that are exchanged in exchange state.
+6.2 LSAs are sent Link State Update (LSU) messages.
+6.3 the router then will send LSAck message sto acknowledge that they received the LSAs.
+
+'Full State'
+in the full state, the routers have a full OSPF adjacency and identical LSDBs.
+they continue to send and listen for hello packets (every 10 seconds by default) to maintain the neighbor adjacency. evry time a hello packet is received the 'Dead' Timer (40 second by default) is reset.
+if the dead timer counts down to 0 and no hello message is received the neighbor will be removed.
+then router will continue to share LSAs as the network changes to make sure each router has a complete and accurate map of the network.
+
+
+commands:
+R#show ip ospf neighbor => shows information about OSPF neighbors to the router.
+
+
+OSPF configuration:
+R(config-if) #ip ospf (proces-id) area (area) => it will activate OSPF directly on the interface 
+
+R(config-if) #router ospf 1
+R(config-router) #passive-interface default => this command configure all interfaces as OSPF passive interface.
+
+R(config-router) #no passive-interface (interface-id) => it disables the passive configuration.
+
+
+
+### Day 28 OSPF part 3 ###
+
+Loop back interfaces description:
+A loopback interface is a virtual interface in the router. it is always up/up unless it is manually shut down.
+it is not dependent on physical interface and it provides a consistent IP address that ccan be used to reach/identify the router
+
+
+OSPF network types:
+Thee are three main OSPF network types (type of connection)
+1.Broadcast: enaled by default on ethernet and FDDI (Fiber Distributed Data Interfaces) interfaces.
+2.Point-to-Point: enable by default on PPP (point-to-point protocol) and HDLC (High-Level Data Link Control) interfaces.
+3.Non-broadcast: enbaled by efault on Frame Relay and X.25 interfaces
+
+Broadcast Network Type:
+Enabled on Ethernet and FDDI interfaces by default.
+Routers dynamically discover neighbors by sending/listening for OSPF hello messages using multicast address 224.0.0.5
+A DR (designated router) and BDR (backup designated router) must be elected on each subnet (only DR if there are no OSPF neighbors)
+Routers which aren't the DR or BDR become a DROther.
+
+the DR/BDR election order priority:
+1.Highest OSPF interface priority
+2.Highest OSPF Router ID
+First place becomes the DR for the subnet 'second place' becomes the BDR
+
+the default OSPF interface proirity is 1
+
+• R(config-if) #ip ospf priority <0-255> => this command is used to change the interface priority.
+
+note: if you set the OSPF interface priority to 0, the router cannot be the DR/BDR for the subnet.
+
+important:
+the DR/BDR election is 'non-preemptive'. once the DR/BDR are selected they willl keep their role until OSPF is reset. that is why interface with priority of 255 becomes DROther
+
+in the broadcast network type,router still only form a full OSPF adjacency with the DR or BDR of the segment.
+therefore, routers only exchange LSAs with the DR and BDR. DROthers will not exchange LSAs with each other.
+all routers will still have the same LSDB, but this reduces the amount of LSAs flooding the network.
+
+note:
+Messages to the DR/BDR are multicast using address 224.0.0.6
+
+DR and BDR state is between 2-way state - (DR/BDR election) - Exstart State
+
+the DR & BDR will form a full adjacency with ALL routers in the subnet but the DROthers will only form a full adjacency with DR/BDR ((backup) Designated Route)
+
+command: to check out the full adjacency and neighbor count.
+• R#show ip ospf interface brief => it has the Nbrs F/C column which indicate the full adjacency and neighbor count of the routers in OSPF network.
+
+• R# show ip ospf interface g0/0 => with show ip ospf interface the neighbor count and adjecancies can be shown.
+
+
+Point-to-Point Network Type
+- Enabled on serial interfaces using PPP or HDLC encapsulation by default.
+- Routers dynamically discover neighbors by sending/listening OSPF Hello messages on multicast address 224.0.0.5
+- A DR and BDR are not elected. no point to elected cuase its point to point connection.
+
+Serial Interfaces (obsolete)
+one side of a serial connection functions as DCE (Data Communiction Equipment). and the other as  DTE (Data Terminal Equipment)
+the DCE side needs to spcify the "clock rate (speed)" of the connection.
+the serial interfaces use clock rate command instead of speed in ethernet interfaces.
+
+encapsulation method can change by:
+• R(config-if) #encapsulation (type)
+note: the default encapsulation is HDLC and you can configure it to PPP
+
+configuration can be checked out by:
+• R1 #show running-config interface s2/0
+
+• R# show controllers (interface-id) => identify which side is DCE/DTE
+
+•R(config-if)# clock rate (bits-per-second) => clock rate must be set for serial interface
+
+note:
+in point-to-point connection, the ip ospf neighbor shows "-" in state of interface. because it is not categorized.
+
+you can configure the OSPF network type on an interface with:
+R(config-if) # ip ospf network type
+
+if two router are directly connected to each other there is no need for DR/BDR. the point-to-point connection can be established.
+
+note: not all network types work on all link types (for example, a serial link cannot use the broadcast network type)
+
+
+OSPF Neighbor Requirements
+1. Area number must match. for instance all Neighbors should be in area 0
+
+2.Interfaces must be in the same subnet. for instance, interface should be in 192.0.1.0 0.0.0.3 area 0 
+
+3. OSPF process must not be shutdown
+
+4. OSPF Router IDs must be unique
+for example, R1 has 192.1.1.2 as it RID and R2 should have 192.1.1.2 as RID
+
+5. Hello and Dead timers must match. it means that hello timer should be in smaller interval that Dead timer.
+
+6. Authentication setting must match. in OSPF it is possible to set authentication key for OPSF connection and OSPF is only connected to the same authenticated OSPF interface.
+command:
+• R1(config-if) #ip ospf authentication-key (password) => it will set a password-key for that OSPF interface.
+• R1(config-if) #ip ospf authentication => it will enable the authentication for that interface.
+
+7. IP MTU (Maximum Transission Unit) settings must match.
+note: can become OSPF neighbors, but OSPF doesn't operate properly. it will throw too many retransmissions error.
+command:
+• R(config-if) #ip mtu <68-1500 bytes>  => to set MTU of that interface
+ 
+8. OSPF network type must match.
+
+
+OSPF LSA types:
+there are 11 types of LSA, but there are only 3 that are required the most in CCNA.
+1. Type 1 (Router LSA)
+	-every OSPF router generates this type of LSA
+	-it identifies the router using router ID
+	-it also lists networks attacked to the router's OSPF-activated interfaces.
+2. type 2 (Network LSA)
+	-Generated by the DR of each 'multi-access' network (the broadcast network type)
+	- list the routers which are attached to the multi-access network
+3. type 5 (AS External LSA)
+	-Generated by ASBRs to describe routes to destinations outside of the AS (OSPF domain)
+
+the LSAs can be checked by `show ip ospf database`
+
+
+
+### Day 29 First Hop Redundancy Protocol FHRP###
+
+FHRP (First Hop redundancy protocol ) is a cumputer networking protocol which is designed to protect the default gateway used on a subnetwork by allowing two or more routers to provide backup for that address; in the event of failure of an active router, the backup router will take over the address.
+that is why first hop is used due to the gateway.
+
+in FHRPs
+- A virtual IP is configured on the two routers, and a virtual MAC is generated for the virtual IP (each FHRP uses a different format for the virtual MAC)
+
+- An active router and a standby router are elected (different FHRPs uses different terms)
+
+- end hosts in the network are configured to use the virtual IP as their default gateway.
+
+- the active router replies to ARP request using the virtual MAC address, so traffic destined for other newtorks will be sent to it.
+
+- if the active router fails, the standby becomes the next active router.
+the new actvie router will send gratuitous ARP messages so that switches will update their MAC address tables. It now functions as the default gateway.
+note:
+Gratuitous ARP: ARP reply sent without being requested.
+the frame is broadcast FFFF.FFFF.FFFF (normal ARP replies are unicast)
+
+-if the old active router comes back online, by default it won't take back its role as the active router. it will become standby router
+note:
+FHRPs are not-preemtive. the current active router will not automatically give up its role, even if the former active router returns. unless it is manually changed.
+
+- you can configure 'preemption', so tha the old active router does take back its old role.
+
+
+HSRP (Host Standby Router Protocol)
+- Cisco proprietary
+
+- an active and standby router are elected
+
+- there are two versions: version 1 and version 2
+version 2 adds IPv6 support and increases the number of groups that can be configured
+
+- multicast IPv4 address: v1 = 224.0.0.2
+					    v2 = 224.0.0.102
+
+- virtual MAC address: v1 = 0000.0c07.acXX (XX = HSRP group number)
+				       v2 = 0000.0c9fXXX (XXX = HSRP group number)
+
+- in a situation with multiple subnets/VLANs, you can configure a different active router in each subnet/VLAN to load balance.
+for example R1 can be active and R2 can be standby in VLAN1 and R1 be standby and R2 be active in VLAN2
+
+
+VRRP (Virtual Router Redundancy Protocol)
+- Open standard
+
+- A master and Backup router are elected
+
+- Multicast IPv4 address: 224.0.0.18
+
+-Virtual MAC address: 0000.5e00.01XX (XX = VRRP group number) ex: (0xc8 = 200) so .01c8 will be equal to group number 200
+
+- In a situation with multiple subnets/VLANs, you can configure a different master router in each subnet/VLAN to load balance.
+
+
+GLBP (Gateway Load Balancing Protocol)
+- Cisco Proprietary
+
+- Load balances among multiple routers within a single subnet
+
+- An AVG (Active Virtual Gateway) is elected.
+
+- Up to four AVFs (Active Virtual Forwarders) are assigned by the AVG (the AVG itself can be an AVF too)
+
+- Multicast IPv4 address: 224.0.0.102
+
+- Virtual MAC address: 0007.b400.XXYY (XX= GLBP group number, YY = AVF number)
+ 
+
+Configuration commands fro HSRP over two routers
+
+on R1 the interface is selected. note that the interface connected to the internet should be selected which is acting as the default gateway.
+
+• R1(config) #interface g0/0
+
+• R1(config-if) #standby <0-255 group number> => in version 1 the group number is vary from 0 to 255 but in version 2 it is 0 to 4095.
+
+• R1(config-if) #standby version 2 => it will change the version to v2 so the group range will increase.
+note: v1 and v2 are not compatible so versions should match.
+
+• R1(config-if) #standby 1 ip 172.17.0.254 => to set IP address you want to use as the default gateway (the Virtual IP)
+
+• R1(config-if) #standby 1 priority <0-255> => determine which router to be the active router
+note:
+the active router determined in this order:
+	1. highest priority (default 100)
+	2.highest IP address
+
+• R1(config-if) # standby 1 preempt => preempt causes the router to take the role of active router even if another router already has the role.
+note: its only neccessary on the router you want to become active preempt
+
+• R1 #show standby => gives information about the HSRP configuration on Router
+
+
+
+### Day 30 TCP & UDP ###
+
+Functions of Layer 4 (Transport Layer)
+-Provides transparent transfer of data between end-hosts
+
+-Provides (or doesn't provide (base on tcp or udp)) various services to applications:
+	-reliable data transer
+	-error recovery
+	-data sequencing
+	-flow control
+
+-provides layer 4 addresing (port numbers: not the phyiscal interfaces):
+	-Identify the application layer protocol for example port 80 which indicate HTTP. (TCP): Src:50000 Dst: 80. Src is randomly selected by a PC. and 80 identifies the application layer protocol 
+	-Provides session multiplexing
+
+
+Session:
+a session is an exchange of data between two or more communicating devices.
+
+
+port ranges are designated by IANA (Internet Assigned Number Authority):
+Well-known port numbers: 0 - 1023 example. HTTP , FTP,SSH ... selection is restricted
+Registered port numbers: 1024 - 49151.
+Ephemeral/private/dynamic port numbers: 49152 - 655535. host uses this range when selecting a random source port.
+
+
+TCP (Transmission Control Protocol)
+-TCP is connection-oriented.
+	- Before actually sending data to the destination host the two communicate to establish a connection. once the connection is stablished, the data exchange begins.
+
+-TCP provides reliable communication.
+	-The destination host must acknowledge that it received each TCP segment.
+	-If a segment isn't achnowledged, it is sent again.
+
+-TCP provides sequencing.
+	-Sequence numbers in the TCP header allow destintion hosts to put segments in the correct order even if the y arrive out of order.
+
+-TCP provides flow control.
+	-The destination host can tell the source host to increase/decrease the rate that data is sent.
+
+
+Establishing Connections: Three-Way handshake:
+1.SYN flag in segment is sent -->
+2.SYN flag, ACK flag is received <--
+3.ACK flag  is sent -->
+then the conncetion will be stablished
+
+Terminating Connections: Four-Way handshake:
+1. FIN flag is segment is sent -->
+2. ACK flag is recieved <--
+2. FIN flag is received <--
+4. ACK flag is sent -->
+the connection will be terminated
+
+TCP sequencing /Acknowledgment
+1. Seq: 10 is sent -->
+2. Seq:50 & Ack:11 is received <-- the ack is 1 more number more thatn the seq to be consequented.
+3. Seq:11 & Ack:51 is sent -->
+4. Seq:52 & Ack: 12 is received <--
+...
+...
+host set a random initial sequence number.
+Forward acknowledgement is used to indicate the sequence number of the next segment the host expeects to receive.
+
+TCP Retransmission : for a segment not being acknowledged.
+for example:
+1.Seq 20 is sent -->
+2.ACK 21 is received <--
+3.Seq 21 is sent -->
+but this time no Ack is received. so the host 1 will wait for certain amount of time and sent the Seq 21 again until Ack 22 is received.
+
+
+TCP Flow Control: Window Size
+-Acknowledging every single segment, no matter what size, is inefficient.
+
+-The TCP header's "Window Size" field allows more data to be sent before an acknowledgment is required.
+
+-A "sliding window" can be used to dynamically adjust how large the window size is.
+
+note that in real situation the sequence numbers get much larger and do not increase by 1 with each message.
+
+
+UDP (User Datagram Protocol)
+-UDP is not connection-oriented
+	-the sending host does not establish a connection with the destination host before sending data. the data is simply sent.
+
+-UDP does not provide reliable communication
+	-when UDP is used, acknowledgments are not sent for received segments. If a segment is lost, UDP hsa no mechanism to re-transmit it. Segments are sent 'best-effort', it means that there is no guarantee
+
+-UDP does not provide sequencing
+	-There is no sequence number filed in the UDP header. If segments arrive out of order, UDP has no mechanism to put them back in order.
+
+-UDP does not provide flow control
+	UDP has no mechanism like TCP's window size to control the flow of data.
+
+UDP datagram header only have: Source port, Destination port, Length, Checksum
+
+
+note:
+-TCP provides more feature than UDP, but at the cost of additional overhead.
+-There are some applications that use UDP, but provide reliability etc within the application itself. for instance TFTP (Trivial File Transfer Protocol)
+- some applications use both TCP & UDP, depending on the situation. for example DNS
+
+retrieving email
+
+Important Port Numbers:
+TCP
+FTP data (20)
+FTP control (21)
+SSH (22)
+Telnet (23)
+SMTP (25) sending email
+HTTP (80)
+POP3 (110) retrieving email
+HTTPS (443)
+
+UDP
+DHCP server (67)
+DHCP client (68)
+TFTP (69)
+SNMP agent (161)
+SNMP manager (162)
+Syslog (514)
+
+TCP & UDP
+DNS (53)
+
+
+
+### Day 31 IPv6 Part 1 ###
+The main reason is that there simply aren't enough IPv4 address available.
+however, VLSM, Private IPv4 addresses, and NAT have been used to conserve the use of IPv4 address space but there were short-term solutions.
+
+IANA which controls Ipv5 address assignments, distributes IPv5 address space to various RIRs( Regional Internet Registries) which then assign them to companies that need them:
+AFRINIC: for africa continent
+APNIC: for east asia and australi
+ARIN: north America
+LACNIC: south America
+RIPE NNC: Europe, middle east , russia
+
+on 25 september of 2015 ARIN declared exhaustion of the ARI IPv4 address pool.
+
+IPv6 descriptions
+-Internet Stream Protocl was developed in the later 1970s but never actually introduced for public use.
+-It was never called IPv5, but it used a value of 5 in the version field of the IP header.
+-So when the succesor to IPv4 was being developed, it was named IPv6
+
+
+Hexadecimal:
+
+- binary/ base 2 / 0b 
+it is binary because it only has 2 digits. 0 & 1
+use case:
+for instance it is not possible to find out if '10' is binary or not so it is shown as 0b10 which it means binary 10
+
+- Decimal / Base 10 / 0d
+0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+
+- Hexadecimal / Base 16 / 0x
+0,1,2,3,4,5,6,7,8,9,A,B,C,D,E,F
+
+
+Binary to Hexadecimal 
+
+0b11011011:     first it should be splited in two decimanl number
+
+0d1101	0d1011: now that is in decimal and it will be equal to 0d13 0d11
+0d13	0d11:   convert each 4-bit group to decimal
+
+0xD	0xB:	convert each decimal number to hexadecimal.
+
+0b110111011 => 0xDB that's the answer
+
+
+IPv6:
+an IPv6 address is 128 bits.
+2001:0DB8:5917:20َ1:0020:0080:34DB
+
+
+Shortening (abbreviating) IPv6 addresses
+
+- Leading 0s can be removed
+2001:0DB8:000A:001B:20A1:0020:0080:34BD
+will be:
+2001:DB8:A:1B:20A1:20:80:34BD
+
+
+- Consecutive quartets of all 0s can be replaced with a double colon (::)
+2001:0DB8:0000:0000:0000:0080:34BD
+will be:
+2001:0DB8::80:34BD
+note:
+we can commit this because IPv6 address are known for their 8 quartets in length so missing quartets will be replaced by 0.
+
+important:
+consecutive quartets of 0s can only bea vvriated once in an IPv6 address
+for instance:
+2001:0000:0000:0000:20A1:0000:0000:34BD
+will become:
+2001::20A1:0:0:34BD.
+because if we use abbreviation for both sides its difficult to know which side has amount of quertets to be 8 quartets. instead we remove leading 0.
+
+
+Finding the IPv6 prefix (global unicast addresses)
+-Typically, an enterpise requesting IPv6 addresses from their ISP will receive a /48 block.
+
+-Typically IPv6 subnets use a /64 prefix length
+that means an entrprise has 16 bits to use to make subnets cause it has received /48 block
+
+- The remaining 64 bits can be used for hosts.
+
+
+2001:0DB8:8B00:0001:0000:0000:0000:0001/64
+
+2001:0DB8:8B00 => 48-bit 'global routing prefix' assined by the ISP
+
+:0001: (after global routing prefix) => 16-bit 'subnet identifier' used by the enterprise to make various subnets.
+
+0000:0000:0000:0001 => 64-bit 'interface identifier' the host portion of the address
+
+
+Finding the IPv6 prefix
+300D:00F2:0B34:2100:0000:0000:1200:0001/56
+number of bits:
+(16):(32):(48):2(52)1(56)00(64):(80):(102):(116):(128)
+
+example:
+2001:0DB8:0BAD:CAFE:1300:0689:9000:0CDF/71 => 2001:DB8:BAD:CAFE:1200::/71
+2001:0DB8:0000:FEED:0DAD:018FL6001:0DA3/62 => 2001:DB8:0:FEEC::/62
+
+note:
+2001:db8:0:0::/64 => this subnet is used for documentation and example not in real network
+
+configuring IPv6 address command:
+1. • R(config) #ipv6 unicast-routing => to enable ipv6 routing on the router.
+
+configure the interface
+2. • R(config) #interface g0/1 => selecting the desired interface
+   • R(config-if) #ipv6 address 2001:db8:0:0::1/64 => giving an IP version v6 address to 2001:db8:0:0::/64
+   • R(config-if) #no shutdown
+
+• R# show ipv6 interface brief => to show interfaces with IPv6 IP addresses
+
+in 'show ipv6 interface brief' there is actually 2 IPs for each interface.
+GigabitEthernet0/1 [up/up]
+	1.* FE80:EF8:22FF:FE36:8501 
+	2001:DB8:0:1::1
+
+* this Ip is called Link-Local Addresses. they are automatically assigned to interface when they are enabled.
+Ipv4 also has link-local but its not automatically assigned.
+
+
+
+
+### Day 32 IPv6 Part 2 ###
+
+Configuring IPv6 addresses (EUI-64)
+
+-EUI stands for extended Unique Identifier or Modified EUI-64
+
+-(Modified) EUI-64 is a method of converting a MAC adress (48-bits) into a 64-bit interface identifier.
+
+-This interface identifier can then become the 'host portition' of a /64 IPv6 address.
+
+-How to convert the MAC address:
+1. Divide the MAC address in half
+123456789AB => 123456 | 789AB
+2. Insert FFFE in the middle
+123456FFFE789AB
+3.invert the 7th bit:
+123456789AB => 2 is 0010 so the 1 will be 0.
+103456789AB
+
+
+Configuring IPv6 addresses (EUI-64)
+1. • R(config)# interface g0/0 => selecting the desired interface
+2. • R(config)# ipv6 address 2001:db8::/64 => tells the outer to use this prefix plus te EUI-64 interface identifier to generate an IPv6 address.
+
+• R1# show interface g0/0 => to check interface MAC address.
+
+• R1(config-if)#do show ipv6 interface brief => it demonstrate all interface. also the 7th of the binary will be converted.
+
+why inver the 7th bit?
+-MAC addres an nbe divided into two types:
+1.UAA (University Administered address)
+	-Uniquely assigned to the dvice by the manufacturer
+2.LAA (Locally Administered Address)
+	-Manually assigned by an admin (with the mac-address command on the interface) or protocol. doesn't have to be globally unique.
+
+- you can identify a UAA or LAA by the 7th bit of the MAC address, called the U/L bit (Universal/Local bit):
+	-U/L bit set to 0 = UAA
+	-U/L bit set to 1 = LAA
+
+in the context of IPv6 addresses/EUI-64, the meaning of the U/L bit is reversed:
+	-U/L bit set to - = the MAC address the EUI-64 interface ID was made from was an LAA
+	-U/L bit set to  = the MAC address the EUI-64 interface ID was made from was a UAA
+
+
+Global unicast addresses
+-Global unicast IPv6 addresses are public addresses which can be used over the Internet.
+
+- must register to use them. Because they are public addresses, it is expected that they are globally unique.
+
+- Originally define as the 2000::/3 block (2000:: to 3FFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF).
+now defined as all addresses which aren't reserved for other purposes.
+
+
+Unique local addresses
+- Unique local IPv6 addresses are private addreses which caanot be used over the internet.
+
+- You do not need to register use them. they can be used freely within internal networks and don't need to e globally unique (*). can't be routed over the internet. the ISP will drop it
+
+- Uses the address block FC00::/7 (FC00:: to FDFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF)
+however, a later update requires the 8th bit to be set to 1, so the first two digits must be FD.
+
+- *the global ID should be unique so that addresses don't overlap when companies merge
+
+
+Link Local Addresses
+
+-Link-local IPv6 addresses are automatically generated on IPv6-enabled interfaces.
+use command R1(config-if) # ipv6 enable on an interface to enable IPv6 on that interface.
+
+-Link-local means that these addreses are used for communication within a single link (subnet)
+Router will not route packets with a link-local destination IPv6 address.
+
+-Common uses of link-local addresses: routing protocl peerings (OSFPv3 uses link-local addreses for neighbor adjacencies)
+
+-the interface ID is generated using EUI-64 rules.
+
+day 32 IPv6 continues:
+
+Multicast
+multicast addresses are one-to-many
+	one source to multiple destination (that have joined the sepcific multicast group)
+
+IPv6 uses range FF00::/8 for multicast (FF00:: to FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF)
+
+IPv6 doesn't use broadcast (there is no 'broadcast address')
+
+multicast range for different usecases:
+
+Purpose									IPv6			IPv4
+All nodes/hosts (functions like broadcast)	FF02::1		224.0.0.1
+All routers								FF02::2		224.0.0.1
+All OSPF routers							FF02::5		224.0.0.5
+All OSPF DRs/BDRs						FF02::6		224.0.0.6
+All RIP routers							FF02::9		224.0.0.9
+all EIGRP routers							FF02::A		224.0.0.10
+
+
+Multicast address scopes:
+IPv6 defines multiple multicast 'scopes' which indicate how far the packet should be forwarded. the addresses in the table above use the 'link-local' scope (FF02) which stays in the local subnet.
+
+IPv6 multicast scopes:
+- Interface-local (FF01): The packet doesn't leave the local device. Can be used to send traffic to a service within the local device. also known as local node
+
+- Link-local (FF02): The packet remains in the local subnet. Routers will not route the packet between subnets.
+
+- Site-local (FF05): The packet can be forwarded by routers. Should be limited to a single physical location (not forwarded over a WAN)
+
+- Organization-local (FF08): wider in scope that site-local (an entire company/organization)
+
+- Global(FF0E): No boundaries. Possible to be routed over the internet.
+
+
+Anycast addresses
+anycast is a new feature of IPv6
+- anycast is 'one-to-one-of-many' it means there are multiple possilbe destination but it is only send to one of them. mixture of multicast and unicast.
+
+- Multiple router are configured with the same IPv6 address.
+	they use a routing protocl to advertise the address.
+	when hosts send packets to that destination address, routers will forward it to the nearest (referred to smallest routing metric cost) router configured with that IP address (based on routing metric)
+
+- There is no specific address range for anycast addresses. use a regular unicast address (global unicast, unique local) and specify it as an anycast address:
+• R(config-if)# ipv6 address 2001:db8:1:1::99/128 anycast
+
+anycast address configuration:
+1.R1(config)# interface g0/0 => selecting the interface that is wanted to be configured.
+2. R1(cofig-if)# ipv6 address 2001:db8:1:1::99/128 anycast => with anycast in the end we configure this IP to be anycast
+3. R1(config) #do show ipv6 interface g0/0 => check the information about anycast of the interface. [ANY] is an indication
+
+
+Other IPv6 addresses
+• :: = the unspecified IPv6 address
+	Can be used when a device doesn't yet know its IPv6 address.
+	IPv6 default routes are configured ::/0
+	IPv4 equivalent: 0.0.0.0
+
+• ::1 = the loopback address
+	used to test the protocol stack on the local device
+	processed within the local device, but not sent to other devices.
+	IPv4 equivalent: 127.0.0.1/8 address range.
+
+
+
+
+### Day 33 IPv6 Part 3 ###
+
+IPv6 Address Representation:
+RFC 5952 is a Recommendation for IPv6 address Text representation
+RFC (Request for Comments) is a publication from the ISOC (internet Society) and asociated organizations like the IETF (Internet Engineering Task Force), and are the official documents of internet specifications, protocols, procedures, etc.
+
+
+RFC 5952 suggests standardizing IPv6 address Representation:
+- Leading 0s must be removed:
+2001:0db8:0000:0001:0f2a:4fff:fea3:00b1
+will be:
+2001:db8:0:1:fa:4fff:fea3:b1
+
+- :: MUST be used to shroten the longest string of all-0 quartets:
+(if there is only one all-0 quartet, don't use '::')
+2001:0000:0000:0000:0f2a:0000:0000:00b1
+will be:
+2001::f2a:0:0:b1
+
+- If there are two equal-length choices for the ::, use :: to shorten the one on the left.
+2001:0db8:0000:0000:0f2a:0000:0000:00b1
+will be:
+2001:db8::f2a:0:0:b1
+
+- Hexadecimal characters (a,b,c,d,e,f) must be written using lower-case, not upper-case (but its not that big deal but it is recommended due to Cisco devices)
+
+
+IPv6 Headers:
+IPv6 is a Fixed Header Format and due to this attiribute it is much more shorter that IPv4 header.
+
+- IPv6 Header - Version: 
+Length 4 bits
+indicates the version of IP that is used
+Fixed value of 6 (0b0110) to indicate IPv6
+
+- IPv6 Header - Traffic Class
+Length: 8 bits
+Used for QoS (Quality of Service), to indicate high-priority traffic.
+For example IP phone traffic, live video calls, etc, will have a traffic class value which gives them priority over other traffic.
+
+- IPv6 Header - Flow Label
+Length: 20 bits
+Used to identify specfici traffic 'flows' (communications between a specific source and destination)
+
+- IPv6 Header - Payload Length
+Length: 16 bits
+Indicate the length of the payload (the encapsulated layer 4 segment) in bytes.
+The length of IPv6 header itself isn't include, because it's always 40 bytes.
+
+- IPv6 Header - Next Header
+Length: 8 bits
+Indicate the type of the 'next header' (header of the necapsulated segment) for example TCP or UDP
+Same function as the IPv4 header's 'Protocol' field.
+
+- IPv6 header - Hop limit
+Length: 8 bits
+The value in this field is decremented by 1 by each router that forwawrds it, if it reaches 0, the packet is discarded.
+Same function as  the IPv4 header's 'TTL' field.
+
+- IPv6 header - Source / Destination
+Length 127 bits each
+The se filed contain the IPv6 addresses of the packet's source and detination 
+
+
+Solicited-Node Multicast address
+An IPv6 solicited-node multicast address is calculated from a unicast address.
+[ff02:0000:0000:0000:0000:0001:ff] + Last 6 hex digist of unicast address
+
+for example:
+2001:0db8:0000:0001:0f2a:4fff:fea3:00b1
+will be:
+ff02::1:ff:a3:b1
+
+Neighbor Discovery Protocol
+- Neighbor Discovery Protocol (NDP) is a protocl used with IPv6
+- It has various functions, and one of those functions is to replace ARP (Address Resolution Protocol), which is no longer used in Pv6.
+- The ARP-like function uses ICMPv6 and solicited-node multicast addresses to learn the MAC address of other hosts. (ARP is IPv4 uses broadcast)
+- Two message types are used:
+	1.Neighbor Solicitation (NS) = ICMPv6 Type 135
+	2. Neighbor Advertisement (NA) = ICMPv6 Type 136
+
+
+Neighbor Solicitation Packet fields
+for instance R1 is pinging the R2:
+1. Source IP: R1 G0/0 IP
+2. Destination IP: R2 solicited-node multicast address
+3. Source MAC: R1 G0/0 MAC
+4. destination MAC: multicast MAC based on R2's solicited-node address.
+
+Neighbor Advertisement (NA) packet fields:
+1. Source IP: R2 G0/0 IP
+2. Destination IP: R1 G0/0 IP
+3. R2 G0/0 MAC
+4. Destination MAC: R1 G0/0 MAC
+
+IPv6 Neighbor Table
+• R1# show ipv6 neighbor => the IPv6 neighbor table on routers can be shown by this command and to check MAC address, age and state of each addresses.
+
+
+NDP allows hosts to atumatically discover routers on the local network.
+Two messages are used for this process:
+1. Router Solicitation (RS) = ICMPv6 Type 133
+	Sent to multicast address FF02::2 (all routers)
+	Asks all routers on the local link to identify themselves.
+	Sent when an interface is enabled/host is connected to the network
+2. Router Advertisement (RA) = ICMPv6 Type 134
+	Sent to multicast address FF02::1 (all nodes)
+	The router announces its presence, as well as other information about the link.
+	These messages are sent in response to RS messages.
+	They are also sent periodically, even if the router hasn't received an RS.
+
+
+SLAAC (Stateless Address Auto-configuration)
+Host s uses the RS/RA messages to learn the IPv6 Prefix of the local link (ie. 2001:db7::/64), and then automatically generate an IPv6 address.
+
+Using the `ipv6 address prefix/prefix-length eui-64` command, you need to manually enter the prefix.
+
+using the `ipv6 address autoconfig` command, you don't need to enter the pefix. the device uses NDP to learn the pefix used on the local link.
+
+he device wil use EUI-65 togenerate the interface ID , or it will be randomly generated (depending on the device/maker)
+
+
+Duplicate Address Detection (DAD)
+DAD allows host to check if other devices on the local link are using the same IPv6 address.
+any time an IPv6-enabled interface initializes it perfomrs DAD.
+DAD uses NS and NA. if host doesn't get a reply it knows the address is unique.
+if it gets a reply it means another host on the network is already using the address.
+
+
+IPv6 Static Routing
+IPv6 and IPv4 routing works the same, the two processes are separate on the router, and the two routing tables are separated as well.
+IPv5 routing is enbaled by default but IP routing is disabled by default, and must be enaled with ipv6 unicast-routing.
+If IPv6 routing is disabled, the router will be able to send and receive IPv6 traffic, but will not route IPv6. (will not forward it).
+
+
+note that:
+Routes for link-local addresses are not added to the routing table.
+A local host route is automatiically added for each address configured on the router.
+
+command for IPv6 Static Routing
+• R(config-if) # ipv6 route destination/prefix-length {next-hop | exit-interface [next-hop]} [ad]
+{} => cuerly brackets mean a required choice.
+| => pipe stands for 'OR' so either next-hop or exit-interface
+[] => square brackets mean an optional choice.
+
+Names for different IP static configuration base on options that are being set.
+- Directly attached static route: only the exit interface is specified.
+	`ipv6 route destination/prefix-length exit-interface`
+example:R1(config)# ipv6 route 2001:db8:0:3::/64 s0/0/0
+note:
+in IPv6 you can't use directly attached static routes if the interface is an Ethernet interface.
+
+- Recursive static route: only the next hop is specified.
+	`ip route destination/prefix-length next-hop`
+	R1(config)# ipv6 route 2001:d88:0:3::/64 2001:db8:0:12::2
+	
+- Fully specified static route: Both the exit interface and next hop are specified.
+	`ipv6 route destination/prefix-length exit-interface next-hop`
+	R1(config)# ipv6 route 2001:db8:0:3::/64 g0/0 2001:db8:0:12::2
+
+examples:
+Network route:
+R1(config)# ipv6 route 2001:db8:0:3::/64 2001:db8:0:12::2
+
+Host route:
+R2(config)# ipv6 route 2001:db8:0:3::100/128 2001:db8:0:12::1
+we use /128 to route for host route.
+
+Default route:
+R3(config)# ipv6 route ::/0 2001:db8:23::1
+
+
+Link-Local Next-Hops
+when next-hop and the exit-interface is specificed on the router, the static route is called: "fully specificed static route".
+reason you need to specify the exit interface is because, with a link-local next-hop address, the router isn't able to figure out, on its own, which interface that next-hop address is connected to.
+
+
+
+
+### Day 34 ACL ###
+
+Access Control List (ACL)
+-ACLs (Access Control Lists) have multiple uses and can be used for security perspective
+
+-ACLs function as a pcaket filter, instructing the router to permit or discard specific traffic.
+
+-ACLs can filter traffic based on source/destination IP addresses, source/destination Layer 4 ports, etc.
+
+
+How ACLs work
+- ACLs are configured globbaly on the router (global config mode)
+
+- They are an ordered sequence of ACEs (Access Control Entries)
+
+for example:
+ACL 1:
+1. if source IP = 192.168.1.0/24, then permit
+2. if source IP = 192.168.2.0/24, then deny
+3. if source IP = any, then permit
+(the sequence of this configuration is important)
+
+- Configuring an ACL in global config mode will not make the ACL take effect.
+
+- The ACL must be applied to an interface eventhough it is applied on global configuration.
+
+- ACLs are applied either inbound or outbound
+
+- When the router checks a packet against the ACL, it processes the ACEs in order, from top to bottom.
+
+A maximum of one ACL can be applied to a single interface per direction.
+Inbound: Maximum of one ACL
+Outbound: Maximum of one ACL
+
+
+Implicit Deny
+the Implicit deny tells router to deny all traffic that doesn't match any of the configured entries in the ACL.
+there is an 'implicit deny' at the end of all ACLs.
+
+
+ACL Types
+
+- Standard ACLs: Match based on source IP address only
+	Standard Numbered ACLs
+	Standard Named ACLs
+
+- Extended ACLs: Match based on Source/Destination IP, Source/Destination Port, etc
+	Extended Numbered ACLs
+	Extended Named ACLs
+
+
+Standard Numbered ACLs
+- Standard ACLs match traffic based only on the source IP address of the packet.
+
+- Numbered ACLs are identified with a number (ie. ACL 1, ACL 2, etc)
+
+- Different types of ACLs have a different range of numbers that can be used.
+	Standard ACLs can be 1-99 and 1300-1999
+
+The basic command to configure a standard numbered ACL is:
+• R1(config) # access-list (number) {deny | permit } (ip) (wildcard-mask)
+
+examples:
+• R1(config)# access-list 1 deny 1.1.1.1 0.0.0.0 => deny the ip with the specificied wildcard-mask
+• R1(config)# access-list 1 deny 1.1.1.1 => deny the ip without specifying the mask
+• R1(config)# access-list 1 deny host 1.1.1.1 => blocks only a single host
+
+• R1(config)# access-list 1 permit {any | 0.0.0.0 255.255.255.255} => to permit all IPs
+
+• R1(config)# access-list 1 remakr ## Block foreigner From accounting ## => to add remark or comment to the ACL with number 1.
+
+
+commands:
+• R1(config)# do show access-lists => description about access-list of the network
+• R1(config)# do show ip access-lists => shows information about the IP ACLs
+• R1(config)# do show running-config | include access-list => shows configuration related to access-lists
+• R1(config-if)# ip access-group (number) {in | out } => apply ACL configuration over an interface for outbound or inbound
+
+note:
+Standard ACLs should be applied as close to the destination as  possible.
+
+
+Standard Name ACLs
+- Standard Name ACLs match traffic based only on the source IP address of the packet.
+- Named ACL are identified with a name (ie. "block_departments")
+- Standard named ACLs are configured by entering 'standard named ACL config mode' and then configuring each entry within that config mode.
+
+commands for standard ACLs configuration:
+• R(config) # ip access-list standard (acl-name) => to enable standard named ACL
+• R(config-std-nacl) # [entry-number] { deny | permit } ip wildcard-mask
+
+commands example:
+1. • R(config)# ip access-list standard BLOCK_DEPARTMENT => to create a named access-list
+2. • R(config-std-nacl)# 5 deny 1.1.1.1 => denying 1.1.1.1 by entry number of 5 
+3. • R(config-std-nacl)# 10 permit any => permit rest of IPs by entry number of 10
+4. • R(config-std-nacl)# remkar ## configured NOV 1 2024 ## => adding a remark for better understanding
+5. • R(config-std-nacl)# interface g0/0 => selecting an interface to set access-group
+6. • R(config-std-nacl)# ip access-group BLOCK_DEPARMENT => adding that interface to specific access-group.
+
+• R# show access-lists => to check the access lists
+• R# show running-config | section access-list => to demonstrate running configs that are related to access-list
+
+note:
+in `show ip access-lists`
+the router may re-order the /32 entries, this improves the efficiency of processing the ACL. it doesn't change the efect of the ACL.
+this applies to both standard named and standard numbered ACLs. 
+however, packet Tracer does not do this.
+
+
+
+

@@ -1,3 +1,6 @@
+
+
+
 __Lab Day-4__
 enable => enable the privilege exec mode
 
@@ -21,8 +24,12 @@ R1(config)# enable secret (secret-name) => more secure way of protecting router 
 
 R1# write memory or write or copy running-config startup-config => it will save the configuration in startup-config or device
 
+
+
 __Lab Day-6__
 SW1# show mac address-table => shows the mac address table of switch with their relative interfaces
+
+
 
 __Lab Day-8__
 Router# show ip interface brief => it will show the interfaces and ip-addresses assign to them
@@ -40,6 +47,8 @@ R1(config-if)# end => it will go directly to privilege mode
 note:
 remember to write memory the configurations
 
+
+
 __Lab Day-9__
 R1(config-if) #speed (speed in mg) => will set speed of that interface
 
@@ -52,11 +61,14 @@ R1(config-if-range) # description ## not in use ## => it will set this descripti
 
 #do show interface status => shows swtich interfaces (work only in switches)
 
+
+
 __Lab Day-11 (part1)__
 
 R1(config) #ip route (ip address) (mask) (interface or ip of the interface => it determines routes for IPs that are away from router (next hop should be declared if ip is being in used)
 
 R1(config) #do show ip route => it shows the interfaces and routes status
+
 
 __Lab Day-11 (part2)__
 in pc terminal, ipconfig /all => it shows information about macs and IPs
@@ -67,6 +79,7 @@ show run | include ip route => it will show ip routes that are in set in router
 
 note: sometime the routing can be wrong and sometimes even ip of each interface can go wrong. be cautious!
 
+
 __Lab Day-12__
 use show interface (interface name) to see mac address of that interface
 use ipconfig /all in PCs to see their mac address in CLI
@@ -74,6 +87,7 @@ use ipconfig /all in PCs to see their mac address in CLI
 
 __Lab Day-15__
 show ip interface (interface name) => it will show information about the ip and other property of that interface
+
 
 
 __Lab Day-16__
@@ -90,6 +104,8 @@ however it is simple and not really that common to do.
 (config)# vlan (number of vlan) => it will go to that vlan configuration
 (config-vlan)#name (name-of-vlan) => sets a name for that vlan
 
+
+
 __Lab Day-17___
 
 (config-if (g0/1))# switchport trunk allowed vlan (vlan numbers,) => to set trunk for vlans that are in switch and want to be connected to other switches
@@ -104,6 +120,8 @@ in router for trunking:
 R1(config) # g0/0.10 => setting vlan in this case vlan 10
 R1(config-subif) # encaupsulation dot1q 10 => enables encapsulation for vlan
 R1(config-subif)# ip address (ip address) (mask) => sets ip and mask for vlan port
+
+
 
 __Lab Day-18__
 
@@ -127,6 +145,7 @@ interface vlan 10
 note: in some cases no shutdown for SVIs are required
 
 
+
 __Lab Day-19__
  do show interface (interface name) switchport => checking administrative and operational mode
 
@@ -145,6 +164,7 @@ adding another vlan to transparent vtp will not effect other switches
 SW1(config)# vtp mode client =>  it will set switch vtp to client mode thus if a new vlan is created inside the client mode switch it should also be created in vtp switch so it can be advertised and be updated on others
 
 
+
 __Lab Day-20__
 SW1 #show spanning-tree => shows STP information about that switch
 
@@ -155,6 +175,8 @@ SW1 #show spanning-tree detail => shows more detailed information about STP
 SW1 #show spanning-tree summary => shows the summary of STP
 
 note: alternate and non-designated have same meaning in cisco
+
+
 
 __Lab Day-21__
 
@@ -173,6 +195,8 @@ SW3(config-if) #spanning-tree portfast => it enables the portfast for interfaces
 SW3(config-if) # spanning-tree bpduguard enable => enables bpdu guard for selected interface
 
 shutdown and then no shutdown will return the interface up that is being disabled due to bpdu guard
+
+
 
 __Lab Day-23__
 
@@ -200,6 +224,7 @@ for multilayer switch to be able to have routing table, we need to enable IP rou
 (config)# port-channel load-balance (mode) => it will set the load-balance mode to desired mode.
 
 
+
 __Lab Day-24__
 
 for adding a static route to the routing table that acts as a backup we need to config its administrative distance higher that the routing protocol that is being used. for such that we do:
@@ -215,6 +240,8 @@ by using `tracert or traceroute` we can check out the next hop over network to c
 
 loopback also can be used for simulating a setup on routers for example ping 1.1.1.1 and receiving the result of ICMP
 
+
+
 __Lab Day-25__
 
 how to enable loopback on an interface
@@ -224,6 +251,8 @@ how to enable loopback on an interface
 3. then on that interface (loopback interface) add the ip:
 (config-if) #ip address 1.1.1.1 255.255.255.255
 4. check it out by `do show ip interface brief`
+5. to check the subnet ' do show interface (loopback 0)
+or do show ip protocls
 
 enable eigrp with Administrative Distance
 (config) #router eigrp 100 =>enable the eigrp on router and the 100 is for AD
@@ -251,4 +280,93 @@ or
 (config-router) #do show ip route connected => it will show the connected routes
 
 (config-router) #do show ip router eigrp topology => it will show more information about the EIGRP routes that the router has received
+
+
+
+__Day 26 OSPF part 1 __
+
+to enable network configuration for OSPF enabled interfaces:
+1. R1 (config)# router ospf 1 => adding ospf routing protocol with processor ID of 1
+2.1 R1 (config-router) # network 1.1.1.1 255.255.255.255 area 0 => enables network (in this case loopback of 1.1.1.1/32 over area 0.
+2.2 R1(config-router) # 10.0.12.0 0.0.255.255 area 0 => in this case enabling network of 10.0.12.0/16 on area 0
+R1 (config-router) #passive-interface G0/0 => to make the interface passive and not send OSPF LSA.
+
+enabling default routing advertisment to internet on router:
+1. #R1 (config-router) default-information originate
+2. ip route 0.0.0.0 0.0.0.0 (next hop interface ip example: 203.0.113.2) => this will enable the default route over the interface connected to internet
+
+R1 (config-router) #  do show ip ospf database => to see the LSDB (Link State DataBase) and LSAs in it 
+
+to check out neighbors and interfaces that are OSPF enabled
+R1 # show ip ospf neighbor => to list enabled OSPF neighbors
+R1 # show ip ospf interfaces => to list enabled OSPF interfaces
+R2 # show ip route => to check the default router that being advetised by R1 OSPF protocol. the E2 is the default route.
+
+
+
+__Day 27 OSPF part 2 __
+
+to enable OSPF over a range of interface:
+1. R2(config) #interface range g0/1, f0/1,  loopback0 => selecting interfaces that OSPF are going to be enabled on them
+2. R2(config-if-range) #ip ospf 1 area 0 => enable OSPF with process ID of 1 in area 0
+
+to configure the reference bandwidth on each router for better distinction of FastEthernet and GigabyteEthernet interface... :
+R2(config-router) #auto-cost reference-bandwidth <mbits-per-sec> (10000) => sets the bandwidth of reference-bandwidth to 10000.
+
+to check the interfaces cost:
+R2(config-router) #do show ip ospf interface => it will show the interface cost in OPSF
+
+note: in configuration OSPF and demonstration of ip routes, the OSPF external type 2 is type of OSPF that ignore internal Cost of OSPF to connect to external network.
+
+
+
+__Day 28 OSPF part 3 __
+
+to enable a serial interface for OSPF:
+1. R(config) # show ip interface brief => to check of which interface is the serial interface
+2. R(config) #interface s0/0/0 => selecting the desired serial interface
+3. R(config-if) # ip addresss 192.16.1.3 255.255.255.252  => giving it an ip address
+4. R(config-if) # do show controllers s0/0/0 => to check if it is DTE or DCE for setting clock rate because clock rate is configured on DCE interface
+5. R(config-if) #clock rate 10000 => it sets clock rate to 10kbits
+6. R(config-if) #no shutdown => to enable the interface
+
+also check whether the OSPF is running:
+R(config-if) #do show ip protocol 
+if it is not in OSPF:
+1. R(config-if) #ip ospf 1 area 0 => sets OSPF with PID of 1 and area 0 on the selected interface
+2.R (config) #do show ip ospf int s0/0/0 => to check the OSPF protocol enable on the interface
+
+• R (config-if) #no ip ospf network point-to-point => in order to disable the point-to-point connection one selected interface
+
+• R (config) # do show run | section ospf => shows running configs and specificly the OSPF section.
+
+• R (config) # do show ip ospf database => shows the LSDB and all records of the router.
+
+__ Day 29 HSRP configuration __
+
+to enable the HSRP on R1:
+1. • R1(config) # interface g0/0 => select the interface that is going to be the default gatway.
+
+2. • R1(config-if) # standby verison 2 => select the version 2 HSRP 
+
+3. • R1(config-if) # standby 1 ip 10.0.1.254 => select the group number and also set the Virtual IP for that interface
+
+4. • R1(config-if) #standby 1 priority 200 => to select the priority in order to be selected for standby or active.
+
+5. • R1(config-if) #standby 1 preempt => to enable preemption on R1 router.
+
+• R1(config-if) # do show standby => shows the state of standby in router
+
+6. • R1(config-if) # end => it will go to the privileged mode.
+
+7. R1 #write => it will save the configuration
+
+note:
+the default gatway should be set on end host of the network. remember that Virtual IP needs to be set for HSRP.
+
+on end host CLI:
+arp -a  => it will show MAC address and virtual IP of the routers
+
+in tracert, the physical IP is demonstrated not the Virtual, it is because in arp the actual IP is used to route between routers.
+
 
