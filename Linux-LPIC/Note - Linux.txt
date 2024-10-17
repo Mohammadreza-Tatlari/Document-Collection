@@ -93,5 +93,9 @@ sudo alien --to-deb package.rpm
 Install the Converted Package:
 sudo dpkg -i package.deb
 
+lsb_release -a => checks the version (Linux Standard Base) details
+
+
+
 
 				

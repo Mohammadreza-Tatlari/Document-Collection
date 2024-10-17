@@ -1588,4 +1588,182 @@ commands:
 
 
 
+### Day 37 Network Time Protocol (NTP) ###
+
+all devices have an internal clock
+in Cisco IOS, time can be viewed by `show clock` command:
+• R1# show clock => it will show the default time zone coordiate UTC (Coordinated Universal Time)
+
+if you use the `show clock detail` command, you can see the time source.
+• R1# show clock detail
+* => it means that time is not considered authoritative
+the "Time source is hardawre calendar" => The hardware calendar is the default time source.
+
+the internal hardawre clock of a device will drift over time, so it is not the ideal time source.
+the most important reason to have accurate time on a device is to have accurate logs for troubleshooting.
+
+
+command:
+• R1# show log => shows all the logs that are related to the device (router). also the time of each log is important so `show clock` command should be checked before the show log command.
+
+
+Manual Time Configuration
+you can manually configure the time on the device with the `clock set` command
+• R1# clock set (hh:mm:ss) (1-31 Day of the month) (Month of the year) (Year)
+example:
+• R1# clock set 14:30:00 26 Dec 2024 => sets the clock to the indicated time.
+
+note:
+although the hardware calendar (built-in clock) is the default time-source, the hardwawre clock and software clock are separate and can be configured separately.
+
+manually configure the hardware clock with the `calendar set` command
+• R1# calendar set (day of the month) (month) (year)
+example:
+• R1# calendar set 14:35:00 27 dec 2024
+
+typically you will want to synchronize the 'clock and 'calendar'. 
+use the command `clock update-calendar` to sync the calendar to the clock's time.
+use the command `clock read-calendar` to sync the clock to the calendar's time.
+
+
+Configuring the Time Zone
+you can configure the time zone with the `clock timezone` command:
+• R2(config)# do show clock => to check the clock time
+• R2(config)# clock timezone (name-of-timezone) (-23 - 23 hours-offset-from-UTC) (0-59 Minutes offset from UTC)
+but then the adjustment of time may be required:
+• R2(config)# clock set(hh:mm:ss) (Day of the month) (month) (year)
+example:
+• R2(config)# clock timezone JST 9
+• R2(config)#do clock set 15:10:00 Dec 27 2024
+
+note:
+become part of the running config, that is why it is configured in global config mode.
+
+
+Daylight Saving Time (summer time): some countries depend on geological location need to set clock forward or backward each year
+
+• R1(config)# clock summer-time (name of time zone in summer) (date | recurring) (week number to start | last/first week of the month) (Day) (month) (time to start hh:mm) (week number to end first/last <1-4>) (Weekday to end) (month to end) (hh:mm time to end) (<1-1440> Offset to ad in minutes)
+
+example:
+R1(config)# clock summer-time EDT recurring 2 sunday march 02:00 March 02:00 1 Sunday November 02:00
+
+
+NTP (Network Time Protocol)
+- Manually configuring the time on devices is not scalable and result to inaccurate time.
+- NTP allows automatic syncing of time over a network.
+- NTP clients euqest the time from NTP servers. a device can be an NTP server and an NTP client at the same time. 
+- NTP allows accuracy if time within ~1milisecond if the NTP server is in the same LAN, or within ~50 miliseconds if connecting to the NTP sever over a WAN/the internet.
+- Some NTP servers are 'better' than others due to distance of an NTP server. from the original reference clock is called "stratum". higher the stratum the more inaccurate the time is.
+- NTP uses UDP port 123.
+
+
+Reference Clocks
+-a reference clock is usually a very accurate time device like an atomic clock or a GPS clock. Reference clocks are stratum 0 within the NTP hierarchy. NTP servers directly connected to reference clocks are stratum 1.
+for instance
+stratum 1: NTP servers get their time from reference clocks
+stratum 2: NTP servers get their time from stratum 1 NTP servers.
+stratum 3: get their time from stratum 2 NTP servers.
+...
+stratum 15: is the maximum. anything above that is considered unreliable.
+
+- Devices can also 'peer' with devices at the same stratum to provide more accurate time. which is called "symmetric acitve" mode. Cisco devices can operate in three NTP modes:
+Server mode, Client Mode, Symmetric active mode
+
+- an NTP client can sync to multiple NTP servers
+
+- NTP server which get their time directly from reference clocks are also called primary servers. NTP servers which get their time from other NTP servers are called secondary servers. secondary servers operate as server and client mode.
+
+
+NTP Configuration:
+multiple NTP servers can be defined for the device and devices will automatically select the best server that response faster.
+• R1(config)#ntp server 216.239.35.0 => sets the ip for the NTP
+
+for manually config and select a server, `prefer` option can be used
+• R1(config)#ntp server 216.239.35.0 prefer
+
+• R1# show ntp associations => it shows the ntp servers associated with device
+in table of "ntp associatations":
+*sys.peer: the ntp server that is synced with
++candiate: they are candidate server but are not synced
+~configured: means configured 
+-outlyer, xfalseticker: the NTP will not sync with those NTP servers.
+
+• R1#show ntp status => to check NTP status running on Device
+
+• R1(config)# ntp update-calendar => configures the router tp update hardware clock with the time learned via NTP
+
+note: 
+hardware clock initialize the software clock. its a good practice to keep it updated.
+
+
+configure NTP server over a router:
+first set a loopback interface and set it as a NTP server on a Router1
+1.• R1(config)# interface loopback0
+2.• R1(config-if)# ip address 10.1.1.1 255.255.255.255
+3.• R1(config)# ntp source loopback0 => it sets the loopback interface to NTP source.
+
+ntp master setting
+• R1(config)# ntp master <1-15> => it sets the ntp master and if the stratum number is not defined it will set it to 8. cause 8 is the ntp default master stratum
+
+ntp symmetric active mode:
+• R3(config)#ntp peer (ip address of NTP server) => it will peer to that NTP server 
+
+ntp authentication (optional)
+it allows NTP clients to ensure they only sync to the intended server.
+to configure NTP authentication:
+ntp authenticate => enable authenticate
+ntp authentication-key (key-number) md5 (key) => create the NTP authentication key(s)
+ntp trusted-key (key-number) => specify the trusted key(s)
+ntp server (ip-addresss) key (key-number) => specify which key to use for the server. (this command is not needed on server itself)
+
+
+
+### Day 38 DNS (Domain Name Server) ###
+
+DNS is used to resolve human-readable names to IP addresses.
+When a domain name is searched in web browser, your device will ask a DNS server for the IP address of that domain name.
+
+command:
+• (windows) Ipconfig /all => for demonstrate the configuration of network over a device.
+• nslookup (domain name) => for checking the DNS request and the IP address of the domain
+
+Records:
+A record: for map names of IPv4 addresses.
+AAAA record: for map names of IPv6 addresses.
+CName record : Canonical Name related to different zone for requesting DNS
+note:
+standard DNS queries/responses tupically use UDP port 53. TCP is used for DNS messages greater than 512 bytes or Zone Transfer
+
+Devices will save the DNS server's responses to a local DNS cache. thus repetetive query is not require any more.
+
+• (windows) ipconfig /displaydns => it shows the cached DNS record on Device.
+• (windows) ipconfig /flushdns => to clear the device cache 
+
+
+Host File:
+host file is not DNS server, it is an alternative of DNS which it used to be use in OS for resolving IP/domains. 
+
+DNS in Cisco IOS
+- for hosts in a network to use DNS, there is no need to configure DNS on the router, they will forward the DNS messages.
+- Cisco router can be configured as a DNS server, although it's rare.
+- A cisco router can also be configured as a DNS client.
+
+configuration:
+1. • R1(config)# ip dns server => configures R1 to act as a DNS server. and response to host if it has the request.
+2. • R1(config)# ip host R1 (IP address) => configurre a hostname/IP address for mapping
+3. • R1(config)# ip name-server (DNS-server IP) => to set a NS for router to query the unkown records from other DNS server.
+4. • R1(config)# ip domain lookup => enables R1 to perfomr DNS queries (enabled by default)
+
+• R1(config)# show hosts => shows the cached entries on Router.
+
+• R1(config)# ip domain name (example.com) => configures the deafult domain name. it appends to any hostnames without a specified domain.
+example:
+`ping pc1` will become `ping pc1.example.com`
+
+
+
+
+
+
+
 
