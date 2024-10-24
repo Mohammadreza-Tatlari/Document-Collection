@@ -2037,4 +2037,209 @@ SSH configuration process:
 
 Connect: ssh -l (username) (ip-address) or ssh username@ip-address
 
+### Day 43 FTP (File Transfer Protocol) TFTP (Trivial File Trasnfer Protocol) ###
+FTP and TFTP are industry protocol standard to transfer files over a network.
+they both use a client-server model. Clients can use FTP or TFTP to copy files from/to a server.
+as a network engineer, the most common use for FTP is in the process of upgrading the opearint system of a newtork device.
+you can download a version of IOS from a server and then rebeoot the device with the new IOS image.
 
+TFTP is a simple and has only basic features compared to FTP. it is another tool to use when lightweight simplicity is more important than functionality.
+No authentication (username/password), so server will respond to all TFTP requests. no encryption, so al data is sent in plain text. so it is best used in controlled environment to transfer samll files quickly.
+TFTP servers listen on UDP port 69. so it is connectionless and doesn't provide reliability. however, TFTP has similar built-in features for reliability.
+
+TFTP uses 'lock-step' communication. The cloent and server alternately send a message and then wait for a reply. (+retransmissions are sent as needed)
+
+TFTP file transfers have three phases:
+1. Connection TFTP client sends a request to the server, and the server responds back, initializing the connection.
+2. Data Tranfer: the client and server exchange TFTP messages. one sends data and the other sends acknowledgements.
+3. Connection Termination: After the last data message has been sent, a final acknowledgment is sent to terminate the connection.
+
+TFTP TID
+when a client sends the first message to the server, the destination port is UDP 69 and the source is a random ephemeral port.
+This random port is called a 'Tranfer Identifier' (TID) and indetifies the data transfer.
+The server then also selects a random TID to use as the source port when it replies, not 69.
+When the client sends the next message, the destination port will be the server's ID, not 69.
+
+
+FTP uses TCP ports 20 and 21
+username and passwords are used for authentication, however there is NO encryption.
+For Greater security, FTPS (FTP over SSL/TLS) can be used.
+SSH File transfer Protocol (SFTP) can also be used for greater security.
+FTP is more ocmple than TFTP and allow clients to navigate file directories, add and remove directory, list files, etc.
+the client sends FTP commands to the server to perform these functions.
+
+FTP uses two types of connections:
+	- an FTP control connection (TCP 21) is established and used to send FTP commands and replies.
+	- When files or data are to be transferred, separate FTP data (TCP 20) connections are establisehd and terminated as needed.
+
+FTP modes:
+1. Active Mode FTP data connections
+	- The default method of establishin FTP data connection is active mode, in which the server initiates the TCP connections.
+	- in FTP active mode, the server initiates the data connection.
+2. Passive Mode FTP data connections.
+	- the client initiates the data conneciton. this is often necessary when the client is behind a firewall, which could blco kthe incoming connection from the server.
+note: firewalls usually don't permit 'outside' devices to initiate connections. in this case FTP passive mode is used and the client (behind firewall) initiates the TCP connection.
+
+
+IOS file Systems:
+a file system is a way of controlling how data is stored and retrieved.
+you can view the file systems of a Cisco IOS device with `show file systems`:
+tables of show file systems command:
+Type:
+- disk: storage devices such as flash memory
+- opaque: used for internal functions
+- nvram: internal NonVolatileRAM. the startup-config files are stored here.
+- network: Represents external file systems, for example external FTP/TFTP servers.
+
+
+Updating Cisco IOS
+• R1# show version => you can veiw the current version of IOS with show version of IOS
+• R1# show flash => you can veiw the content of flash. ( the  file are are with .bin , .xlm extension)
+
+Copying Files (TFTP)
+•R1# copy (src) (dst). example:
+ • R1# copy tftp: flash: => it tells the router that you want to have access to TFTP server and copy file to destination which is flash. so Router will ask you to Enter the TFTP server IP. and then the source file name on the server. then you need to enter the name you want to save it as on flash (hit enter to accept the default which is hold in [ ])
+
+upgrading new cisco IOS bin file:
+1. • R1(config)# boot system (filepath) => it will reboot the devices with the file that is named which can be the updated file. if you don't use this command, the router will use the first IOS file that it finds in flash.
+2. • R1# write memory => you should write it on memory, otherwise, it won't be saved.
+3. • R1#reload => should be reload to load new configuration.
+
+Deleting File (lets delete that old IOS file):
+• R1#delete (filepath) => it will delete the file with the matched filepath (which can be name of the old IOS file).
+
+
+Copying Files (FTP)
+• R1(config)# (ip-address) ftp (username) (password) => configure the FTP username/password that the device wil use when connecting to an FTP server.
+
+
+
+### Day 44 NAT (Network Address Translate) Static addressing ###
+There are three main short-term solutions for IPv4 inadequacy:
+1) CIDR
+2) Private IP addresses
+3) NAT
+
+in RFC 1918 specifies the following IPv4 address ranges as private:
+10.0.0.0/8 (10.0.0.0 to 10.255.255.255) Class A
+172.16.0.0/12 (172.16.0.0 to 172.31.255.255) Class B
+192.168.0.0/16 (192.168.0.0 to 192.168.255.255) Class C
+you are free to use this addresses and they don't have to be globally unique.
+Private IP addresses cannot be used over the internet and will be dropped by ISP, thus the NAT is used.
+NAT can be used to router private IP address out in the Internet. it translate the Private IP to Public IP address which should be unique.
+
+Network Address Translation (NAT) is used to modify the source and/or destination IP addresses of packets.
+note: NAT in Cisco is more focused on Source NAT and configuration happens on Cisco Routers.
+
+
+Static NAT:
+it involves statically configuring one-to-one mappings of private IP addresses to public IP addresses.
+When traffic from the internal host is sent to the outside network, the router will translate the source adddress. however, this one-to-one mapping also allows external host to access the internal host via the inside global address.
+
+An inside local IP address is mapped to an inside global IP address.
+	- Inside Local: The IP address of the inside host, from the perspective of the local network
+		*the IP address actually confiugred on the inside host, usually a private address.
+	- Inside Global: The IP address of the inside host, from the perspective of outside hosts
+		*the IP address of the inside host after NAT, usually a public address.
+
+Note:
+Static NAT allows devices with private IP addreses to communicate over the internet, However, because it requires a one-to-one IP address mapping, it doesn't preserve IP address.
+
+Static NAT Configuration
+1. Define the inside interface(s) connected to the internal network
+• R1(config)# int g0/1
+• R1(config-if)#ip nat inside
+2. Define the outside interface(s) connected to the external network
+• R1(config)#int g0/0
+• R1(config-if)#ip nat outside
+• R1(config-if)# exit
+3.configure the one-to-one IP address mappings: `ip nat inside source static (inside-local-ip) (inside-global-ip). each are set for different end-hosts.
+• R1(config)# ip nat inside source static 192.168.0.167 100.0.0.1 -> for end-host1
+• R1(config)# ip nat inside source static 192.168.0.168 100.0.0.2 -> for end-host2
+note: it won't be over write if multiple hosts are translated to one single outside IP
+4. check the IP NAT tabel
+• R1(config)# ip nat translations => it shows PAT (port address translation), Protocols, and address of outside local, outside global, inside local, inside global.
+
+	- Outside Local: The IP address of the outside host, from the perspective of the local network
+	- Outside global: the IP address of the outside host, from the perspective of the outside network.
+
+Insdie/Outside = Location of the host
+Local/Global = Perspective
+
+
+Command to clean ip nat translationt table
+• R1#clear ip nat translation * => it cleans the table for further logs.
+
+• R1#show ip nat statistic => it shows all the status of NAT on router.
+
+
+
+
+### Day 45 NAT Dynamic 2/2 ###
+• in dynamic NAT, the router dynamically maps inside local addresses to inside global addresses as needed.
+• an ACL is used to identify which traffic should be translated.
+	- if the source IP is permitted by the ACL, the source IP will be translated.
+	- if the source IP is denied by the ACL, the source IP will not be translated. remember that it doesn't mean that it will be dropped.
+• A NAT pool is used to defined the available inside global addresses that can be used.
+• Although they are dynamically assigned, the mappings are still one-to-one ( one inside local IP address per inside global IP address)
+• if there aren't enough inside global IP addresses available (all are currently being used), it is called NAT pool exhaustion:
+	- if a packet from another inside host arrives and needs NAT but there are no available addresses, the router will drop the packet.
+	- the host will be unable to access outside networks until one of the inside global IP addresses becomes available.
+	the dynamic NAT entries will time out automatically if not used, or can clear them manually.
+
+
+Dynamic NAT configuration
+1. Define the inside interface(s) connected to the internal network
+• R1(config)# int g0/1
+• R1(config-if)#ip nat inside
+2. Define the outside interface(s) connected to the external network
+• R1(config)# int g0/0
+• R1(config-if)#ip nat outside
+3. Define the traffic that should be tanslated. traffic permitted by the ACL will be translated.
+• R1(config)#access-list 1 permit 1921.168.0.0 0.0.255.255
+4. Define the pool of inside gloabl Ip addresses. note: instead of prefix-length 24, you can use netmask 255.255.255.0
+• R1(config)#ip nat pool POOL1 100.0.0.0 100.0.0.255 prefix-length 24
+5. configure dynamic NAT by mapping the ACL to the pool
+• R1(config)#ip nat inside source list 1 pool POOL1
+. for checking out:
+• R1(config)#show ip nat translations => show translating table of router
+• R1(config)#show ip nat statistics => shows the status of NAT configuration on router.
+
+
+PAT (Port Address Translation) (NAT Overload)
+PAT (Aka NAT overload) tansaltes both the IP address and the port number (if necessary).
+by using a unique port number for each communication flow, a single public IP address can be used by many different internal hosts. (port number are 16bits = over 65000 available port numbers)
+the router will keep track of which inside local address is using which inside global address and port.
+because many inside hosts can share a single public IP, PAT is very usefull for preserving public IP addresses, and it is used in networks all over the world.
+
+PAT Configuration (pool)
+1. Define the inside interface(s) connected to the internal network
+• R1(config)# int g0/1
+• R1(config-if)#ip nat inside
+2. Define the outside interface(s) connected to the external network
+• R1(config)# int g0/0
+• R1(config-if)#ip nat outside
+3. Define the traffic that should be tanslated. traffic permitted by the ACL will be translated.
+• R1(config)#access-list 1 permit 1921.168.0.0 0.0.255.255
+4. Define the pool of inside gloabl Ip addresses. note: instead of prefix-length 24, you can use netmask 255.255.255.0
+• R1(config)#ip nat pool POOL1 100.0.0.0 100.0.0.3 prefix-length 24
+5. Configure PAT by mapping the ACL to the pool and using overloda keyword at the end.
+• R1(config)#ip nat inside source list 1 pool POOL1 overload
+
+note:
+in `show ip nat translations` for PATH there is no one-to-one mapping, there are many-to-one mapping due to ports.
+
+
+PAT Configuration (interface)
+1. Define the inside interface(s) connected to the internal network
+• R1(config)# int g0/1
+• R1(config-if)#ip nat inside
+2. Define the outside interface(s) connected to the external network
+• R1(config)# int g0/0
+• R1(config-if)#ip nat outside
+3. Define the traffic that should be tanslated. traffic permitted by the ACL will be translated.
+• R1(config)#access-list 1 permit 1921.168.0.0 0.0.255.255
+4.Configure PAT by mapping the ACL to the interface and enabling overload.
+• R1(config)#ip nat inside source list 1 interface g0/0 overload 
+note:
+that it will use the Router interface public IP address for translating 
