@@ -1762,8 +1762,279 @@ example:
 
 
 
+### Day 39 DHCP (Dynamic Host Configuration Protocol)
+
+DHCP is used to allow hosts to automatically/dynamically learn various aspects of their network configuration. such as IP address, default gateway, subnet mask, DNS server etc. Typically used for 'client devices' such as workstation, laptops,etc.
+Devices like routers, servers, etc are usally manually configured because they need fixed IP address to function.
+
+In small networks the router typically acts as the DHCP server for hosts in LAN. in large networks the DHCP server is used.
+
+by using network management in windows (GUI) or command `ipconfig /all' (CLI) you can see the DHCP configuration on end hosts
+
+note:
+• (Preferred) tag in IPv4 Address means that the PC was previously assigned this IP address by the DHCP server. so it asked to receive the same address again this time.
+• Lease Obtained/Expire: DHCP server ' lease' IP address to clients. these leases are usually not permanent, and the client must give up the address at the end of the lease time.
+
+command:
+ipconfig /all => shows all configuration of network specially the DHCP
+ipconfig /release => it will release the IP address that has obtained from DHCP server
+ipconfig /renew => ask DHCP server for a new IP address
+
+DHCP procedures:
+1. DHCP Discover: A broadcast massage that is sent from client asking for any DHCP server in the network (Broadcast)
+1.2 DHCP release: it also release the IP address if any are exists. the IP address of the requester client will be 0.0.0.0 when requesting for IP and the IP is sent in unicast form (Unicast)
+
+2. DHCP Offer: the DHCP will offer an address to the request of the Client. it will be a unicast due to MAC that is learned (Broadcast or Unicast
+
+3.DHCP Request: it is the message that client sends to indicate that it wants to use  the IP that is offered (Broadcast)
+
+4. DHCP Ack: it is an acknowledgement of DHCP server for the Request message of the client (Broadcast or Unicast)
+
+DHCP D-O-R-A
+
+
+DHCP Relay
+Some network might configure routers to act as the DHCP server for connected LANs. but large enterpirses often use a centralized DHCP server.
+
+if the server is centralized it won't receive the DHCP clients' broadcast DHCP messages.(broadcast messages don't leave the local subnet). to fix it, you can configure a router to act as a DHCP relay agent.
+the router will forward the clients' broadcast DHCP messages to the remote DHCP server as unicast messages.
+
+
+DHCP servr configuration in IOS
+• R1(config)#ip dhcp excluded-address 192.168.1.1 192.168.1.100 => specify a range of addresses that won't be givent to the DHCP clients. (for example for further configuration)
+
+• R1(config)#ip dhcp pool [name-of-pool] => it creates a DHCP pool with specificed name
+
+• R1(dhcp-config)#network 192.168.1.0 /24 => specify the sbunet of addreses to be assigned to clients (expect th excluded addressses)
+
+• R1(dhcp-config)#dns-server 8.8.8.8 => specify the DNS server that DHCP clients should use.
+
+• R1(dhcp-config)#domain-name (example.com) specify the domain name of the network (ie PC1 = pc1.example.com)
+
+• R1(dhcp-config)#default-router 192.168.1.254 => specify the default gateway
+
+• R1(dhcp-config)#lease (day) (hours) (minutes) OR infinite => configure the lease time.
+
+• R1#show ip dhcp binding => shows information about DHCP binds
+
+
+DHCP relay Agent configuration in IOS
+• R1(config)# interface g0/1 => configure the interface connected to the subnet of the client devices.
+
+• R1(config-if)#ip  helper-address 192.168.10.10 => configure the IP address of the DHCP server as the 'helper' address. remember that it should have a route to that DHCP server destination IP
+
+
+DHCP Client Configuration is IOS (rare and not common)
+• R1(config)# interface g0/1 => selecting the interface that DHCP configuration needs to applied on
+
+• R1(config-if)# ip address dhcp => use this mode to thell the router to use DHCP to learn its IP address.
+
+• R1(config)#do show ip interface g0/1 => to check the IP address information about the DHCP received IP of that interface
 
 
 
+### Day 40 SNMP ###
+• Simple Network Management Protocol (SNMP) can be used to monitor the status of devices, make configuration changes, etc.
+
+• There are two main types of devices in SNMP:
+1. Managed Devices:
+	- These are the devices being managed using SNMP like Routers and Switches.
+2.Network Management Station/System (NMS)
+	- The devices managing the manged devices
+	-This is the SNMP server (but it is actually NMS)
+
+
+SNMP Operations:
+1. Managed devices can notify the NMS of events.
+2. The NMS can ask the managed devices for information
+3. The NMS can tell the managed devices to change aspects of their configuration
+
+
+SNMP Components
+• NMS components:
+	- the SNMP Manager: is the software on the NMS that interfacts with the managed devices. it receives notification, sends requests for information and sends configurations
+	- the SNMP Application: provides an interface for the network admin to interact with. Displays alerts, statistics, charts.
+
+• Managed Devices:
+	- SNMP Agent: is the SNMP software running on the managed devices that interfact with the SNMP manager on the NMS. it sends notifcations to/receives messages from the NMS.
+	- The Management Information Base (MIB): is the structure that contains the variables that are managed by SNMP. Each variable is identified with tan Object ID (OID). for instance, interface status, traffic throughput, CPU usage. etc.
+
+
+SNMP Object IDs are organized in a hierarchical structure.
+.1.3.6.1.2.1.1.5 => 1.iso 3.indetified-organization 6.dod 1.internet 2.mgmt 1.mib-2 1.system 5.sysName
+for more information check out oid-info.com
+
+
+three versions of SNMP that are widely used:
+SNMPv1
+SNMPv2c
+SNMPv3: much more secure version that supports strong encryption and authentication.
+
+
+SNMP messages
+message Class	Description									Messages
+-Read			sent by the NMS to read information				Get, GetNext, GetBulk		
+-Write			sent by the NMS to change information			Set
+-Notification		Sent by managed devices to alert the NMS		Trap,Inform
+-Response		sent in response to a previous message/request	Response
+
+Read message:
+Get: request sent from the manager to the agent to retrieve the value of a varialbe (OID) or multiple variables.
+GetNext: a request sent from the manager to the agent to discover the available variables in te MIB.
+GetBulk: a more efficient version of the GetNext message. introduced in SNMPv2
+
+Write message:
+Set: a request sent from the manage to the agent to change the value of one or more variables. then agent will send a response with new values.
+
+Notifcation:
+Trap: a notifcation sent from the agnet to the manager. manager does not send a Response to acknowledge, so these messages are 'unreliable'
+Inform: a notification message that is acknowledged with a Response messages. it is used for communications between managers, but updated for agents too.
+
+
+SNMP Ports:
+SNMP Agent = UDP 161
+SNMP Manager = UDP 162
+
+
+SNMPv2c Configuration
+• R1(config)#snmp-server [contact location] (gmail for contact or address for location) => optional information
+• R1(config)#snmp-server community (password) ro/rw => configuring the SNMO community sttrings (passwords)
+ro = read only = no set messages. rw = read/write = can use set messages.
+• R1(config)#snmp-server host (ip address) version (2c) (password) => specify the NMS, version, and community.
+• R1(config)#snmp-server enable traps snmp (linkdown linkup) or (trap config) => configure the Trap types to send to the NMS
+
+
+
+### Day 41 Syslog ###
+Syslog is and industry standard protocol for message logging.
+on network devices, Syslog ca nbe used to log events such as changes in interface status (up/down), etc.
+Logs are essentials when troubleshooting issues, examing the cuase of incidents, etc.
+
+
+Syslog message format
+seq:time stamp: %facility-severity-MNEMONIC:description
+seq: => a sequence number indicating the order/sequence of messages.
+time stamp: => a timestamp indicating the time the message was generated (may not be displayed on some devices)
+facility => a value that indicates which process on the device generated the message
+severity => a number that indicates the severity of logged events
+MNEMONIC => a short code for the messages, indicating what happened.
+description => detailed information about the event being reported.
+
+
+Syslog Severity Levels
+Level	Keyword			Description
+0		Emergency		System is unusable
+1		Alert			Action must be taken immediately
+2		Critical			Critical conditions
+3		Error			Error conditions
+4		Warning			Warning conditions
+5		Notice			Normal but signifcant condition (notification)
+6		Informational		Informational emssages
+7		Debugging		Debug-level mesages
+
+
+Syslog Logging locations
+Console line: syslog messages will be displayed in the CLI when connected to the devices via the console port.
+VTY lines: syslog messages wil be dispalyed in the CLI when connected to the devices via Telnet/SSH
+Buffer: syslog messages will be saved on RAM. yo can veiw the messages with `show logging`
+External Server: you can configure the devices to send syslog messages to an external server. Syslog servers will lsiten for messages on UDP port 514.
+
+
+Syslog Configuration
+•R1(config)#logging console (level number/keyword) => configure logging to the console line it will log the levels higher than what is selected ( 6 to 0) or (5 to 0) higher means the severity.
+
+•R1(config)#logging monitor (keyword ex: informational) => logging to the vty lines.
+
+•R1(config)#logging buffer [size ex:8192] (level) => logging to the buffer
+
+•R1(config)#logging (ip address) => to an external server
+•R1(config)#logging host (ip address)
+
+•R1(config)#logging trap (keyword) => this sets the logging level for the external NMS server
+
+
+Terminal monitor
+even if `logging monitor (level)` is enable, by default syslog messages will not be displayed when connected via Telnet or SSH.
+for the messages to be displayed, you must use `terminal monitor` command. this command must be used every time you connect to the devices via Telnet or SSH.
+
+logging synchronous
+command `logging synchronous` for console logs should be used to enable synchronous logging in order to not interrupt on CLI commands. this will cause a new line to be printed if you typing is interrupted by a message.
+
+different of Syslog and SNMP
+syslog messages cannot be actively pulled or modified by server such as SNMP Get or SNMP Set.
+syslog and SNMP are used together.
+
+
+
+### Day 42 SSH (secure shell) ###
+
+Console Port Security
+by default no password is needed to access the CLI of a Cisco IOS devices via the console port.
+however, you can configure a password on the console line.
+
+• R1(config)#line console 0 => selecting the console 0 (it is always 0 cause only one single console line)
+• R1(config)# password (password) => configure th console line's password.
+• R1(config)# login => tell the device to require a user to enter the configured password to access.
+
+console port security - login local
+• R1(config)#login local => tell the devices to require a user to login using one of the configured usernames on the device.
+
+
+Layer 2 Switch - Management IP
+layer 2 switches don't perform packet routing. however, you can assign an IP address to an SVI (Switch Virtual Interface) to allow remote connection to the CLI of the switch (using Telnet or SSH).
+
+command for configuration:
+SW1(config)# interface vlan1
+SW1(config)# ip address 192.168.1.253 255.255.255.0
+SW1(config)# no shutdown
+the commands above configure the IP address on the SVI in the same way as on a multiplayer swtich. enable the interface if necessary.
+
+SW1(config)#ip default gateway 192.168.1.254 => configure the switch's default gateway. in this case, PC2 isn't in the same LAN as SW1. it won't work without default gateway.
+
+
+Telnet 
+Telnet (teletype Network) is a protocol used to remotely access to the CLI of a remote host. it sends data in plain text and No encryption,thus the data can be captured by wireshark. it is largely replaced by SSH for better security. telnet port is on 23
+
+Telent configuration
+• SW1(config)# enable secret (password) => enable password/secret. without it exec privileges will not be given.
+• SW1(config)# access-list 1 permit host (ip address) => configure an ACL to limit which devices can connect to the VTY lines.
+• SW1(config)# line vty 0 15 => telnet/SSH access can be configured for example 16 lines available so it means 16 users can be connected at once for virtual teletype.
+
+• SW1(config-line)# transport input telnet => allows only Telnet connections.
+• SW1(config-line)# transport input telnet ssh => allows both
+• SW1(config-line)# transport input none => allows no connections.
+• SW1(config-line)# transport input all => allows all
+
+• SW1(config-line)# access-class 1 in => apply the ACL to the VTY lines.
+
+
+SSH (secure shell)
+there are two version of SSH, SSH & SSHv2 (which is more secure)
+if a device supports both version 1 and 2, it is said tu run 'version 1.99' which it means that both can be supported. ssh is on port 22 TCP.
+
+check SSH support
+IOS images that support SSH will have 'k9' in their name exampe: vios_12-ADVENTERPRISEK9-M
+NPE (No Payload Encrpytion) IOS images do not support cryptographic features such as SSH.
+
+SSH RSA Keys (Rivest-Shamir-Adleman)
+to enable and use SSH, you must generate an RSA public and private key pair.
+the keys are used for data encrpytion/decryption, authentication,etc.
+
+configuring RSA keys:
+• SW1(config)#ip domain name (domainName) => the FQDN of the device is used to name the RSA keys FQDN = Fully Qualified Domain Name (host name + domain name)
+
+• SW1(config)# crypto key generate rsa => generates the rsa key.
+
+• SW1(config)#show ip ssh => will show the SSH status.
+
+SSH configuration process:
+1. Configure host name
+2. Configure DNS domain name
+3. Generate RSA key pair
+4. Configure enabled PW, username/PW
+5. Enable SSHv2 (only)
+6. Configure VTY lines
+
+Connect: ssh -l (username) (ip-address) or ssh username@ip-address
 
 
