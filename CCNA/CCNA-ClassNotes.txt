@@ -2243,3 +2243,487 @@ PAT Configuration (interface)
 • R1(config)#ip nat inside source list 1 interface g0/0 overload 
 note:
 that it will use the Router interface public IP address for translating 
+
+
+
+### Day 46 QoS (Quality of Service) 1/2 ###
+firstly, lets talk about IP phones because they are one of the Topics for QoS.
+IP Phones
+Traditional phones operate over the public swtiched telephone network(PSTN), sometimes this is called POTS(Plain Old Telephone Service).
+IP phones use VoIP(Voice over IP) technologies to enable phone calls over an IP network, such as the internet.
+IP phones are connected to a switch just like any other end host.
+
+IP phones have an internal 3-port switch.
+	- 1 portis the 'uplink' to the external swtich
+	- 1 port is the 'downlink' to the PC
+	- 1 port connects internally to the phone itself.
+This allows the PC and the IP phone to share a single switch port. Traffic from the PC passes through the IP phone to the switch.
+
+It is recommended to separate 'voice' traffic (from the IP phone) and 'data' traffic (from the PC) by placing them in separate VLANs.
+	- This can be accomplisehd using a voice VLAN.
+	- Traffic from the PC will be untaged, but traffic from the phone will be tagged with a VLAN ID.
+
+configuration:
+• SW1(config-if)# interface gigabitethernet0/0
+• SW1(config-if)# switchport access vlan 10
+• SW1(config-if)# switchport voice vlan 11
+with the configuration above PC will send traffic untagged, as normal. SW1 will use CDP to tell Phone1 to tag Phone1's traffic in VLAN 11
+
+note:
+as you know for sending multiple data over a single port, trunk is being used but, by using `show interfaces g0/0 switchport ` you will see that interface g0/0 is static access.
+althoug hthe interface sends/receives traffic from two VLANs, it is not considered a trunk port. it is considere dan access port.
+
+
+PoE (Power over Ethernet)
+PoE allows Power Sourcing Equipment (PSE) to provide power to Powered Devices (PD) over an Ethernet cable.
+Typically the SPE is a switch and the PDs are IP phones, IP caemras, wireless access points, etc.
+The PSE receives AC power from the outlet, converts it to DC power, and supplies that DC power to the PDs.
+PoE has a process to detemine if a connected device needs power, and how much power it needs.
+	- When a device is connected to a PoE-enabled port, the PSE sends low power signals, monitors the response, and determines how much power the PD needs. it is called power policing.
+Power Policing can be cofigured to prevent a PD from taking too much power.
+
+Commands:
+• SW1(config-if)# power inline police => it is equivalent of `power inline police action err-disable` which cinfogure power policing with the default setting: disable the port and send a syslog message if a PD draws too much power.
+• SW1(config-if)# power inline police action log => does not shutdown the intrface if the PD draws too much power. it will restart the interface and send a syslog message.
+• SW1# show power inline police (interface) => will show status of power line of that interface
+
+Note:
+we have different PoE with different standards such as PoE+(Type 2, Standard:802.3at) or UPoE+ (Type 4, Standard:802.3bt)
+
+
+QoS
+voice traffic and data traffic used o use entirely separate networks:
+	- Voice traffic used the PSTN
+	- Data traffic used the IP network (enterprise WAN, Internet, etc)
+however, modern networks are typically converged networks in which IP phones, video Traffics, etc, all share the same IP network. this enables cost savings as well as more advanced features for voice and video traffic. for example integration with collaboration software (Cisco WebEx, etc)
+however, the different kinds of traffic now have to compete for bandwidth.
+QoS is a set of tools used by network devices to apply different treatment to different packets.
+
+
+QoS is used to manage the following characteristics of network traffic:
+1. Bandwidth
+	The overall capacity of the link, mesaured in bits per second(Kbps, Mbps, Gbps, etc)
+	QoS tools allow you to reserve a certain amount of a link's bandwidth for specific kinds of traffic. for eaxmple: 20% voice traffic, 30% for specific kinds of data traffic, leaving 50% for all other traffic.
+
+2. Delay
+	The amount of time it takes traffic to go from source to destination = way-way delay
+	The mount of time it takes traffic to go from source to destination and return = two-way delay
+
+3. Jitter
+	The variation in one-way delay between packets sent by the same application
+	IP phones have a 'jitter buffer' to provide a fixed delay to audio packets.
+
+4. Loss
+	The % of packets sent that do not raech their destination
+	Can be caused by faulty cables.
+	Can also be caused when a devices' packet queues get full and the device starts discarding packets.
+
+Standards are recommended for acceptable interactive audio (ie: phone call, video call) quality:
+	one-way delay: 150ms or less
+	Jitter: 30 ms or less
+	Loss: 1% or less
+
+
+QoS - Queuing
+If a network device receives messages faster than it can forward them out of the appropriate interfacem the messages are plced in a queue.
+by default, queued messages will be forwarded in a First In First Out (FIFO) manner. if the queue is full new packets will be dropped. This is called tail drop.
+Tail Drop can lead to TCP global synchronization.
+
+TCP sliding window:
+	host using TCP use the 'sliding window' increase/decrease the rate at which they send traffic as needed.
+	when a packet is dropped it will be re-trasnmitted.
+	when a drop occurs, the sender will reduce the rate it sends traffic.
+	it will then gradually increase the rate.
+when the queue fills up the tail drop occurs, all TCP host sending traffic will slow down the rate at which they send traffic.
+they will all then increase the rate at which they send traffic, which rapidly leads to more congestion, dropped packets, and the process repeats again.
+Network congestion -> Tail Drop -> Global TCP window size decrease -> Network underutilized -> Global TCP window size increase -> Network congestion ...
+
+Solution to prevent tail drop and TCP global synchronization wave is Random Early Detection (RED).
+when the amount of traffic in the queue reaches a certain threshold, the device will start randomly dropping packets from select TCP flows.
+In standard RED, all packets are treated the same.
+an improved version, Weighted Random Early Detection (WRED), allows you to control which packets are dropped depending on the traffic class.
+
+
+
+### Day 47 QoS 2/2 ###
+the purpose of QoS is to give certain kinds of network traffic priority over others during congestion.
+
+Classification 
+Classification organized network traffic (packets) into traffic classes (categories)
+classification is fundamental to QoS. to give priority to certain types of traffic, you have to identify which type of traffic to give priority to.
+
+there are many methods of classifying traffic. some examples:
+	- an ACL. traffic which is permitted by the ACL will be given certain treatment, other traffic wil not
+	-NBAR (Network Based Application Recognition) performs a deep packet inspection, looking beyong the Layer 3 and Layer 4 information up to Layer 7 to identify the specifci kind of traffic.
+	- In the Layer 2 and Layer 3 headers there are specific fileds used for this purpose.
+
+The PCP (Priority Code Point) field of the 802.1Q tag (in the Ethernet header) can be used to identify high/low priority traffic. only when there is a dogt1q tag. it is also known as COS (Class Of Service. its use is defined by IEEE 802.1p
+
+the DSCP (Differentiated Services Code Point) field of the IP header can also be used to identify high/low priority traffic.
+
+
+PCP/COS
+PCP or known as COS is 3 bits (8 possible values. 2^3 =8) value field inside Ethernet Header which defines the Priority of Traffic.
+
+PCP Value		Traffic Types
+0				Best Effort (default)
+1				Background
+2				Excellent effort
+3				Critical applications
+4				Video
+5				Voice
+6				Internetwork control
+7				Network control
+
+* 'best effort' delivery means there is no guarantee that data is delivered or that it meets any QoS standard. This is regular traffic, not high-priority.
+* IP phones mark call signaling traffic (used to establish calls) as PCP3.
+they mark the actual voice traffic as PCP5.
+
+Because PCP is found in the dot1q header, it can only be used over the following connections:
+	- trunk links
+	- access links with a voice VLAN
+note:
+traffic in external destinations will not have a dot1q tag, like router. so traffic over those links will not be marked with a PCP value. it is a limitation which layer 3 classification methods don't have.
+
+
+The IP ToS (Type of Service) byte
+in IP headers we also have a ToS field which contains the DSCP (Differentiated Services Code Point) and ECN (explicit congestion Notification) with 6 bits = 64 values (0-63). 
+however in old ToS byte it was contained IPP (IP precedence) which only 3 bits where is used. 3 bits = 8 values (0-7)
+
+IP Precedence
+Standard IPP markings are similar to PCP. the values between 0 to 7 and in which 7 and 6 are reserved. for network control traffic.
+
+DSCP (Differentiated Services Code Point)
+DSCP(6bit)  ECN(2bits) => 6 bits = 64 values (0-63)
+With IPP updated to DSCP, new standard markings had to be decided upon.
+	- Default Forwarding (DF) - best effort traffic
+	- Expedited Forwarding (EF) - low loss/latency/ jitter traffic (usually voice)
+	- Assured Forwarding (AF) = A set of 12 standard values
+	- Class Selector (CS) - A set of 8 standard values, provides backward compatibility with IPP
+
+DF (Default Forwarding):
+bits are => 000000
+DF is used for the best-effort traffic.
+The DSCP marking for DF is 0
+
+EF(Expedited Forwarding)
+EF is used for traffic that requires low loss/latency/jitter
+THe DSCIP marking for EF is 46 => bits are 101110
+
+AF (Assured Forwarding) defines four traffic classes. All packets in a class have the same priority.
+Within each class, there are three levels of drop precedence.
+	- higher drop precedence = more likely to drop the packet during congestion
+'000' '00' '0' = 'Class' 'Drop Precedence' 'Always 0' => AF'XY'
+for example:
+001010 => AF11: which will be equal to DSCP 10
+001100 => AF12: which will be equal to DSCP 12
+010110 => AF23: which will be equal to DSCP 22
+Formula to conver from AF value to decimal DSCP value: 8X + 2Y
+
+AF41 (34) will get the best treatment
+AF13 (14) will get the wort treatmentl
+
+
+CS (Class Selector) defiens eight DSCP values for backward compatibility with IPP
+there are three bits that were added for DSCP are set to 0, and the origibal IPP bits are used to make 8 values.
+IPP:  0		1		2		3		4		5		6		7
+CS:  CS0		CS1		CS2		CS3		CS4		CS5		CS6		CS7
+DSCP: 0		8		16		24		32		4O		48		56
+
+
+RFC	4954
+this RFC was developed to bring all of values together and standardize their use.
+- Voice traffic: EF
+- Interactive video: AF4x
+- Streaming video: AF3x
+- High Priority data: AF2x
+- Best effort: DF
+
+
+Trust Boundaries
+the turst boundary of a network defines where deviecs trust/don't trust the QoS markings of received messages.
+if the markings are trusted, the devices will forward it. if not the device will change the markings according to the configured policy.
+Recommendation:
+if an IP phone is connected to the swtich port, it is recommended to move the trust boundary to the IP phones.
+this is done via configuration on the swtich port connected to the IP phone.
+		
+
+Queuing/Congestion Management
+When a network device receives traffic at a faster rate than it can forward the traffic out of the appropriate interface, packets are placed in that interface's queue as they wait to be forwarded.
+when the queue becomes full, packets that don't fit in the queue are dropped (tail drop)
+RED and WRED drop packets early to avoid tail drop.
+
+An essential part of QoS is the use of multiple queues.
+	- This is where classification plays a role. the device can match traffic based on various factors (for example the DSCP marking in the IP header) and then place it in the appropriate queue.
+	- However, the device is only able to forward one frame out of an interface at once, so a scheduler is used to decie which queue traffic is forwarded from next.
+		- Prioritization allows the scheduler to give certain queues more priority than others.
+
+Steps are:
+ingress traffic -> (routing, etc) -> Classification -> queuing -> scheduling -> transmission.
+
+A common scheduling method is weighted round-robin.
+	round-robin: packets are taken from each queue in order, cyclically.
+	weighted: more data is taken from high priority queues ecah time the scheduler reaches that queue
+
+CBWFQ(Class-based Weighted Fair Queuing) is a popular method of scheduling, using a weighted round-robin scheduler while gauranteeing each queue a certain percentage of the interace's bandwidth during congestion.
+
+Round-robing scheduling is not ideal for voice/video traffic. even if the voice/video traffic receives aguaranted minimum amount of bandwidth, round-robin can add delay and jitter.
+
+LLQ (Low Latency Queuing) designateds one (or more) queues as stricts priority queues.
+	- This means that if there is traffic in the queue, the scheduler will always take the next packet from that queue untill it is empty
+this is very effective for reducing the delay and jitter of voice/video traffic.
+• however, it has the downside of potentially starving other queues if there is always traffic in the designated strict priority queue.
+• Policing (next slide) can control the amount of traffic allowed in the strict priority queue so that it can't take all of the ;inks' bandwidth.
+
+
+Shaping and Policing
+Traffic shaping and policing are both used to control the rate of traffic.
+• Shaping buffers traffic in a queue if the traffic rate goes over the configured rate.
+• Policing drops traffic if the traffic rate goes over the confgured rate.
+note: policing also has the option of re-marking the traffic instead of dropping it.
+	- Burst traffic over the configured rate is allowed for a shrot period of time.
+	- this accomodates data application which typically are 'bursty'. 
+	- the aount of burst traffic allowed is configurable
+in both cases, classification can be used to allow for different rates for different kinds of traffic.
+
+
+
+### Day 48 Security Fundamental ###
+
+The Principle of the CIA Triad from the foundation of security:
+1. Confidentiality:
+	- Only authorized users should be able to access data. some data is public but some is secret and should be only be accessed by specific people.
+2. Integrity
+	- Data should not be tampered with (modified) by unauthorized users and should be correct and authentic
+3. Availability
+	- The network/system should be operational and accessible to authorized users.
+
+Attackers can threaten the confidentiality , integrity, and available of an enterprise's systems and information.
+
+
+Terms
+• A Vulnerability is any potential weakness that can compromise the CIA of a system/info.
+	- A potential weakness isn't a problem on its own.
+• An Exploit is something that can potentially be used to exploit the vulnerability.
+	- Something that can potentially be used as an exploit isn't a problem on it's own
+• A Threat is the potential of a vulnerability to be exploited
+	- A hacker exploiting a vulnerability in your system is a threat.
+• A mitigation technique is something that can protect against threats.
+	- Should be implemented everywhere a vulnerablitiy can be exploited: client devices, server,s swtiches, routers, firewalls, etc.
+
+
+Common Attacks:
+• DoS (denial of service) attacks
+• Spoofing attacks
+• Reflection/amplification attacks
+• Man-in-the-middle attacks
+• Reconnaissance attacks
+• Malware 
+• Social engineering attacks
+• Password-related attacks
+
+
+• DoS (Denial-of-Service) attacks
+DoS attacks are targeting the A in Triad which is accessibility
+one common DoS attack is the TCP SYN flood:
+• TCP has three-way handshake: SYN | SYN-ACK | ACK
+1. the attacker send countless TCP-SYN messages to the target.
+2. the target sends a SYN-ACK message in reponse to each SYN it receives.
+3. the attacker never replies with the final ACK of the TCP three-way handshake
+4. incomplete connections fill up the target's TCP connection table.
+5. the attacker continues sending SYN messages.
+6. the target is no longer able to make legitimate TCP connection.
+
+• DDoS (Distributed Denial-of-Service) Attacks: the attacker infect many target computer with malware and uses them all in initiate a denial-of-service attack. for exmaple a TCP SYN Flood attack.
+this group of infected computers is called a botnet.
+
+
+• Spoofing attacks
+To spoof an address is to use a fake source address (IP or MAC address)
+for instance, it can be used to cause DHCP exhaustion attack.
+an attacker uses spoofed MAC addresses to flood DHCP Discover messages. The target server's DHCP pool becomes full, resulting in a denial-of-service to other devices.
+
+
+• Reflection/Amplification attacks
+In a reflection attack, the attacker sends traffic to a reflector, and spoofs the source address of its packets using the target's IP address.
+the reflector (ie. a DNS server) sends the reply to the target's IP address
+if the amount of traffic sent to the target is large enough, this can result in a denial-of-service
+A reflection attack becomes an amplification attack when the amount of traffic sent by the attacker is small, but it triggers a large amount of traffic to be sent from the reflector to the target.
+
+
+• man in the middle attack
+in this attack, the attacker places himself between the srouce and destination to eavesdrop on communications, or to modify traffic before it reaches the destination.
+a common example is ARP spoofing, also known as ARP poisoning.
+a host sends an ARP request, asking for the MAC adress of another device.
+the target of the request sends an ARP reply, informing the requester of its MAC address.
+the attacker waits and sends another ARP reply after the legitimate replier. 
+If the attacker's ARP reply arrives last, it will overwrite the legitimate ARP entry in PC1's ARP table
+
+attacker can inspect or modify the transfering data and forwards it to destinations. this compromises the Confidentiality and Integrity of communication.
+
+
+• Reconnaissane attack
+Reconnoaissance attacks aren't attacks themselves, but they are used to thater information about a target which can be used for a future attacks.
+example of that is:
+nslookup to learn the IP address of a site.
+or a WHOIS query to learn email addresses, phone numbers, physical addresses, etc.
+
+
+• Malware (malicious software)
+Malware referes to a variety of harmful programs that can infect a computer.
+- Viruses: infect oher software (a 'host program'). The virus spreads as the software is shared by users. typically they corrupt or modify files on the target computer.
+- Worms: do not require a host program. they are standalone malware and they ae able to spread on their own, without user interaction. it can carry 'pay loader' and can cause additional harm to target device.
+- trojan horses: they are harmful software that is disguised as legitimate software. they are spread through user interaction uschas opening email attachments, or downloading a file from the internet.
+- etc.
+
+
+• Social Engineering attacks
+Social enginnering involve psychological manipulation to make the target reveal confidentail information or perform some actions that don't directly affect on IT team of a company.
+- Phishing: typically involves fradulent emails that appear to come from a legitimate business and contain links to a fraudulent website that seems legitimate.
+	- spear phishing is a more targeted from a phishing. ie. aimed at employees of a certain company.
+	- whaling is phishing targeted at high-profile individuals. ie. a company president
+- Vishing (voice Phishing): is phishing performed over the phone
+- Smishing (SMS phishing): is pihshing using SMS text messages.
+
+- Watering hole: attacks compromise sites that the target victim frequently visits. if a malicious link is placed on a website the target trusts, they might not hesitate to click it.
+
+- Tailgating: attacks involve entering restricted, secured areas by simply walking in behind an authorized person as they enter.
+
+
+• Password-related attacks
+the most system use a username/password combination to authenticate users.
+attackers can learn a user's passwords via mutiple methods:
+	- Guessing
+	- Dictionary attack: A program runs throug ha 'dictionary' or list of common words/passwords to find the target's password.
+	- Brute force attack: A program tries every possible combination of letters, numbers, and special characters to find the target's password. that is why at LEAST 8 characters (preferably more) and special characters are used.
+
+
+Multi-factor Authentication 
+multi-factor authentication involves providing more that just a username/password to prove your identity.
+items that are used:
+	- Something you know: a username/password combination
+	- something you have: a pressing a notification that appears on your phone, badge scanner, etc
+	- something you are: biometrics such as a face, palm scan. etc.
+
+Requiring multiple factors of authentication greatly increases the security.
+
+
+Digital certificates
+Digital certificates are another form of authentication used to prove the identity of the holder of the certificate.
+Entities that want a certificate to rpove their identity their identity send a CSR (Certificate Signing Request) to a CA (Certificate Authority). which will generate and sign the certificate.
+
+
+Controlling and monitoring users with AAA
+AAA (triple A) stands for Authentication, Authorization, and Accounting.
+it is a framework for controlling and monitoring users of a computer system (ie. a network)
+- Authentication is the process of verifying a user's identity. for example logging
+- Authorization is the process of granting the user the appropriate access and permissions.
+- Accounting is the process of recording the user's activities on the system.
+
+Enterprises tpically use a AAA server to provide AAA services
+	- ISE (Identify Service Engine) is Cisco's AAA server.
+
+AAA servers usually support the followjng two AAA protocols:
+	- RADIUS: an open standard protocol. uses UDP ports 1812 and 1813
+	- TACACS: a CIsco propriety protocol. uses TCP prot 49
+
+
+Security Program elements:
+- User awareness: program are desgined to make emplyees awae of potential security threats and risk. for example preparing a harmless simulating and testing employees on security.
+- User training: program are more formal than user awareness programs. for example dedicating training sessions.
+- Physical access control: protects equipment and data from ptential attackers by only allowing authorized users ito protected areas such as network closets or data center floors. like multifactor locks.
+
+
+
+### Day 49 Port Security ###
+Port security is a security feature of Cisco swtiches, it allows you to control which source MAC address(es) are allowed to enter the switchport. if an unauthorized source MAC address enters the port, an action will be taken.
+	- The default action is to place the interfcae in an 'err-disable' state for the unauthorized source MAC address.
+
+When you enable port security on an interface with the default settings, one MAC address is allowed.
+	- you can configure the allowed MAC adddress manually.
+	- if you don't configure it manually, the switch will aloow the first source MAC adress that enters the interface.
+You can change the maximum number of MAC address allowed.
+A combination of manually configured MAC addresses and dynamically learned addresses is possible.
+
+However, MAC address spoofing is a simple task.
+	- its easy to configure a device to send frames with a different with a different source MAC address.
+Rather than manually specifying the MAC addresses allowed on each port, port security's ability to limit the number of MAC addresses allowed on an interface is more useful.
+example: think of the DHCP starvation attack and the way it can be prevented.
+
+
+Enabling Port Security
+Port security can be enabled on access port or trunk ports, but they must be statically configured as access or trunk and cannot be configured on dynamic ports.
+• SW1(config)# interface g0/1
+• SW1(config-if)# switchport port-security
+
+use `• SW1(config)#do show interface g0/1 switchport` => checks the status in administrative mode.
+
+• SW1# show port-security interface (interface) => shows the port-security status.
+
+
+Re-enabling an interface (manually)
+before re-enabling the interface, disconnect the unauthorized device and then shutdown and then no shutdown the interface
+• SW1(config)# interface g0/1
+• SW1(config)# shutdown
+• SW1(config)# no shutdown
+
+
+Re-enabling an interface (ErrDisabled Recovery)
+It causes the err-disabled interfaces to be automatically re-enabled after a certian period of time.
+there are actually various reasons an interface can enter an err-disabled state.
+• SW1# show errdisable recovery => it shows list of all reasons
+note:
+every 5 minutes (by default), all err-disabled interfaces will be re-enabled if err-disabled recovery has been enabled.
+
+the command for enabling the recovery:
+• SW1(config)# errdisable recovery cause psecure-violation
+• SW1(config)# errdisable recovery interval (time in second, ie: 180)
+
+Errdisable Recovery is useless if you don't remove the cause of err-disabling
+
+
+Violation Modes
+the re are three different violation modes that determine what the switch will do if an unauthorized frame enters an interface configured with port security.
+1. Shutdown
+	- Effectively shuts down the port by placing it in an err-disabled state.
+	- Generates a Syslog and/or SNMP message when the interface is disabled.
+	- The violation counter is set to 1 when the interface is disabled.
+2. Restrict
+	- The switch discards traffic from unauthorized MAC addresses.
+	- the interface is NOT disabled
+	- Generates a Syslog and/or SNMP message each time an unauthorized MAC is detected.
+	- The violation counter in incremented by 1 for each authorized frame
+3. Protect
+	- same as the Resticts but it doesn't generate Syslog/NSMP messages. and it does NOT increment the violation counter.
+
+Commands for violation mode
+• SW1(config-if)#switchport port-security
+• SW1(config-if)#switchport port-security mac-address (000a.000a.000a)
+• SW1(config-if)#switchport port-security violation ( restrict | protect )
+
+• SW1# show port-security interface (interface) => for status.
+
+
+Secure MAC address aging
+• By default secure MAC addresses will not 'age out' (Aging Time : 0 mins)
+	- Can be configured with `switchport port-security agint time (minutes)`
+• The default aging type is Absolute:
+	- Absolute: After the secure MAC address is learned, the aging timer starts and the MAC is removed after the timer expires, even if the switch continues receiving frames from that source MAC address.
+	- Inactivity: After the secure MAC address is learned, the aging timer start but is reset every time a frame from that source MAC address is received on the interface.
+	- Aging type is configured with `switchport port-security aging type (absolute | inactivity)`
+
+Secure Static MAC aging (addresses configured with `switchport port-security mac-address (x.x.x)) is disabled by default.
+can be enabled by `switchport port-security aging static.
+
+
+Sticky Secure MAC addresses.
+WHen you issue the `switchport port-security mac-address sticky` command, all current dynamically-learned secure MAC addresses will be converted to sticky secure MAC addresses.
+`no switchport port-security mac-address sticky` will convert all MAC addresses to regular dynamically-learned secure MAC addresses.
+
+the sticky secure MAC addresses will never age out.
+	- you need t osave the running-config to the startup-config to make them truly permanent. (or else they will not be kept if the switch restarts)
+
+overall of MAC address table:
+	- Sticky and Static secure MAC addresses will have a type of STATIC
+	- Dynmically-learned secure MAC addresses will have a type of Dynamic
+	- You can view all secure MAC addresses with `show mac address-table secure`
