@@ -2727,3 +2727,217 @@ overall of MAC address table:
 	- Sticky and Static secure MAC addresses will have a type of STATIC
 	- Dynmically-learned secure MAC addresses will have a type of Dynamic
 	- You can view all secure MAC addresses with `show mac address-table secure`
+
+
+
+### Day 50 DHCP Snooping ###
+DHCP Snooping is a security feature of "switches" that is used to filter DHCP messages received on untrusted ports.
+DHCP snooping only filters DHCP messages. Non-DHCP messages aren't affectec.
+All ports are untrusted by default. usually, uplink ports (point away toward infrustructure) are configured as trusted ports, and downlink ports (connected to end hosts) ports remain untrusted. so traffic from end hosts are examined.
+DHCP snooping can help to prevent DHCP spoofing. or DHCP poisoning (Man-in-the-middle)
+
+DHCP Poisoning:
+similar to ARP Poisoning, DHCP poisoning can be used to perfomr a man-in-the-middle attack.
+a spurious DHCP server replies to client's DHCP discover messages and assigns them IP addreseses, but makes the client use the spurious erver's IP as the default gateway.
+the attacker can examine/modify the trafic before forwarding it to the legitimate default gateway.
+
+
+when DHCP snooping filters messages, it differentiates between DHCP server messages and DHCP client messages.
+DHCP messages:
+• Messages sent by DHCP Servers:
+	- OFFER
+	- ACK
+	- NACK: opposite of ACK, used to decline a client's REQUEST
+• Messages sent by DHCP Clients:
+	- DISCOVER
+	- REQUEST
+	- RELEASE: Used to tellthe server that the client no longer needs its IP address
+	- DECLINE: Used to decline the IP address offered by a DHCP server.
+
+
+DHCP Snooping Operation
+If a DHCP message is received on a trusted port, forward it as normal without inspection.
+If a DHCP message is received on an untrusted port, inspect it and act as follows:
+	- If it is a DHCP server message, Discard it
+	- If it is a DHCP Client message, perfomr the following checks:
+		-- DISCOVER/REQUEST messages: check if the frames source MAC address and the receiving interface match the entry in the DHCP snooping bidning table.
+		-- RELESAE/DECLINE messages: CHeck if the packet's source IP address and the receiving interface match the entry in the DHCP snooping binding Table.
+
+When a client successfully leases an IP adddress from a server, create a new entry in the DHCP snooping binding table.
+
+
+Configuring DHCP Snooping
+for configuring DHCP snooping on a switch first, you have to enable it on switch globally and then for each interface vlan id
+• SW2(config)#ip dhcp snooping
+• SW2(config)#ip dhcp snooping vlan 1
+• SW2(config)#no ip dhcp snooping information option
+note: DHCP option 82 also know as the DHCP relay agent infrormation option is one of DHCP options.
+it provides additional information about which DHCP relay agent received the client's message on which interface, in which VLAN, etc.
+DHCP relay agent can add option 82 to message they forward to the remote DHCP server.
+by defautlt Cisco switches will drop DHCP messages with iption 82 that are recieved on an untrusted port. that is why it should be configured to not notify it on the switch.
+• SW2(config)#interface g0/0
+• SW2(config-if)#ip dhcp snooping trust => it will set the selected interface as trusted.
+
+• SW2#show ip dhcp snooping binding => to check the status of DHCP MAC and IP address/interface table. (it uses the data to make check if their IP address/interface ID match the entry in the DHCP snooping table to commit operation on them.
+
+
+DHCP snooping rate-limiting
+it can limit the rate at which DHCP messages are allowed to enter an interface.
+If the rate of DHCP messages crosses the configured limit, the interface is err-disabled. it can protect against DHCP exhaustion attacks.
+it canbe manaully re-enabled or automatically re-enabled. with errdisable recovery
+configuration for rate-limiting:
+• SW1(config)#interface range g0/1 -3 => selecting a range of interfaces 
+• SW1(config)#ip dhcp snooping limit rate (number of request for limitation)
+• SW1(config)#errdisable recovery cause dhcp-rate-limit => for checking errdisable table.
+
+
+
+### Day 51 Dynamic ARP Inspection ###
+Review: ARP is used to learn the AMC address of another device with a known IP address. for example PC will use ARP to learn the MAC address of its default gateway.
+Typically it is a two message exchange: request and reply
+ARPs are only sent inside local network thats why it doesn't need IP header.
+
+Review: gratuitous APR (GARP) message is an ARP reply that is sent without receiving an ARP request. it is sent in the broadcast MAC address.
+
+
+DAI (Dynamic ARP Inspection)
+• DIA is a security feature of switches that is used to filter ARP messages received on untrusted ports.
+• DIA only filter ARP messages. Non-ARP messages aren't affected.
+• All ports are untrusted by default
+	- Typically, all ports connected to other network deices (switches, routers) should be configured as trusted, while interfaces connected to end hosts should remain untrusted.
+
+
+ARP Poisoning (man in the middle)
+the attacker can send gratutious ARP messages using another device's IP address.
+other devices in the network will receive the GARP and update their ARP tables, causing them to send traffic to the attacker instead of the legitimate destination.
+
+DAI inspects the sender MAC and sender IP fields of ARP messages received on untrusted ports and check that there is a matching entry in the DHCP snooping binding table.
+	- if there is a matching entry, the ARP message is forwarded normally, other wise it will be discarded.
+
+ARP ACLs can be manually configured to map IP addresses/MAC addresses for DAI to check. useful for hosts that don't use DHCP. DAI can do more in-depth checks also, but these are optional.
+
+DAI supports rate-limiting to prvent attackers from overwhelming the switch.
+DAI and DHCP snooping require work from the switch's CPU. even if the attacker's messages are blocked they can overload the CPU.
+
+
+DAI Configuration
+DAI only requires one command to enable it:
+• SW1(config)# ip arp inspection vlan 1
+• SW1(config)# interface range g0/0 - 1 => selecting one or range of interfaces to implement DAI
+• SW1(config-if-range)# ip arp inspection trust
+
+• SW1# sow ip arp inspection interfaces => shows status of interfaces with DAI
+note:
+DAI rate limiting is enabled on untrusted ports by default with a rate of 15 packets per second.
+DAI burst interval allows you configure rate limitig like this:
+	x packets per y seconds
+
+
+DAI Rate Limiting
+• SW1(config-if-range)#ip arp inspection limit rate 25 burst interval 2 => (the burst interval is optional. if you don't specify it, the default is 1 second.) this command will limit 25 message per 2 second on the selected range of interfaces.
+
+if ARP are received faster than the specified rate, the interface will be err-disabled. it can be turned on manually or with errdisable recovery cause arp-inspection
+
+DAI optional checks:
+• SW1(config)# ip arp inspection validate dst-mac
+dst-mac: validate destination AMC address
+ip: validate IP addresses
+src-mac: validate source MAC address
+• SW1(config)# ip arp inspection validate dst-mac ip src-mac => it enables are three validation
+• SW1(config)# do show running-config | include validate => to see all validations checks for DAI
+
+
+ARP ACLs
+• SW1# show ip dhcp snooping binding => to check the ARP table inspection of switch
+
+1. to prepare a ACL APR table for a switch first we need to create it one.
+• SW1(config)# arp access-list ARP-ACL-1 => create an access-list with the name ARP-ACL-1
+• SW1(config-arp-nacl)# permit ip host 192.168.1.100 mac host 9c29.2f1e.7700
+
+2. then we need to apply it on interfaces
+• SW1(config)# ip arp inspection filter ARP-ACL-1 vlan 1
+
+• SW1# show ip arp inspection => shows the table of all information about ARP inspection
+
+
+
+### Day 52 LAN Architectures ###
+to understand the networks you will be configuring and troubleshooting it's important to know some basics of network design.
+
+Common Terminologies
+Star: when several devices all connect to one central device we can draw them in a 'star' shape like below, so this is often called a 'star topology'.
+
+Full Mesh: when each device is connected to each other device forming a mesh and all are connected with each other.
+Partial Mesh: When some devices are connected to each other, but not all.
+
+
+Two-Tier Campus LAN Design
+Campus LAN referred to designs which one building office or two building connected to each other.
+
+the two-tier LAN design consists of two heirarchical layers:
+	- Access Layer
+	- Distribution Layer
+
+two-tier is also called a 'Collapsed Core' design because it omits a layer that is found in the Three Tier design: the Core Layer.
+
+• Access Layer:
+	- the layer that end hosts connect to (PCs, printers, cameras, etc)
+	- typically Access Layer Switches have lots of ports for end hosts to connect to
+	- QoS marking is typically done here cause mark traffic should happen as early as possible
+	- Security services like port security, DAI, etc are typically perfomred here
+	- switchports might be PoE-enabled for wireless APs, IP phones, etc.
+
+• Distribution Layer:
+	- aggregates connections from the Access Layer Switches
+	- typically is the border between Layer 2 and Layer 3
+	- connects to services such as Internet, WAN, etc.
+
+in collapsed core designs. the Distribution Layer is sometimes called the Core-Distribution Layer.
+
+
+Three-Tier Campus LAN Design
+in large LAN networks with many Distribution Layer switches (for example in separate buildings), the number of connections required between Distribution Layer switches grows rapidly.
+
+to help scale large LAN networks, you can add a Core Layer.
+Cisco recommends adding a Core Layer if there are more than three Distribution Layer s in a single location.
+
+The three-tier LAN design consists of three hierarchical layers:
+Access Layer
+Distribution Layer
+Core Layer
+
+Core Layer:
+	- Connects Distribution Layers together in large LAN networks
+	- The focus is speed ('fast transport')
+	- CPU-intensive operations such as security, QoS marking/classfication, etc. should be avoided at this layer.
+	- connections are layer 3, no spanning-tree.
+	- Should maintain connectivity throughout the LAN even if devices fail.
+
+
+Spine-leaf Architecture - cisco ACI (Application Centric Infrustructure)
+Data centers are dedicated  spaces/buildings used to store computer systems such as servers and network devices.
+Traditional data center designs used a three-tier architecture (Access-Distribution-Core). this worked well when mosft traffic in the data center was norht-south.
+with the prcedence of virtual servers, applications are often deployed in a distributed  manner (across multiple physical servers), which increase the amount of east-west traffic in the data center.
+
+the traditional three-tier architecture led to bottlenecks in bandwidth as well as variability in the server-to-server latency depending on the pat hthe traffic takes.
+
+to solve this, Spine-leaf architecture (also called Clos architecture) has become prominent in data centers.
+
+Rules about Spine-LEaf architecture;
+	- Every LEaf switch is connected to every Spine switch.
+	- Every Spine switch is connected to every Leaf switch.
+	- Leaf switches do not connect to other Leaf switches.
+	- Spine switches do not connect to other Spine switches.
+	- End hosts (servers etc.) only connect to Leaf switches.
+the path taken by tarffic is randomly chosen to balance the traffic load among the Spine switches.
+each server is separated by the same number of 'hops' (except those connected to the same Leaf), providing consisten latency for East-West traffic.
+
+
+SOHO networks
+Small Office/Home Office refers to the office of a small compnay, or a small home office with few devices. SOHO networks don't have complex needs, and most of network functionality is typically provided by single device such as a router.
+
+
+
+
+
+
