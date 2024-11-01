@@ -2938,6 +2938,520 @@ Small Office/Home Office refers to the office of a small compnay, or a small hom
 
 
 
+### Day 53 WAN (Wide Area Network) Architectures ###
+
+WAN are used to connect geopgraphically separate LANs over a large geographic area.
+although the internet itself can be considered a WAN, the term WAN is typically used to refer to an enterprise's private connections. over public/shared networks like the internet, VPNs (Virtual Private Networks) can be used to create private WAN connections
+
+
+Hub-Spoke Topology
+it is a topology in which the other parts of a company such as Data center or other offices are connected to the centeral location which for example the headquerter is working. the centeral location is called hub and the other offices are spoke.
+
+• WAN over shared infrastructure and how the data is flowing between hub and spoke.
+
+
+Leased
+A leased line is adedicated physical link, typically connecting two sites. it uses Leased lines used serial connections (PPP or HDLC encapsulation).
+Due to the higher cost, higher installation lead time, and slower speeds of leased lines, Ethernet WAN technologies are becoming more popular.
+
+
+MPLS (Multi Protocol Label Switching)
+service provider's MPLS networking are shared infrastructure, however the label switching in the name of MPLS allows VPNs to be created over the MPLS infrastructure through the use of labels.
+
+Some important terms:
+CE router: Customer Edge router
+PE router: Provider Edge router
+P  router: Provider core router
+
+when the PE router s receive frames from the CE routers, they add a lebel to the frame which is used to make forwarding decisions within the service provider network, not the destination.
+
+
+Routing Sites in Layer 3
+the CE routers do not use MPLS, it is only used by the PE/P routers.
+when using layer 3 MPLS VPN, the CE and PE router sppeer using OSPF, for instance to  share routing informations.
+example:
+office A CE will peer to PE of a provider from one site via OSFP and office B CE will peer to PE of the provider from the other edge then they will send connect with OSPF and inside the Provider it uses MPLS labeling.
+
+
+Routing Sites in Layer 2
+When using Layer 2 MPLS VPN, the CE and PE routers do not form peerings, the service provider network is entriely transparent to the CE routers.
+in effect, it is like the two CE routers are directly connected.
+	-their WAN interfaces will be in the same subnet.
+if a routing protcol is used, the two CE routers will peer directly with each other and uses OSPF.
+
+
+some sorts of internet Connections:
+• DSL (Digital Suscriber Line)
+DSL provides internet connectivity to customers over phone lines, and can share the same phone line that is already installed in most homes.
+A DSL modem (modulator-demdulator) is required to convert data into a format suitable to be sent over the phone lines.
+note that the modem can be a separate device that is connected to the phone line.
+
+• Cable Internet CATV (Cable TV)
+Cable internet access via the same CATV (cable television) lines used for TV service.
+like DSL, a cable modem is required to convert data into a format suitable to be sent over the CATV cables.
+
+
+Redundant Internet Connections
+Single Homed: 1 connection to 1 ISP
+Dual Homed: 2 connections 1 ISP
+Multihomed = 1 connection to each 2 ISPs
+Dual Multihomed = 2 connections to each of 2 ISPs
+
+Private WAN services such as leased lines and MPLS provide security becuase each customer's traffic is separated by using dedicated physical connections.
+
+When using the Internet as a WAN to connect sites together, there is no built-in security by default. to provide secure communication over the internet, VPNs (Virtual Private Networks) are used.
+
+two kinds of Internet VPNs:
+1. Site-to-Site VPNs using IPsec
+2. Remote-access VPNs using TLS
+
+
+Site-to-Site VPNs (IPsec)
+A 'Site-to-Site VPNs' is a VPN between two devices and used to connect two sites together.
+A VPN tunnel is created between the two  devices by encapsulating the original IP packet with a VPN header and a new IP header.
+the tunlle is formed only betweeen two tunnel endpoints (ie. routers) and the data is unencrypted when it is reach to the the routers from end-host and the encrypted data will be sent from router 1 to router 2 for instance.
+
+Limitations: of standard IPsec:
+1.IPsec doesn't support broadcast and multicast traffic, only unicast. this means that routing protocols such as OSPF can't be used over the tunnels, because they rely on multicast traffic.
+	- this can be used by GRE (Generic routing encapsulation) over IPsec 
+2.Configuring a full mesh of tunnels between many sites is a labor-intensive task.
+	- this can be solved with Cisco's DMVPN.
+
+
+• GRE over IPsec
+GRE creates tunnels like IPsec, but its not encrypted packet.
+to get the flexibility of GRE with the security of IPsec, 'GRE over IPsec' can be used:
+	the original packet will be encapsulated by a GRE header and a new IP header, and then the GRE packet will be encrypted and encapsulated within an IPsec VPN header and new IP header.
+
+
+• DMVPN
+Dynamic Multipoint VPN is a Cisco developed solution that allows router to dynamically create a full mesh of IPsec tunnels without having to manually configure every single tunnel.
+1.confiugre IPsec tunnels to a hub site
+2. the hub router give each router information about how to form an IPsec tunnel with the other routers.
+
+
+• Remote-Access VPNs
+remote-access VPNs are used to allow end devices (PCs, mobile phones) to access the company's internal resources securly 
+Remote-access VPNs typically use TLS (Transport Layer Security)
+	- TLS is also what provides security for HTTPS. TLS was formerly known as SSL 
+the end devices then form secure tunnels to one of the company's routers/firewalls acting as a TLS server to connect and use resources securely.
+
+
+Site-to-Site vs Remote-Access VPN
+	Site-to-Site VPNs typically use IPsec
+	Remote-Access VPNs typically use TLS
+
+	Site-to-Site VPNs provide service to many devices within the sites they are connecting
+	Remote-Access VPNs provide service to the one end device the VPN client sotware is installed on
+
+	Site-to-Site VPNs are used to permanently connect two sites over the Internet
+	Remote-Access VPNs provide on-demand secure connection
+
+
+
+### Day 54 Virtualization & Cloud 1/3 ###
+Before virtualizations there was a one-to-one relationship between a phyiscal server and an operating system. it was inefficient to run multiple apps on a single server, due to apps not being isolated from each other and a problem from one single app could cause all others to fail.
+
+Virtualization allows us to break the one-to-one relationship of hardware to OS and allow to run mutliple Operating Systems. each instance is called a VM (Virtual Machine).
+A hypervisor us used to manage or allocate the hardware resource. the hypervisor Type 1 is also called VMM (virtual machine monitori).
+A type 1 hypervisor are also called bare-metal hypervisors and they are connected directly to hardware and are mostly used in data centers like VMware ESXi, or Microsoft Hyper-V.
+
+Type 2 Hypervisor
+Type 2 run as a program on an OS like a regular computer and VMs will be running on it. the OS running the Hypervisor is called Host OS. and OS running as VM is called Guest OS.
+Type 2 hypervisors are called hosted hypervisors.
+
+Virtualization allows:
+	- Paritioning: run multiple opearing sytstems on one physical machine. and devide system resources between virtual machines.
+	- Isolation: Provide fault and security isolation at the hardware level.
+	- Encapsulation: save the entire state of a virtual machine to files. move and copy virtual machine as easily as moving and copying files.
+	- Hardware Independence: Provision or migrate any virtual machine to any physical server.
+
+
+VMs Network
+VMs are connected to each other and the extenral network via a virtual switch running  on the hypervisor.
+vSwtich's are like regular physical switch and its interfaces can act as access or trunk prots and use VLANs to separate the VMs at Layer 2.
+interfaces on the vSwitch connect to the Physical NIC(s) of the server to communicate with the external network.
+
+
+Deployments of IT infrastructures were Combinations of:
+On-Premises: all equipment is owned by the company and the responsibility of them are with the companies own
+Colocation: The data center do not own the devices and only take care of electricity and space and cooling.
+
+
+Cloud Services:
+Cloud Computing is a model for enabling ubiquitous, convenient, on-demand network access to a shared pool of configurable computing resource (e,g networks, servers, storage, applications, and services) that can be rapidly provisioned and released with minimal management effort or service provider interaction. this cloud model is composed of Five essential characteristics, three service models and four deployment models.
+
+The Five Essential chracteristics of cloud computing:
+1. On-demand self-service
+2. Broad network access
+3. Resource pooling
+4. Rapid elasticity
+5. Measured service
+
+• On-demand self-service: a consumer can unilaterally provision computing capabilities, such as server time and network storage, as needed automatically without requiring human interaction with each service provider.
+so the customer is able to use the service (or stop using) freely without direct communication to the service provider for example via a web portal.
+
+• Broad network access: Capabilities are avaiable over the network and accessed through standard mechanism that promote use by heterogeneous thin or thick client platfroms.
+the service is available through standard network connections (the internet or private WAN connections) and can be accessed through many kinds of devices.
+
+• Resource Pooling: The provider's computing resources are pooled to serve multiple consumers using a multi-tenant model, with different phyiscal and virtual resources dynamically assigned and reassigned according to consumer demand.
+so a pool of resources is provided by the service provider, and when a customer requests a service )for example creates a new VM).
+
+• Rapid Elasticity: Customers can quickly expand the services they use in the cloud from a pool of resources that appears to be infinite. likewise, they can quickly reduce their services when not needed.
+
+• Measured service: the cloud service provider measures the customer's usage of cloud resource, and the customer can measure their own use as well.
+
+
+The Three Service Models of Cloud
+in cloud computing, everything is provided on a 'service' model.
+for eaxmple, rather than the end user buying a physical server, mounting it on a rack, installing the hypervisor, creating the VMs. the service provider offers all of this as a service.
+
+The three service models of cloud computing are:
+1. Software as a Service (SaaS)
+2. platform as a Service (PaaS)
+3. Infrastructure as a Service (IaaS)
+
+• Software as a Service: the capability provided to the consumer is to use the provider's applcations running on a cloud infrastructure. the consumer does not manage or control the underlying cloud infrastructure include network, OS or etc and only limited to user-specific application configuration settings.
+for example: Microsfot 365 applications.
+
+• Platform as a Service: the consumer has control over the deployed applications and possibly configuration settings for the application-hosting environment.
+for example: AWS Lambda and goole App engines.
+
+• Infrastructure as a Service: the capability provided to the consumer is to provision processing, storage, networks, and other fundamental computing resources where the consumer is able to deploy and run arbitrary software, which can include operating systems and applications. user is also limited to control of selected networking components for example host firewalls.
+example: Amazon EC2 and google Compute Engine
+
+
+The Four Deployment Models of Cloud:
+Although Public cloud is the most common deployment model, its not the only one
+
+other models of cloud:
+1. Prviate cloud
+2. Community cloud
+3. Public cloud
+4. Hybrid cloud
+
+• Private Cloud: the cloud infrastructure is provisioned for exclusive use by a single organization and can be owned by a third party.
+example: AWS provides private cloud services for the America DoD.
+
+• Community cloud: provisioned for exlusive use by a specific community of consumers from organizations that have shared concerns.
+
+• Public Cloud: provisioned for open use by the general public.
+popular public cloud services:
+AWS (Amazon Web Services)
+Microsoft Azure
+GCP (Google Cloud Platform)
+OCI (Oracle Cloud Infrastructur)
+IBM Cloud
+Alibaba Cloud
+
+• Hybrid Cloud: the composition of two or more distinct cloud infrastructures that remain unique entities.
+for example: private cloud which can offload to a public cloud when necessary.
+
+
+Benefits of Cloud Computing:
+	- Cost
+	- Glocal Scale
+	- Speed/Agility
+	- Productivity
+	- Reliability
+
+
+
+### Day 54 2/3 Containers ###
+Containers are sotware packages that contain an App and all dependencies (Bins/Libs in the diagram) for the contained App to run.
+	Multiple apps can run in a single container, but this is not how containers are used.
+
+Containers run on a Container Engine (ex: docker Engine). the container engine runs on a host OS (like Linux)
+Containers are lightweight and include only the dependencies required to run the specific App.
+
+A container Orchestrator is a software platfrom for automating the deployment, management, scaling of containers.
+	- Kubernetes is the most popular container orchestrator
+	- Docker Swarm is docker's container orchestration tool
+
+In small numbers, manual operation is possible but for large-scale systems microservice architecture requires thousands of containers.
+
+Microservice Architecture: an approach to sotware architecture that devides larger solution into smaller parts (microservices)
+those microservices all run in containers that can be orchestrated by kubernetes or other platfrom.
+
+VMs vs Containers:
+- VMs can take minutes to boot up but Containers can boot up in Miliseconds
+- VMs take up more disk space but Containers take up very little disk space
+- VMs use more CPU/RAM resources but Container use much fewer 
+- Containers are more portable; they are smaller and faster to boot up and can be run on nearly any container service.
+- Containers are less isolated because they all run on the same OS
+
+
+
+### Day 54 3/3 VRF (Virtual Routing & Forwarding ###
+Virtual Routing & Forwarding is used to divide a single router into multiple virtual routers. similar to how VLANs are used to divide a single swtich (LAN).
+It does this by allowing a router to build multiple separate routing tables.
+- Interfaces (Layer 3 only) & routers are configured to be specific VRF
+- Router interfaces, SVIs & routed ports on multilayer switches can be configured in a VRF.
+
+Traffic from one VRF cannot be forwarded out of an interface to another VRF. however, VRF Leaking can be configured to allow traffic to pass between VRFs.
+
+VRF is commonly used to facliate MPLS.
+VRF-lite is a VRF without MPLS
+VRF is used for traffic isolation from other traffics. Customer IP address can overlapo without issues.
+
+note: without the use of VRF, two interfaces on the same router cannot be in the same subnet.
+
+
+VRF Configuration
+for configuring VRF there is two steps:
+1. Creating VRFs: R(config)# ip vrf (name)
+• R1(config)#ip vrf Customer1 => assign a vrf with the name Customer2
+• R1(config-vrf)#ip vrf Customer2
+• R1(config-vrf)#do show ip vrf  => to check VRF status
+
+2. Assing interfaces to VRFs: R(config-if)# ip vrf forwarding (name)
+• R1(config)# interface g0/0
+• R1(config-if)# ip vrf forwarding Customer1
+• R1(config-if)#  ip address 192.168.1.1 255.255.255.252
+note: if na interface has an IP address configred, the IP address will be removed.
+
+Note:
+`show ip route` display the global routing table. so if all interfaces of router are configured in VRFs, nothing will be displayed. however mix of interfaces using VRF and non-VRF can used.
+
+to see the ip routes of VRF use:
+• R# show ip route vrf (vrf-name) => shows the interfaces that are included inside VRF with defined vrf name.
+
+Note:
+for pinging any route in VRF, you should use:
+R# ping vrf (vrf-name) (ip-address) => it will ping the route and Ip address of that VRF table route. because the global route table is empty and only VRF are in use.
+
+
+
+### Day 55 Wireless Fundamentals ###
+The standard we use for wirelss LANs are defined in IEEE 802.11. the term Wi-Fi is a trademark of the Wi-Fi Alliance. Wi-Fi has become the common term that is used to refer to 802.11 wireless LANs term.
+
+Wireless Issues:
+1. All devices within range recieve all frames, like devices connected to an Ethernet Hub.
+	- Privacy of data is a greate concern.
+	- CSMA/CA (Carrier Sense Multiple Access with Collision Avoidance) is used to facilaite half-duplex communication.
+		CSMA/CD is used for wired networks, CSMA/CA is used in wireless networks
+		When using CSMA/CA, a device will wait for other devices to stop transmitting before it transmits data itself
+
+2. wireless communications are regulated by various international and national bodies.
+
+3. Wireless signal coverage area must be considered
+	- Signal range
+	- signal absorption, reflection, reflection, diffraction, scattering.
+		-Absorbtion: happens when a wireless signal pases through a material and is converted into head, weakening the original signal
+		- Refleciton: happens when a signal bounces off of a material, for example metal this is why Wi-Fi reception is siaully poor in elevators.
+		- Refraction: happens when a wave is bent when entering a medium where the signal travels at a different speed. for example, glass and water can refract waves.
+		- Diffraction happens when a wave encounters an obstacle and travels around it. this can result in blind spots behind the obstacts.
+		- Scattering: happens when a material causes a signal to scatter in all directions. dust, smog, uneven surfaces, can cause scattering.
+
+4. other devices using the same channels can cause interference. example: a wireless LAN in your neighbor's house.
+
+
+Radio Frequency
+to send wirelss signals, the sender applies an alternating current to an antenna. this creates electromagnetic fields which propagate out as waves.
+
+Electromagnetic waves can be measured in multiple ways for example amplitude and frequency.
+	• Amplitude is the maximum strength of the electric and magnetic fields.
+	• Frequency measures the number of up/down cycles per a given unit of time.
+		• the most common measurement of frequency is hertz.
+			• Hz (Herz) = cycles per second
+			- kHz(Kilohertz) 1,000 cycles per second.
+			- MHz (Megahertz) 1,000,000 cycles per second
+		• Another important term is period, the amount of time of one cylce.
+			- if the frequency is 4 Hz, the period is 0.25 seconds.
+		Types: Visible frequency is about 400 THz to 790 THz, Radio frequency range is froom 30 Hz to 300 GHz.
+		Other ranges of frequency can be used for medication or aviation communication or other purposes. (Wiki pedia can be studied)
+
+
+Radio Frequency Bands
+Wi-FI uses two main bands (frequency ranges)
+	• 2.4 GHz band
+	• 5 GHz band
+the 2.4 GHz band typically provies further reach in open space and better penetration of obstacles such as walls.
+more deviecs tend to use the 2.4 GHz band so interference can be a bigger problem compared to the 5 GHz band.
+
+note: Wi-Fi 6 (802.11ax) has expanded the spectrum range to include a band in the 6 GHz range.
+
+
+Channels
+Each band is divided up into multiple 'channels'. devices are configured to transmit and receive traffic on one (or more) of these channels.
+for example: 2.4 GHz band is divided into several channels, each with a 22 MHz range.
+
+In Large WLANs with multiple APs, its important that adjacent APs don't use overlapping channels in the 2.4 GHz band it is recommended to use channels 1, 6, and 11.
+
+note:
+The 5 GHz band consist of non-overlapping channels, its easier to avoid interference between adjacent APs.
+
+802.11 Standards have different Frequencies and Max Data Rate(Theoretical)
+
+
+Service Sets
+802.11 defines different kinds of service sets which are groups of wireless network devices.
+There are three main types:
+	- Independent
+	- Infrastructure
+	- Mesh
+
+All devics in a service set share the same SSID (service set Identifier)
+The SSID is a human-readable name which identifies the service set. the SSID does not have to be unique.
+
+IBSS (Independent Basic Service Set) is a wireless network in which two or more wireless devices connect directly without using an AP (Access Point). Also called Ad Hoc network.
+can be used for file transfer and not that scalable.
+
+BSS (Basic Service Set) is a kind of infrastructure Service Set in which clients connect to each other via an AP (Access Point) but not directly to each other.
+BSSID (Basic Service Set ID) is used to uniquely identify the AP. and the BSSID is MAC address of AP radio.
+Wireless that have associated with BSS are called 'client' or 'stations'.
+The area around an AP wehre its signal is usable is called a BSA (Basic Service Area).
+
+ESS (Extended Service Set) to create larger wireless LANs beyonf the range of a single AP, we use an ESS.
+APs wit htheir own BSSs are connected by a wired network:
+	- Each BSS uses the same SSID but has a unique BSSID
+	- Each BSS uses a different channel to avoid interference.
+Clients can pass between APs without having to reconnect, providing a seamless Wi-Fi experience when moving between APs. this is called 'roaming'
+note: BSA should overlap 10-15% to prevent conectivity lost.
+
+MBSS (Mesh Basic Service Set) can be used in situations where it's difficult to run an Ethernet connection to every AP.
+Mesh APs suse two radios: one to provide a BSS wireless clients, and one to form a 'backhaul network' to bridge traffic from AP to AP.
+At least one AP is connected to the wired network and it is called RAP (Root Access Point).
+other APs are caled MAPs (Mesh Access Points)
+A protocol is used to determine the best path through the mesh.
+
+
+Distribution System
+most wireless networks aren't standalone networks. they are a way for wireless clients to connect to the wired network infrustructure.
+for instance ,each wireless BSS or ESS is mapped to a VLAN in the wired network.
+
+
+Additional AP Operational Modes:
+• Repeater Mode: can be used to extend the range of a BSS. a repeater with two radios can receive on one channel, and then retransmit on another channel.
+
+• Workgroup birdge (WGB): operates as a wireless client of another AP, and can be used to connect wired devices to the wireless network.
+for instance: PC that has no wireless capability is wired connected to the WGB which has a wireless connection to the AP.
+
+• Outdoor bridge: used to connect networks over long distances without a physical cable connecting them.
+the connection can be point-to-point or point-to-multipoint in which multiple sites connect tot one central site.
+
+
+
+### Day 56 Wireless Architectures ###
+802.11 Frame Format
+802.11 frames have a different format than 803.3 Ethernet Frames.
+Frame Sections:
+	• Frame Control: Provides information such as the message type and subtype.
+	• Duration/ID: Depending on the message type, this field can indicate:
+		- the time the channel will be dedicated for transmission of the frame.
+		- and identifier for the association (connection).
+	• Address: Up to four address can be present in 802.11 format and the order and present depends on message type
+		- Destination Address (DA): Final recipient of the frame
+		- Source Address (SA): Original sender of the frame
+		- Receiver Address (RA): Immediate recipient of the frame
+		- Transmitter Address (TA): Immediate sender of the frame
+	• Sequence Control: used to reassemble fragments and eliminate duplicate frames.
+	• QoS Control: used in QoS to prioritize certain traffic.
+	• HT (High Throughput) Control: Added in 802.11n to enable HIgh throughput Operations that are defined as HT(High Throughput for 802.11n and VHD (Very High Throughput) for 802.11ac.
+	• FCS (Frame Check Sequence): to check for errors.
+
+
+802.11 Association Process
+For a station to send traffic through the AP, it must be associated with the AP
+ther are three 802.11 connection states:
+	- Not authenticated, not associated: probe state request and response
+	- Authenticated, not associated: authentication request and response.
+	- Authenticated and assiociated: association request and response
+The station must be authenticated and associated with the AP to send traffic through it.
+
+There are two ways a station can scan for a BSS:
+	- Active scanning: the station sends probe requests and listen for aprobe response from an AP.
+	- Passive scanning: the station listens for beacon message from an AP.
+
+
+802.11 Messages Types:
+• Management: used to manage the BSS
+	- Beacon
+	- Probe request, probe response
+	- Authentication
+	- Association request and response, etc
+• Control: Used to control access to the medium (radion frequency). assists with delivery of management and data frames.
+	- RTS (Request to Send)
+	- CTS (Clear to Send)
+	- ACK, etc
+• Data: Used to send actual data packets.
+
+
+There are three main wireless AP deployment methods:
+1. Autonomous
+2. Lightweight
+3. Cloud-based
+
+• Autonomous APs are self-contained systems that don't rely on a WLC.
+	autonomous APs are configured individually, and can be configured by console cable (CLI), telnet/SSH (CLI), or HTTP/HTTPS web connection (GUI)
+there is no central monitoring or management of APs.
+
+note: it is the best practice to keep management traffic separate from regular data traffic by putting it in a separate subnet and VLAN.
+Autonomous APs can be used in small networks but they are not viable in medium to large networks.
+Each VLAN has to stretch across the entire network and it is a bad practice in large network, becuase it cause:
+	- Large broadcast domains
+	- Spanning tree will disable links
+	- Adding/Deleting VLANs is very labor-intensive.
+
+
+• Lightweight APs
+the function of an AP can be split between the AP and a wireless LAN Controller (WLC).
+Lightweight APs handle real-time operaitons like transmitting/receiving RF traffic, encryption/decryption of traffic, sending out beacons/probes, etc.
+other functions are carried out by a WLC, for example RF management, security/QoS management, client authentication, client association/roaming management, etc.
+This is called split-MAC architecture.
+
+The WLC and the lightweight APs authenticate each other using digital certificates installed on each device (X.509 standard certifcates).
+
+The WLC and lightweight APs use a protocol called CAPWAP (Control And Provisioning Of Wireless Access Points) to communicate. based on an older protocol called LWAPP (Lightweight Access Point Protocol).
+
+Two Tunnels are created between each AP and the WLC:
+	- Control Tunnel (UDP port 5246): this tunnel is used to configure the APs, and control/manage the operattions. all traffic in this tunnel is encrypted by default.
+	- Data tunnel (UDP port 5247). All traffic from wireless client is sent through this tunnel to the WLC. it does not go directly to the wired network.
+Traffic in this tunnel is not encrypted by default, but you can configure it to be encrypted with DTLS (Data gram Transport Layer Security which uses UDP)
+
+note:
+Because all traffic from wirelss clients is tunneled to the WLC wit hCAPWAP, APs conenct to switch access ports, nut trunk ports.
+
+benefits of Lightweight APs
+	- Scalability: can simple scale up network APs.
+	- Dynamic channel assignments: WLC can automatically select channel which channel each AP should use
+	- Transmit power optimization: set appropriate transmit power for each AP
+	- Self-healing wireless coverage WLC can increase the transmit power of nearby APs to avoid converage holes.
+	- Seamless roaming
+	- Client load balancing
+	- Secuirty/QoS mangement
+
+
+Lightweight APs Operations various:
+• Local: this is the default mode where the AP offers a BSS(s) for client to associate.
+
+• FlexConnect: allows the AP to locally switch traffic between the wired and wireless networks if tunnels to the WLC go down.
+
+• Sniffer: THe AP does not offer a BSS for clients. it is dedicated to capturing frames and sending them to a device running sniffer sotware like wireshark.
+
+• Monitor: THe AP does not offer a BSS for client, it is dedicated to  receive frames to detect rogue devices. so it can found rogue devices and de-authenticate them from AP.
+
+• Rogue Detector: The AP does not use its radio. it listens to traffic on the wired network only, but it receives a list of suspected rogue client and AP MAC addresses from the WLC. by listening to ARP messages on the wired netowkr and correlating it with WLC, it can detect rogue devices.
+
+• SE-Connect (Spectrum Expert Connect): The AP does not offer a BSS for clients. It is dedicated to RF spectrum analysis on all channels. it can send information to software such as Cisco Spectrum Expert.
+
+• Bridge/Mesh: the lightweight AP can be a didcarted bridge between sites.
+
+• Flex plus Bridge: Adds FlexConnect functionality to the Bridge/Mesh mode.
+
+
+Cloud-Base APs
+Cloud-base AP architecture is in between autonomous AP and split-MAC architecture.
+Autonomous APs are centrally managed by a Cloud Application like Cisco Meraki.
+however, data traffic is not sent to the cloud, it is sent directly to the wired network like when using autonomous APs. Only management/control traffic is sent to the cloud.
+
+
+WLC Deployments:
+there are four main WLC deployment models for split-MAC architecture:
+1. Unified: The WLC is a hardware appliance in acentral location of the network
+2. Cloud-Based: the WLC is a vm running on a server, usually in a private cloud.
+3. Embedded: The WLC is integrated within a switch
+4. Mobility Express: The WLC is integrated within an AP.
 
 
 
