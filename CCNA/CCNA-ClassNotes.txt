@@ -3455,3 +3455,258 @@ there are four main WLC deployment models for split-MAC architecture:
 
 
 
+### Day 58 Wireless Configuration ###
+in WLC (Wireless LAN Controller) configuration you should bear in mind that WLC conncets to the switch via a LAG (Link Aggregation Group), aka EtherChannel. WLCs only support static LAG not PAgP (Port Aggregation Protocol) or LACP(Link Aggregation Control Protocol).
+example:
+• SW(config-if-range)# interface range f0/1 - 2 => selecting the range of interfaces for connecting switch to WLC
+• SW(config-if-range)# channel-group mode on => it sets the channel group mode on static.
+
+directing the WLC Ip address to APs 
+for directing the WLC address to APs the configuration on router or switch should be set:
+for instance:
+• SW(config)# ip dhcp pool VLAN10 => setting a DHCP pool for Access Point to get the IP addresses from that which needs to communicate with WLC
+• SW(dhcp-config)# network 192.168.1.0 255.255.255.0 
+• SW(dhcp-config)# default-router 192.168.1.1
+• SW(dhcp-config)option 43 ip 192.168.1.100 => option 43 is used to tell the APs the IP address of their WLC (it  is used when  the APs are not in the same subnet as WLC to send the CAPWAP discovery message)
+note: Layer 3 Switch or Router can also act as NTP server but the ntp configuration in WLC should be set to the router that is providing the NTP.
+
+WLC Initial Setup
+WLC setup is mostly a Wizard procedure on CLI which asks for autoinstall option, System name and administrative rule. and LAG enabeling. Manage Interface IP addresses and network address configuration
+
+Virtual Gateway IP address: it is an IP address used when the WLC is communicating directly with wireless clients such as when relaying DHCP requests.
+
+Multicast IP address: 239.239.239.239: used when forwarding traffic to its APs, the class D range is used which is reserved for multicast
+
+Mobility/RF Group Name: (name) => used for when multiple WLC are present and are going to work together.
+
+Network Name (SSID): (name of SSID)
+Configure DHCP Bridging mode: it makes the WLC to be bridge to other WLC and will make itself transparent to Clients.
+
+note: for configuring the Regulatory Domain, the Model of device will be important. 
+for instance: AIR-CAP3502I-E-K9
+E is the regulatory domain of the device which indicate Europe.
+if regulatory doesn't match it won't be able to join the WLC.
+
+after the configuration, the WLC GUI can be accessed by Web browser.
+
+
+WLC Ports/Interfaces
+WLC ports are the physical ports that cables connect to.
+WLC interfaces are the logical interfaces withint he WLC (ie. SVIs on a switch)
+WLCs have a few different kinds of ports:
+	- Service Port: a dedicated management port, used for out-of-band management must connect toa switch access port because it only supports one VLAN. This port can be used to connect to device while it is booitng, performing system recovery, etc.
+	- Distribution system port: These are the standard network ports that connect to the distribution system (wired network) and are ued for data traffic. these ports usually connect to switch trunk ports and if multiple distribution ports are used they can form a LAG.
+	- Console Port: this is a standard console port, either RJ45 or USB.
+	- Redundancy port: this port is used to connect to another WLC to from a high avaiability(HA) Pair.
+
+
+WLC have a few different kinds of interfaces:
+• Management interface: used for management traffic such as Telnet, SSH, HTTP,RADIUS, NTP, etc. CAPWAP tunnels are also formed to/from the WLC' management Interface
+• Redundancy management interface: when two WLCs are connected by their redundancy ports, one WLC is 'active' and the other is 'standby'. This interface can be used to connect to and manage the 'standby' WLC.
+• Virtual Interface: This interface is used when communincating with wireless client to relay DHCP requests, perform client web authentication, etc.
+• Service port interface: If the service port is used this interface is bound to it and used for out-of-band management.
+• Dynamic interface: These are the interfaces used to map a WLAN to a VLAN, for example, traffic from the internal WLAN will be sent to the wired network from the WLC' internal dynamic interface.
+
+
+Layer 3 Security: Web Policies
+- Web Authentication: after the wireless clients gets an IP address and tries to access a web page, they will have to enter a username and password for authentication
+- Web Passthrough:similar no need for username or password, but a warning or statement is displayed that the cliet has to agree to gain access to the internet
+- Conditional and Splash Page: redirect options are similar, but additionally require 802.11X layer 2 authentication.
+
+Recommendation: LAB 58 for better practice can be considered.
+
+
+
+### Day 59 Network Automation ###
+Network automation provides many key benefits:
+• Human error (typos , etc) is reduced.
+• Networks become much more scalable. new deployments, network-wide changes, and troubleshooting can be implemented in a fraction of the time.
+• Network-wide policy compliance can be assured (standard configurations, software versions, etc)
+• the improved efficiency of network operations reduces the opex (operating expenses) of the network. each task requires fewer man-hours.
+
+there are various tools/methods that can be used to automate tasks in the network:
+- SDN (Software Defined Networking)
+- Ansible
+- Puppet
+- Python
+- etc
+
+
+Logical Planes
+the various functions of network devices can be logically divided up (categorized) into planes:
+- Data plane
+- Control plane
+- Management plane
+
+• Data Plane
+All tasks and functionality related to forwarding user data/traffic from one interface to another are part of the data plane. such as NAT, encapsulation, ACL verification, flooding, port security. etc
+data plane is also called the 'forwarding plane'
+
+• Control Plane
+how does a device's data plane make its forwarding decisions?
+routing table, MAC address table, ARP table, STP, etc.
+functions that build these tables (and other functions that influence the data plane) are partof the control plane.
+the control plane controls what the data plane does, for instance, building the router's routing table.
+the control plane performs overhead work.
+for instance:
+OSPF or STP themselves doesn't forward user data packets, but they inform the data plane about how packet should be treated.
+or ARP messages aren'tuser data but they are used to build an ARP table which is used to process of forwarding data.
+
+note:
+in traditional networkig, the data plane and control plane are both distributed. each device has its own data plane and its own control plane. the planes are distributed throughout the network and are not centralized.
+
+• Management Plane
+like the control plane, the management plane performs overhead work.
+the management plane doesn't directly affect the forwarding of messages in the data plane
+the management plane consists of protocols that are used to manage devices:
+SSH/Telnet, used to connect to the CLI of a device to configure/manage it.
+Syslog,
+SNMP,
+NTP, etc
+
+* the data plane is the reason we buy routers and switches (and network infrastructure in general) to forward messages. the control plane and management plane are both necessary to enable the data plane to do its job.
+
+
+The operations of the Management plane and Control plane are usually managed by the CPU. this is nto desirable for data plane operations because CPU processing is slow.
+instead, a specialized hardware ASIC (Application-Specific Integrated Circuit) is used. ASICs are chips builtfor specific purposes.
+
+using a switch as an example:
+when a frame is received, the ASIC (notthe CPU) is responsible for switching logic.
+the MAC address table is stored in akind of memory called TCAM (Ternary Content-Addressable Memory).
+another common name for the MAC address table is CAM table.
+	- the ASIC feeds the destination MAC address o the frame into the TCAM, which returns the matching MAC address table entry.
+CPU is essential in Devices but it is more general purposed.
+
+
+SDN (Software Defined Networking)
+SDN is an approach to networking that centralizes the control plane into an application called a controller
+SND is also called Software-Define Architecture (SDA) or Controller-Based Networking.
+The controller can interact programmatically with the network devices using APIs (Application Programming Interface)
+
+
+SouthBound Interface (SBI)
+the SBI is used for communications between the controller and the network devices it controls. it typically consists of a communication protocol and API.
+some examples of SBIs:
+OpenFlow
+Cisco OpFlex
+Cisco onePK (Open Network Environment Platform Kit)
+NETCONF
+
+
+The Northbound Interface (NBI) 
+SBI is for controller to communicate with managed devices and gathers information about them. NBI is what allows us to interact with the controller, access the data it gathers about the network, program it, and make changes in the network via the SBI.
+
+A REST API is used on the controller as an interface for apps to interact with it.
+	- REST = Representational State Transfer
+Data is sent in a structured (serialized) format such as JSON or XML. it makes it much easier for programs to use the data.
+
+
+
+### Day 60 JSON, XML, & YAML ###
+Data Serialization is the process of converting data into a standardized format/structure that can be stored or transmitted and reconsturcted later.
+this allows the data to be comminucated between applications in a way both applications understands, like JSON, YAML, XML format. these formats are transmitted and converted by APIs.
+
+
+JSON (Javascript Object Notation) is an open standard file format and data interchange format that uses human-readable text to store and transmit data objects. REST API often uses JSON.
+JSON structure type is based on Object and Array.
+
+
+XML (Extensible Markup Language) was developed as a markup language, but is now used as a general data serialization language. is also used often by REST API
+XML structure is like HTML markup language structure and is written in tags
+command:
+• R#show ip interface brief | format => shows the ip interface brief in XML format in terminal.
+
+
+YAML (YAML Aint Markup Language) originally meant Yet Another Markup Language, but to distinguish ts purpose as a data-serialization language rather than a markup , it was repurposed to YAML Ain't Markup Language.
+YAML is used by the network automation tool Ansible.
+YAML is very human-readable, whitespace is significant (unlike JSON, XML), and indentation is very important.
+YAML files start with ---. and "-" is used to indicate a list. keys and values are presented as key:value.
+
+
+
+### Day 61 REST APIs ###
+An API (Application Programming Interface) is a software interface that allows two applications to communicate with each other.
+in SDN architecture, APIs are used to communicate between apps and the SDN controller (via the NBI) and between the SDN controller and the network devices (via the SBI). the NBI typically uses REST APIs. NETCONF and RESTCONF are popular southbound APIs.
+
+CRUD
+CRUD (Create (POST), Read (GET) ,Update (Put&Patch), Delete(DELETE)) refers to the operations we perform using REST APIs.
+
+HTTP uses verbs (aka, Methods) that map to these CRUD operations.
+REST APIs typically use HTTP.
+
+HTTP Request
+When an HTTP client sends a request to an HTTP server, the HTTP header includes information like this:
+	- an HTTP verb(method , ie: GET)
+	- A URI (Uniform Resource Identifier), indicating the resource it is trying to access.
+
+example of URI: https://sandbox.cisco.com/dna/intent/api/v1/network
+https => scheme
+sandbox.cisco.com => authority
+/dna/intent/api/v1/network => path
+
+the HTTP request can include additional headers which pass additional information to the server.
+example:
+Accept header, which informs the server about the type(s) of data that can be sent back to the client
+Accept: application/json or Accept: application/xml
+
+note: REST API don't have to use HTTP for communication although HTTP is the most common choice.
+
+
+HTTP Response
+the servers reponse will include a status code indicating if the request succeeded or failed as well as other details.
+the first digit indicates the calss of the response:
+1xx informational - the request was received, continuing process
+	- 102 processing: indicate that the server has received the request and is processing it, but the response is not yet available.
+2xx successful - the request was successfully received, understood, and accepted.
+	- 200 OK , or 201 Created: ie response to POST method
+3xx redirection - further action needs to be taken in order to complete the request
+	- 301 Moved Permanently: indicates that the requested resource has been moved, and the server indicates it new location.
+4xx client error - the request contains bad syntax or cannot be fulfilled 
+	- 403 Unauthorized
+	- 404 Not Found
+5xx server error - the server failed to fulfill an apparently valid request.
+	- 500 Internal Server Error: the server encountered something unexpectd that it doesn't know how to handle
+
+
+REST
+REST stands for Representational State Transfer
+REST APIs are also known as REST-based APIs or RESTful APIs.
+	 REST isn't a specific API. instead, it describes a set of rules about how the API should work, it is actually a framework for APIs.
+
+the Six constraints of RESTful architecture are:
+- Uniform Interface
+- Client-server
+- Stateless
+- Cacheable or non-cacheable
+- Layered system
+- Code-on-demand (optional)
+
+• Client-Server
+REST APIs use a client-server architecture
+the client uses API calls (HTTP Requests) to access the resources on the server. the separation between the client and server means they can both change and evolve independently of each other.
+	when the client application hcanges or the server application changes the interface between them must not break.
+
+• Stateless
+means that each API exchange is a separate event, independent of all past exchanges between the client and server, so the server doesn't store information about previous requests from the client to determine how it should respond to new requests.
+for instance: if authentication is required, this means that the client must authenticate with each request it makes.
+
+• Cacheable or Non-Cacheable
+Cache refers to storing data for future use. for example your computer might chache many elements of a web page so that it doesn't have to retrieve the entire page evey time you visit it.
+note: not all resource have to be chacheable.
+
+For applications to communicate over a network, networking protocols must be used to faciliate those communication. REST APIs is the most common choice.
+
+
+Cisco DevNet
+DevNet is CIsco's developer program to help developers and IT professionals who want to write applications and develop integrations with Cisco products, platfroms and APIs.
+
+DNA Center Sandbox Can be used to send a REST API call using Postman
+	- DNA Center is one of CIsco's SDN controllers.
+	- Postman is a platform for building and using APIs.
+
+
+
+
+
+
+
