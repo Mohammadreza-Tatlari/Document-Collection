@@ -95,6 +95,9 @@ sudo dpkg -i package.deb
 
 lsb_release -a => checks the version (Linux Standard Base) details
 
+firewall configuration on ubuntu 24.0 is based with iptable kernel firewall
+sudo iptables -L => to check all the rules running on OS
+iptables [options] [chain] [criteria] -j [target]
 
 
 

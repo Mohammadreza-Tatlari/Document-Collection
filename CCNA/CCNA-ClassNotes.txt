@@ -3706,6 +3706,130 @@ DNA Center Sandbox Can be used to send a REST API call using Postman
 
 
 
+### Day 62 SDN (Software-Defined-Networking) ###
+SDN is an approcah to networking that centralized the control plane into an application called a controller.
+the controller can interact programmatically with the network devices using APIs.
+the SBI (SouthBound Interface) is used for communication between the controller and the network devices it controls.
+the NBI (NorthBound Interface) is used to interact with the controller with our scripts and applications.
+
+SDN Architecture
+• Application Layer - Top: Ontains scripts/application that tell the SDN controller what netwrok behavior are desired. and controller uses NBI to communicate with it.
+• Control Layer - Middle: Contains the SDN controller that receives and processes instructions from the application layer and it contains controller and controller plane.
+• Infrastructure Layer - Bottom:Contais the network devices that are responsible for forwarding messages across the network.
+
+
+Cisco Software-Defined Access
+Cisco SD-Access is Cisco's SDN solution for automating campus LANs.
+	- ACI (Application Centric Infrastructure) is SDN solution for automating data center networks.
+	- SD-WAN is SDN solution for automating WANs.
+Cisco DNA (Digital Network Architecture) Center is the controller at hte center of SD-Access.
+
+
+Fabric
+the 'underlay' is the underlying physical Network of devices and conections (wireless, wired) which provide IP connectivity. for example multilayer switches and their connections are underlying physical network.
+
+the 'overlay' is the virtaul network built on top of the physical underlay network. for example, SD-Access uses VXLAN (Virtual Extensible LAN) to build tunnels.
+
+the 'Fabric' is the combination of the overlay and underlay, the physical and virtaul network as the whole and both are essentials for SD-Access to work.
+
+
+there are three different roles for switches in SD-Access:
+	- Edge Nodes: Switches that Connect to end hosts
+	- Border Nodes: Switches that connect to devices outside of the SD-ACces domain, i.e WAN Routers.
+	- Control Nodes: use LIPS (Locator ID separation Protocol) to perform various control plane functions.
+
+
+SD-Access in underlay
+• you can add SD-access on top of an existing network (brownfield deployment) if your network hardware and software supports it.
+	- Google 'Cisco SD-Access Compatibility matrix' if you're curious.
+	- in this case DNA Center won't configure the underlay because it can cause existing configuration to fail.
+• a new deployment (greenfield deployment) will be configured by DNA Center to use the optimal SD-Access underlay:
+	- All switches are layer 3 and use IS-IS as their routing protocol.
+	- All links between switches are routed ports. This means STP is not needed.
+	- Edge nodes (access switches) act as the default gateway of end hosts (routed access layer)
+
+SD-Access in overlay
+• LISP (Locator ID separation Protocol) provides the control plane of SD-Access.
+	- A list of mappings of EIDs (end point identifiers) to RLOCs (routing locators) is kept.
+	- EIDs identify end hosts connected to edge switches, and RLOCs identify the edge switch which can be used to reach the ned host.
+• Cisco TrustSec (CTS) provides policy control (QoS, security policy, etc)
+• VXLAN provides the data plane of SD-Access.
+
+
+Cisco DNA Center
+Cisco DNA Center has two main roles:
+1.The SDN controller in SD-Access
+2.A network manager in a traditional network (non-SD-Access)
+
+DNA Center is an pplication installed on Cisco UCS (Unified Computing System). UCS has a REST API which can be used to interact with DNA center.
+the SBI supports protcols such as NETCONF and RESTCONF and traditional Telnet, SSH, SNMP protocol to communicate with infrastructure layer.
+the DNA Center enables intent-based Networking (IBN) which allow engineers to communicate their intent for network behavior to DNA Center. then DNA center will take care of it
+
+
+
+### Day 63 Ansible, Puppet, & Chef ###
+• Configuration drift
+Configuration drift is when individual changes made over time cause a device's configuration to deviate from the standard configurations as defined by the company. as individual engineers make changes to devices, the configuration of a device can drift away from the standard.
+note:
+even without automation tools, it is best to have standard configuration management practices. for example when a change is made, save the config as a text file and place it in a shared folder. or use standard naming system like 'hostname_yyyymmdd might be used.
+
+
+• Configuration Provisioning
+Configuration provisioning refers to how configuration changes are applied to devices.
+in large networks, configuration provisioning is done by configuration management tools like Ansible, Puppet, and Cheff allow us to make changes to devices on a mass scale.
+
+two essenstial components:
+1. Template
+2. Variables
+by giving template and variables the configuration can be done. in which the value inside the tamplate can be fulfilled by variables. for instance, variables are given by YAML inside the Cisco packet.
+
+• Configuration Management Tools
+Configuration Management tools are network automtion tools that faciliate the centralized control of large numbers of network devices.
+the options are like Ansible, Puppet and Chef , etc. they are widely used to manage and configure server system and network devices.
+
+
+• Ansible
+Ansible is owned by Red Hat and is written in Python.(Ruby and Chef are written in Ruby)
+Ansible is Agentless, it doesn't require any special software to run on the manged devices.
+Ansible uses SSH to connect to devices, make configuration changes, extract information.
+Ansible uses a push model. the ANsible server (Control node) uses SSH to connect to managed devices and push configuration changes to them.
+	- Puppet and Chef use a pull model.
+
+After installing Ansible, several files should be created:
+	- Variables: These files list variable and their value. these values are substitiued into the templates to create complete configuration file which are written in YAML.
+	- Templates: these files represent a devices' configuration file, but specific values for varaibles are not provided. templates are written in Jinja2
+	- Inventory: these files list the devices that will be managed by Ansible, with characteristics of each devices. inventory files are written in INI, YAML or other formats.
+	- Playebooks: these files are 'blueprints of automation taks'. they outline the logic and actions of the task that Ansible should do. and are written in YAML
+
+
+• Puppet
+Puppet is typically agent-based. Specific software must be installed on the managed devices. not all Cisco devices support a Puppet agent.
+It can be run agentless in which a proxy agent runs on an external host, and the proxy agent uses SSH to connect to the managed devices and communiciate with them.
+The puppet server is called 'Puppet Master'.
+Puppet uses a pull model (clients pull configuration from the puppet master). Clients use TCP 8140 to communicate with the Puppet master.
+Instead of YAML, it uses a propriety language for files.
+Required Files in Puppet master include:
+	- Manifest: This file defines the desired configuration state  of a network device.
+	- Templates: used to generate Manifest
+
+
+• Chef
+Chef is agent-based. specific software must be installed on the managed devices. not all cisco devices support the Chef agent.
+Chef uses Pull model.
+the server uses TCP 10002 to send configurations to clients
+Files uses a DSL (Domain-Specific Language) based on Ruby.
+Text files used by Chef include:
+	-Resource: the 'ingredients' in a recip. configurations objects managed by chef.
+	-Recipes: the recipes in a cookbook. outline the logic and actions of the task performed on the resource.
+	-Cookbooks: a set of related recipes grouped together.
+	-Run-list: an ordered list of recipes that are run to bring a device to the desired configuration state.
+
+
+
+
+
+ 
+
 
 
 
