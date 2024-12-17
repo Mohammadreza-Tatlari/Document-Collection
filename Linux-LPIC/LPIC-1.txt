@@ -1029,7 +1029,7 @@ mount => it will show all mounted drivers
 
 also swapon and swapoff have there own commands
 
-### LPIC-001-044 Mounting and UUID and fstab
+### LPIC-001-044 Mounting and UUID and fstab ###
 UUID is used to make a disk to be unique universally and it can be mounted on any other devices thus its name will be changed but it does not affect on functionality
 
 command:
@@ -2339,7 +2339,7 @@ its file used to be in /etc/xinet.d and each file contained data about the serve
 xinetd is replaced by systemd.socket so for example instead of running sshd.service in systemctl, ssh.socket can be run so if the 22/tcp port is going to be checked by fuser 22/tcp -v it will show that the port is being listened by systemd and not directly by sshd
 
 /etc/hosts.allow & /etc/hosts.deny
-if a program contains libwrap liberary inside its dependency it means it repsects to xinetd rules and by used 'ldd (program name) | grep libwrap ' it is possible to find it out. thus two files with names hosts.allow and hosts.deny are used to allow or deny host IPs to have access to those programs.
+if a program contains libwrap liberary inside its dependency it means it respects to xinetd rules and by used 'ldd (program name) | grep libwrap ' it is possible to find it out. thus two files with names hosts.allow and hosts.deny are used to allow or deny host IPs to have access to those programs.
 for instance by adding script below inside hosts.allow:
 vsftpd: 10.10.100.6 => the IP with 10.10.100.6 can have access to vsftpd file.
 
@@ -2472,3 +2472,4 @@ actually, --clearsign tells the gpg to include the clear text message in the out
 gpg --output jadi.revoke.asc --gen-revoke (username with private key) => gen-revoke is for invalidate the public keys in order to create new key pair.
 
 gpg-agent: it is similar to ssh-agent and is used to hold and memorize passwords for managing gpg keys.
+

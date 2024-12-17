@@ -1,0 +1,3459 @@
+LPIC 2 Notes and feedbacks. LPIC 2 is actually the more advance and precised version of LPIC 1 this file is created in order to share information with other colleagues.
+
+### LPIC-2-001 Measure and Troubleshoot Resource Usage ###
+be able to measure hardware resource and network bandwidth, identify and troubleshoot resource problems.
+
+Measure memory usage
+RAM is used to keep temporary data in it in order to process on it on more efficient and faster way. everything goes through RAM. If we have a process, it should be loaded in RAM first in order to be served by CPU later.
+
+Memory Terminlogy:
+• Page: Blocks that are used in memory, usually 4k sized
+• Paging: Used to retrieve data from secondary memory (disk) to primary (RAM).
+• Swap: emulated Memory on HDD
+• Virtual Memory: total allocatable memory. Virtual memory uses both hardware and software to enable a computer to compensate for physical memory shortages, temporarily transferring data from random access memory (RAM) to disk storage.
+• Translation Look aside Buffer (TLB): cache which speedup translation between RAM and virtual memory, stored in RAM
+• Page cache: Recently used  memory pages are stored here(not cpu cache ) Used for parked data
+• Dirty Cache: Data which are wainting to got HDD from RAM.
+• Buffer: a temporary area where data is stored in the main memory (RAM) or disk while moving from an input system to an output system.
+
+Memory measure & Troubleshoot commmand:
+vmstat -w => it shows the virtual memory status and other infromation
+vmstat 2 -t => it will show periodic status with defined interval. 2 stands for 2 seconds and -t is for when it is defined.
+instance: vmstat 2 -wt
+
+free -h => shows free amount of memory and swap
+
+to free up cache we can do:
+echo 3 > /proc/sys/vm/drop_caches ; free -h => the `free -h` in the end is used for checking the buff/cache
+
+
+Swappiness
+swappiness is the kernel parameter that defines how much and how often the Linux kernel will copy RAM contents to swap. this paramtere is vary from 0 to 100 and the default value is 60. the higher the value of the swappiness parameter, the more aggressively the kernel will swap.
+
+/proc/sys/vm# cat swappiness => in the proc/sys/vm the swappiness file exist and by catting it we can see the value of it.
+echo 70 > /proc/sys/vm/swappiness => simply changing the value of proc by echoing into it.
+
+
+Monitoring CPU
+
+uptime => monitors and measures the load that you have put on your CPU.
+
+top => it is used to give us information about system uptime, load avarage, and more detailed information about processes.
+
+options of `top` command:
+press 1: shows all cpu cores load
+shift + < or >: sort top based on different culomns.
+shift + p: sort base on CPU usage.
+shift + m: sort based memory usage
+press c: shows absolute patch of process
+press z: will running process in color
+press d and then delay number: by default top commmand runs every 3 seconds
+press k and insert PID: kills the defined process.
+shift + w: writes on config file
+prees r and PID => to change niceness of process
+q: to exit
+
+wa value in Top
+it shows IO wait processe and it numbers grow when there the bottleneck is hardisk. it happens when process needs data to read from the hard disk, but hard disk is pretty busy and can not read data when is needed. so process waits and then goes to I/O blocked and sleep. it will goes to `unintrupptable sleep` condition and it menas that we can't evenkill that process normally. so `wa` should always be 0.
+
+
+Measure Disk I/O
+in Disk speed, we can use top command but we need to find what program causes the problems, we use `iotop` for that.
+iotop => it is used to show input output of disk in OS kernel it is similar to top but soley for disk
+
+iostat => another handy tool to see the brief information about condition of r/w and speed of disk. iostat is part of systat package
+
+system active report. 
+`sar` is used to give active information from system resource. this command also accepts interval and number of messages. for instance:
+sar 1 7 => it will show logs every 1 seconds and for 7 time.
+sar 1 -t => for 1 second and for time it is terminated.
+sar => it will show logs that where written on memory. (shows previous activities)
+
+
+List of Open files
+in linux mostly everything is a file. so there is a utilty that lists open files. lsof utility is a robust interface for the information inside th /proc virtual filesystem.
+for example, you need to know what process is using a particular directory:
+lsof /run => it will show which command and proceses were using that file.
+lsof -p (process id) => shows what files the particular process has been using.
+lsof | grep 'filename or process or etc '=> lsof shows very long list of open files. so grep needs to be used.
+
+
+Measure Network I/O
+for monitoring networks there are other top commands.
+
+iftop
+`iftop` gives infomration about sessions on NIC and sort them base on transfer rate.
+options:
+shift +  < or >: will sort based on different columns.
+press 1 - 3: sort based on last 2, 20 seconds.
+
+iftop -i (interface name) => we can choose specific interface 
+
+nload
+nload shows the current bandwidth of data.
+
+ipref
+for checking or testing connection between two nodes in network, ipref tool can be used.
+ipref -s => listen on default port 5001 and TCP and logs detail information
+ipref -c (ip address) => connects to ip address and log information about connections.
+
+ipref is a professional tool and can be used for troubleshooting and monitoring network its similar to netstat or netcat.
+
+speedtest-cli
+speedtest-cli is used to check the internet speed from command line.
+
+
+
+### 200.2. Predict Future Resource Needs ###
+in computer science predicting future is possilbe by archiving and processing what has happened in past.
+
+
+collectd
+Collectd, a Unix daemon that collects statistics related to system performance and also provides means for storing the values in different formats like RRD (Round Robin Database) files. The statistics gathered by Collectd help to detect the current performance blocks and predict system load in future.
+
+after installation of collectd, the configuration file will be present in " etc/collectd ".
+in the collectd.conf in order to monitor specific item we can enable it by removing comment sign in load Plugin and plugin configuration sections.
+
+collectd-web
+collectd also has a monitor web-app that lets developers to monitor the usage of system and make further decisions base on collected data.
+
+we can use collectd-web CGI scripts which interprets and generates the graphical html page statistics.
+if firewall is up and running, make sure that required ports arre open for that.
+
+how does it work?
+collectd uses data sets which are defined in types.db database. it gather data in a special format(Round Robin DataBase) in /var/lib/directory/rrd which should be enabled in collectd.conf
+
+
+Other Monitoring Tools
+
+Nagios
+Nagios Core is freely available and is a open source core monitoring system.
+however, the Nagios XI is full enterpise package.
+Nagios Core queries information from the collectd deamon and then create graphs and static charts.
+
+https://www.nagios.com
+
+
+MRTG
+Multi Router Traffic Grapher (MRTG) is a network admins tool that offer enterpise extentions to MRTG including scrutinizer, flowpro and replicator.
+it reads information from routers and switches and creates logs for that.
+it is written in perl and works in Unix, Linux and windows systems.
+
+https://www.mrtg.com/
+
+
+Cacti
+Cacti is a complete network graphing solution desinged to harness the RRDTools data storage. it is very advanced and robust. besided being featureful, it is intuitive and has easy to use interface.
+
+
+
+### 201.1. Kernel Components ###
+Candidates should be able to utilize kernel components that are necessary to specific hardware, hardware drivers, system resources and requirements. This objective includes implementing different types of kernel images, identifying stable and development kernels and patches, as well as using kernel modules.
+
+Kernel Version Numbering 
+the Linux rule of version number is used to be like:
+2.5.75.3:
+2: version Number
+5: Major Revision
+75: Minor Revision
+3: Correction/Patch
+
+where the 'odd' or 'even' revision number had different concepts. odd numbers was used for development version and even reversion number showed the stable version.
+after Kernel 2.6 this concept was changed and only stable version now will be released.
+
+checking Kernel of system
+uname -a => it is used to show information about the Kernel version and other informations like architecture or distro type.
+
+
+Initial RAM Disk / Initial Ram File System (/boot)
+after bios/UEFI done the POST and firmware load it pass the control to boot loader, boot laoder tries to load  the kernel. linux kernel achieve this task by initrd. initrd (initial ramdisk)/initramfs is a scheme for loading a temporary root file system into memory which can be used as part of the linux startup process. initrd and iitramfs are two different methods but do the sam thing. both are commonly used to make preparation before the real root file system can be mounted.
+
+ls /boot/ => is the location where the init file exist.
+initrd.img-6.8.0-48-generic populate RAM duirng boot process for my ubuntu linux kernel.
+each version of linux has its own initrd version.
+Kernel must be some how compressed in order to fit in RAM.
+
+
+XZ Compression
+XZ Compression is a compression program with its file format. it incorporates with LZMA/LZMA2 compression algorithms which are used in 7-zip. however the LZMA are not compatible anymore.
+
+
+zImage and bzImage
+in past RAM used to have small amount of memory and there should be a way to fit and populate  RAM with pre-compiled kernel before root fs mounted. zImage was a name that used to call compressed tiny pre-compiled kernel. zImage was so small and it fit in to just 512k of memory.
+as the kernel got bigger and RAMs became larger, 'Big zImage' was introduced.  nowadays zImage is in embedded linux systems and bzImage are more used.
+
+
+Kernel Modules (/lib/modules/)
+modules of kernel are present in /lib/modules/
+
+Kernel Source (/usr/src)
+Linux kernel source is often placed in /usr/src subdirectoy so your compiler can find it if you need to compile a driver for use with your kernel.
+
+red hat is commercial version of linux
+
+
+
+### 201.2 Compiling a Kernel ###
+be able to properly configure a kernel to include or disable specific features of the Linux kernel as necessary.
+linux kernel is so modular and flexible, most of the time there is no need to manipulate kernel. Specially When we are talking about commercial versions of linux like redhat, manipulating kernel cause support issues.
+but in embedded kernel, the kernel should be as small as possible. so compule or upgrade of the kernel should have a good reason.
+
+upgrading kenrle and compiling it is very distro specific.
+as an administrator you might recompile current version of your linux in order to add / remove some module and features.
+
+
+Upgrading kernel
+check the https://kernel.org inorder to get the desired kernel version and by that we can unzip the downloaded package inside /usr/src/ .
+
+the unzip kernel file also have an /linux/Documentation/
+https://borosan.gitbook.io/lpic2-exam-guide/2012-compiling-a-kernel#upgrading-kernel
+
+
+make modules
+https://borosan.gitbook.io/lpic2-exam-guide/2012-compiling-a-kernel#make-modules
+
+
+dracut
+dracut uses udev deamon events (uevents) and based on them create general purpose initramfs/initrd. it considers current kernel and setting and generate desired initramfs/initrd base on them and put initrd/initramfs on the right place and grub.
+dracut can also be used to modify initrd/initramfs
+
+dracut configuration is in:
+/etc/dracut.conf & /etc/dracut.conf.d/
+
+
+
+### 201.3 Kernel runtime management and troubleshooting ###
+
+Kernel Modules
+Linux kernel is modular since version 2.0. being modular make the OS efficient and much simple. for instance, the code which is not neede wouldn't be loaded or base on condition, module will be compiled or not.
+
+The Linux Kernel Module (LKM) is the core component of the linux operating system and is responsible for managing system resource and providing functionality. kernel modules allow developers to extend the functionality of the Linux kernel without modifying or recompiling the entire kernel.
+modules are loaded into memory only when needed, reducing memory consumption and allowing for greater flexibility.
+
+to list kernel loaded module we have different commands
+lsmod => it will list Kernel Modules with their property and usage frequency.
+
+
+loading and unloading modules:
+there are actually two way to load and unload a modular, an old solution is `insmod`
+insmod => it can load a modules by providing their name or address.
+for eaxmple:
+insmod /lib/modules/4.10.0-40-generic/kernel/fs/jfs/jfs.ko
+
+note:
+if a module has some dependencies, insmod dosn't load those required dependencies automatically.
+
+by lsmod | grep jfs => to check whether jfs is loaded or not.
+
+modinfo => shows information about module. filename, dependencies and possible parameters of each module can be checked by modinfo
+
+rmmode => it removes modules and unload them.
+rmmode jfs => unload the jfs or any module that is given to it.
+by checking it with lsmod | grep jfs we can see that no data related to being loaded is present for jfs
+
+
+modprobe
+modprobe is a modern tool which automatically know the patch and load required dependencies for a module.
+for instance:
+modprobe parport -v => it will load the parport module and will also load its dependencies. -v is used to log the activity that modprobe does.
+
+modprobe can be used for removing modules as well and also it can remove dependencies. it does that by probing over " modules.dep " file.
+modprobe -r (module name) => it will remove that module from loaded modules list.
+
+module.dep is present in /lib/modules/{version of kernel}/ directory.
+
+also we can use 'depmod -a' to create and update module.dep with all new modules and dependencies.
+
+Make module to be persistence
+modules can become persistent and be loaded automatically, however some modules have parameters that they should be loaded automatically too.
+to make parameters persistent, we can create a file in /etc/modprobe.d
+If you have noticed there is blacklist.conf file in /etc/modfprobe.d , if you don't wana let a specific module be loaded use it
+
+/etc/modprobe.d/# vim cdroom-lookdor.conf => creating a file that will be used to add parameter to cdrom module.
+in the we write:
+options cdroom lookdoor=1 => it means that cdroom will come up with parameter of 'lookdoor=1'
+
+
+current running environment parameters can be seen in /sys/module/<module name>
+
+systctl
+by manipulating /proc/sys/kernel we can change some current running parameters but these changes are not permanent and will be gone by reboot. to make them persist we can use sysctl. sysctl is loaded from /sbin/sysctl and read setting from /etc/sysctl.conf and /etc/sysctl.conf.d/ 
+sysctl has a command interface and let us to see and write paramets trough /proc/sys/kernel/
+sysctl a => it will show all tuneables and configurable. but it has large output so we use grep for that.
+sysctl -a | grep swap => looks for swap environment variable.
+sysctl -w vm.swappiness=75 => it will overwrite the vm.swappiness variable to 75.
+
+some other options and configs related to network security and hardening redundancies are present in sysctl.conf file. but remember that files inside sysctl.conf.d/ will be overwritten by sysctl.conf file if matching exists.
+
+
+udev (userspace device)
+during boot process when kernel is loaded and device drivers start setting up hardware, next step of hardware is to initialize the dev. so kernel initial device loading and send uevent to udev daemon. udev keep and handle events base on attributes. also this events are handled based on actions defined for udev.
+there are two type of rules in two different locations:
+lib/udev/rules.d => the default rules.
+etc/udev/rules.d => the user defined rules.
+udev receives kernel messages and uevent messages from hot-pluggable devices.
+
+
+udevadm, udevadm monitor
+udev has a monitoring tool wich shows event logs received from kernel after hardware unitializing and uevent. for instance when a usb is attached to the system it will show the data integration in command-cli interface
+
+udevadm monitor => initiate monitoring tool over CLI
+
+udevadm info --query=all --name=/dev/sdb => if any disk (usb or internal disk) is added to /dev/sdb) we can check and query all the information and logs with info option.
+udevadm info attribute-walk --name=/dev/sdb | less => to have summary of device attributes
+
+udev populate /dev/ and create Hardware Abstraction, which is used by other programs.
+
+
+dmesg
+dmesg logs kernel ring buffer but it does other things too. during the boot proecss kernel is loaded into RAM. in this stage the device driver become present in kernel by init file and set relevant hardware drives. device driver produce message wich can be observed by dmesg as well.
+messages such as I/O, device problem, and hot-puggable devices information can be review by dmesg.
+
+other commands from LPIC-1
+lspci => lists PCi devices on the computer
+lsusb => lists usb devices Connected 
+lsdev => list devices and device information that kernel has detected.
+
+
+
+### 202.1 Customizing SysV-init system startup ###
+Traditionally system V init was used to start start other services. but V init had shortages. so upstart and systemd were developed.
+
+we can check each file directory by 'stat'
+stat /etc/init.d => shows sysV if its present in linux box
+stat /usr/share/upstart => if system has upstart configuration
+stat /usr/lib/systemd 
+
+in ' /proc/1/exe ' also we can see to which file the "exe" file has symbolic link
+
+
+SysV is an ancient method of handlinh system services from unix world.
+sysV uses runlevels concept to define sequence of services that are going to be loaded. in each runlevel specific amounto fshell scripts is proecssed to reach the state we desired.
+
+runlevel		Redhat							Debian
+0			System Halt (do not set as default)	System halt (not as default)
+1			Single user Mode					Single user mode	
+2			Multi User without NFS			Full multi User mode with GUI
+3			Full Multi user mode				--same as 2-- --unused
+4			--unused						//
+5			X11/Full multi user Mode			//
+6			reboot (do not set as initdefault)		reboot(do not set as default)
+
+for changing run level configuration we can modify /etc/inittab.
+
+
+init / telinit
+as disguessed in LPIC-1 init/telinit are somehow the same but telinit is recommended to be used. these commands change the current system runlevel.
+
+runlevel => it shows the runlevels history. and the runlevel we are currently in.
+
+runlevel description and scripts are present in /etc/ and inside rc0-6/ directories. each "rc" has rules for different runlevel and are defined by their number. these rules can be changed or modified too.
+
+
+chkconfig / update-rc.d
+exploring and creating symbolic link in rc files is hard. so we use `chkconfig` to modified and add services to each runlevel. chkconfig is not available in ubuntu 12.x.x and higher. so update-rc.d or sysv-rc-conf are used.
+
+• chkconfig => it will list all services and their state in each runlevel 
+
+chkconfig
+• chkconfig <service name> on/off => start/stop service on any unspecial run level(3,4,5 centOS)
+• chkconfig --level  345 <service name> on/off => Turn service on/off in runlevel 3,4 and 5
+• chkconfig  --list <service name> => List service condition in all unlevels
+
+update-rc.d
+• update-rc.d <service name> disable/enable
+ 
+upstart
+upstart is created by ubuntu to replace sysV. upstart is reactionary, means it takes events and based on them run jobs. In comparison with SysV upstart is more flexible but still it uses scripts and like SysV has some shortages
+
+systemd
+for editing or adding services from systemd the services needs to be copied to /etc/systemd/system folder from /usr/lib/systemd/system
+
+if you ls the file in /etc/lib/systemd/system would would see extension in the end of each file that describe its dependency.
+
+Requires: 	defined units files must beloaded.
+wants: 		specify unit file which must be loaded but if not the service will still work
+requisite:	must be already loaded.
+confilicts: 	unit files which never be activated with current unit file
+before: 		current unit files activated before listed unit files
+after: 		current unit file activated after listed unit file
+
+
+systemctl commands for services
+• systemctl start <ServiceName> => to start a service
+• systemctl stop <ServiceName> => to stop
+• systemctl disable <ServiceName> => disable it, won't be activated even after reboot
+• systemctl enable <ServiceName> => enable a service
+• systemctl relaod <ServiceName> => reload a service by reading its conf file,[might not work]
+• systemctl restart <ServiceName> => stop and start a service
+• systemctl list-unit-files --type=service => same as chkconf --list but in systemd environment
+• systemctl daemon-reload => Reload systemd Daemon, used after unit files modification
+• systemctl list-depencencies => List targets and services dependencies
+
+
+
+###  202.2. System Recovery ###
+process of boot up of OS.
+BIOS / UEFI
+    |
+    Bootable Disk
+        |
+        Boot Loader(LILO,Grub,Grub2)
+            |
+            Kernel (initramfs/initd)
+                |
+                init --->systemd / upstart / SysV
+                            |
+                            everything---shell & other services and programs
+if any problem occurs in any of these steps, the boot process will fail.
+
+to see the location of disks and hex dump the file we can use xxd
+xxd -l 512 /dev/sdb =>  it will hex dump the sdb with len of 512
+
+
+GPT (GUID Partition Table)
+in UEFI system, GPT partition table is used. GPT partition table contains an EFI System Partition (ESP).Inside that there is always /efi directory. /efi directory might contains one or many boot loaders. Each boot loader has its own identifier and corresponding directory.
+thats why only GTP formatted disk can handle dual boot functionality.
+for GTP partitioning we use `gdisk`.
+
+GPT is backward compatible and can work with BIOS and UEFI
+
+Boot laoder recovery
+boot loader recovering needs three specified major requirement.
+1. root partition
+2. kernel and boot partition
+3. initrd/initramfs
+
+
+
+### 202.3. Alternate Bootloaders ###
+
+beside Lilo(legacy), Grubv1, nad Grub2 Boot Loaders there are some other Boot Loaders which are not leaders but have been developed for specific purposes:
+Bootloader				Supported File System(s)			Used Media
+syslinux					ms-dos (FAT32)					USB
+extlinux					FAT32, ext3, ext4					usually on Hard Disk
+iso linux					create .iso files					CD/DVD
+
+
+we can use syslinux to make a bootable usb disk in FAT32 format:
+• lsblk => to list block devices and find the usb disk
+• umount /media/flashname => to unmount the media
+• mkfs.vfat -F 32 -n Vandelizer8GB /dev/sdb1 => formating the flash into FAT32 with new name.
+• fdisk -l /dev/sdb1 => to check the format and information of newly formatted media.
+
+• syslinux -maf /dev/sdb1 => installing syslinux on flash media.
+
+
+make a tiny copy of /usr/lib/syslinux/mbr/mbr.bin on the first 512 bytes of flash disk and make it bootable.
+• mount /dev/sdb1 /media/flash/ 
+• mkdir /media/flash/syslinux
+• cp /usr/lib/syslinux/modules/bios/{libcom32.c32,libutil.c32,vesamenu.c32} /media/flash/syslinux/
+
+make a folder in order to put linux sources there:
+root@server1:~# mkdir /media/flash/iso/ubuntu
+
+syslinux configuration file is syslinux.cfg, create like this:
+``
+DEFAULT Ubuntu_1604
+PROMPT 0
+allowoptions 0
+TIMEOUT 100
+UI vesamenu.c32
+MENU syslinux USB Multiboot Key
+
+LABEL Ubuntu_1604
+MENU LABEL Ubuntu 14.04 Trusty Thar
+kernel /syslinux/iso/ubuntu_1604/casper/vmlinuz.efi
+append initrd=/syslinux/iso/ubuntu_1604/casper/initrd.lz live-media-path=/syslinux/iso/ubuntu_1604/casper boot=live console-setup/layoutcode=it ignore_uuid boot=casper quiet splash --
+
+LABEL 2nd OS
+MENU LABEL Your 2nd OS
+kernel 
+append 
+
+LABEL 3rd OS
+MENU LABEL Your 3rd OS
+kernel 
+append
+``
+
+now we can make desired folder in /syslinux/iso/ and copy source files
+
+isolinux and extlinux both have their own configuration but their process is similar to syslinux.
+
+UEFI runs everything that we put inside ESP (EFI System Parition), specailly FAT32 partition. so it is dangerous in security perspective. to avoid boot loader manipulation, we can digitally sign the bootloader. but bootloader changes over time so to keep the digital signiture valid, we use /uefi/shim.efi. by using a tiny fix boot loader before main bootloader and run it sub sequence, we can keep watch on grub folder changes.
+
+/boot/efi/EFI/ubuntu/shimx64.efi & grubx64.efi
+dpkg -S shimx64.efi => it will search through shimx64.efi file and shows signed places.
+
+hexdump -C shimx64.efi | egrep -i -C 2 'grub|g.r.u.b' => verifying if it is calling correct grub.
+
+
+PXELINUX
+Pixie or Pre Execution Environment Linux is used to boot up system through the network. it describes standardized client-server environment at which client has a pxe-support network interface and its able to boot up from the network. for stablishing this environment we need DHCP, TFTP and NFS servers.
+
+When Client boots up it starts asking for an ip address, DHCP server receives its requests and as our client is pxe-support, DHCP gives it an IP Address and the IP address of TFTP server and required files. then with authenticated IP it request TFTP server to download boot loader and the kernel sources.then the modules are downloaded by the client through the network and they are loaded directly to RAM. part of kernel loading process is that it tries to mount root partition by mounting it from a NFS server and system boots up.
+
+
+
+### 203.1. Operating the Linux filesystem ###
+
+swap, swapon, swapoff
+swap can be put on a file (swap file) or can be an entire disk partition (swap partition).
+
+we can check whether we have swap present in our system or not:
+• free -h => shows the memory and swap availablity.
+• swap -s => if swap was present we can use swap -s to show the capacity and type of the OS swap.
+
+swap file
+swap file is actually a file that occupies amount of space that is declared to it and will use that in use space soley for swap.
+to use a file as swap for example "myswapfile" we need to populate the file and add meta data to it. also its permission should be changed to only root as well.
+
+• dd if=/dev/zero of=myswapfile bs=1M count=500 => first we disk/data duplicate the zero file into myswapfile. it clears the myswapfile by 500mb of space (all zero)
+• mkswap myswapfile => we use mkswap to make our file as a swap file.
+• chmod 600 myswapfile => changing the permission for newly created swap file.
+swapon myswapfile => adding the swapfile to swap space.
+
+finaly we can check the result by `swapon -s`
+in the opposite we can use swapoff to turn off swap for myswapfile.
+
+
+swap partitioning
+it is also a good practice to make swap as a disk partition.
+• lsblk => to list block devices
+• fdisk /dev/sdb => to select and modify the desired disk (this case is sdb)
+and follow the manual as LPIC-1 for partitioning.
+
+finaly u can check that disk information by:
+• fdisk -l dev/sdb 
+
+also don't forget to add meta data to that disk space:
+• mkswap /dev/sdb1
+
+swap -p (-number) (swap file/partion) => it can change the priority of swap files.
+
+
+umount, mount, mtab ,and fstab
+
+when new disk is added to OS it is attached by it is not mounted so to use it we first need to mount it.
+
+we also can check if disk is available by `lsblk or ls /dev | grep sd`
+use fdisk to partition newly added disk.
+and when it is added then format the disk to be used.
+• mkfs.ext4 /dev/sdb1
+
+then mount it where ever you want, also you can create new directory and mount the disk on that directory.
+• mkdir /mnt/my5GSSD
+• mount -t ext4 /dev/sdb1 /mnt/my5GSSD => -t is for type of file system is going to be mounted. /sdb1 is a mount device and /my5GSSD is mount point
+
+mount command:
+mount -V: output version
+mount -v: verbose
+mount -h: help message
+mount -a: mount all file system mention in etc/fstab file
+mount -n /dev/sdb1/mnt/newpartition: mount without writing in /etc/mtab file
+mount -t <File System Type> /dev/sdb1/mnt/newpartition: indicates the file system ext2, ext3, swap, ntfs etc.
+mount -o <options> /dev/sdb1/mnt/newpartition: ro, rw exec/noexec, suid/nosuid, dev/nodev, sync/async, user/users
+
+sync/async
+speed differ between CPU and hard disk or other lazy devices such as floppy disk. to fill the gam between latency of for exampe RAM and 3rd storage media, we use cahces and buffers. for example when CPU want to write on floppy disk it cannot wait for floppy to write on by one (sync) so instead it give the data to RAM buffer and ram buffer will lead the way to write the data on that floppy disk(async). in this scenario till will be optimized.
+
+mount command options:
+• ro: read-only
+• rw: read-write
+• exec/noexec: Permit/Prevent execution of binaries
+• suid/nosuid: Permit/Block the operation of suid, guid bits
+• dev/nodev: Interpret/Do not interpret character or block special devices on the file system
+• sync/async: I/O to the file system is done (a)synchronously
+• defaults: Use default options: rw, suid, dev, exec, auto, nouser, and async
+• remount: Attempt to remount an already-mounted file system, usually used to change mount options
+
+
+/etc/mtab (contraction of mounted file systems table)
+mtab is a file which is kept update with the mount subsystem. it lists currently mounted file system. kernel doesn't work with mtab and mtab is used to print data when we use the command `mount`. kernel puts its settings in /proc/mounts and /proc/self/mounts.
+
+/etc/fstab (file systems table)
+our mounted devices are not persistent and wouldn't be accessible after reboot so far. To make a persistent mount we should use fstab
+<file system>: device/partition that contains file system. example: /dev/floppy0 or UUID
+<mount point>: where do we want a mount device/partition. example: media/floppy
+<type>: type of File system. example: ext4
+<option>: mount options of accessing device/partition. example: rw, user, noauto, exec ...
+<dump>: enable/disable backing up device/partition. example: 0 or 1
+<pass>: control the order of fsck check device/partition during boot process. example: 0, 1 or 2
+
+fstab options are crucial because we can allow users or no user to be able to mount a file system. or make network requirement for accessing on a device. (_netdev).
+
+blkid
+blkid show all information about block devices in system.
+
+
+
+### 203.2. Maintaining a Linux filesystem ###
+File systems 
+we have different file system with different architecture and each have variable property in Maximum Filesize, Max Volume size, extends and journal support and also snapshot.
+
+for checking all file systems that can be made by mkfs (make file system) command in distro we use:
+ls /sbin | grep mkfs => it list all mkfs file system files
+
+mkswap
+swap extension is not present in list of mkfs but for making a partition as a swap file system. we use:
+mkswap /dev/sdXY /dev/sdb2 => it will write that sdXY on the sdb2 partion.
+
+fsck (file system consistency check) 
+fsck is a tool for checking and repairing linux file system. and it is located in /usr/sbin/fsck or sbin/fsck
+fsck is an ext tool and should not be used for  other file systems. however, it can detect XFS and will avoid running on them.
+note:
+it is not possible to check a filesystem while it is being used. so first it should be unmounted.
+
+fsck switches
+-v: 
+-f: force fixing errors, asks conformation before each repair
+-y: it accepts to confirm all fixed
+-n: emulate fixing erros, but no real write them all
+-N: inform other process that fsck command will be run and nothing should be executed.
+-b <superblockbackuplocation>: restore super block from the backup locations
+
+the parameters of fstab are related to etc/fsck
+0: never be checkd by fsck during boot process
+1: check the partition with fsck during boot with priority of 1
+2: check the partion after other partiton with fsck priority of 2
+
+tune2fs
+tune2fs is used to adjust various parameters for the ext2/ext3. for example, we can check the information of partitions.
+tune2fs -l /dev/sdb2 => it will list all information of sdb2
+we can reserve space for user or root user
+tune2fs -m 6 /dev/sda2 => it will set 6% of the sdb2 to be reserved for overall filesystem size.
+
+tune2fs -L (newName) /dev/sdb1 => change volume Name
+tune2fs -i 7 /dev/sdb1 => change check interval to 7 days
+tune2fs -c 10 /dev/sdb1 => change mount count to 10 times
+tune2fs -m 0 /dev/sdb1 => change reserved blocks to 0
+
+
+dumpe2fs
+dumpe2fs show all super lbocks info. superblocks ae kind of meta data if file system which keeps information about size, block size ande etc..
+
+dumpe2fs /dev/sdb1
+superlocks are important. File system is desinged to keep back of them by copying them on several places of hard disk for security purposes.
+
+mkfs.ext4 -n /dev/sdb => -n is used to emulate the file system formatting. this can also be used to check super blocks backup.
+
+debugfs
+debugfs is a ext2/3/4 file system debugger with a editor environment.
+use `help` to see the parameters and functionalities.
+
+XFS File system
+XFS is developed and mostly used for Redhat distros. it has its own tools and on some distros it should be install via xfsprogs to use XFS tools.
+
+you can check other xfs files by xfs [tab] in command file.
+xfs_info: give info about XFS partition, partition must be mounted.
+xfs_repair: fix XFS File System problem
+xfs_check: check XFS file system problems with novebosity. but depricated.
+xfsdump & xfsrestore: XFS backup and restore commands. they can work with mounted parititons.
+
+three levels of backups that an be done with xfsdump:
+0: full backup
+1: only backup changed files since last backup
+2: backup file changes sicne last full or incremental backup
+
+https://borosan.gitbook.io/lpic2-exam-guide/2032-maintaining-a-linux-filesystem#xfsdump-xfsrestore
+
+
+smartd, smartctl
+SMART (Self-Monitoring, Analysis and Reporting Technology) is a monitoring ststem includin computer hard disk drives. it is not linux specific tool. it is a 3rd party utility which is running on host operating system.
+smartd , smartctl are tools to read SMART data. and in some distros they need to be installed.
+
+
+
+### 203.3. Creating and configuring filesystem options ###
+autofs - service control for the automounter
+with fstab and using it for mounting a device disk, it is always always mounted when system is booted up. but when we are using nfs, cifs, smb, through network, we don't want to mount devices and only mount the device when they are needed, so it it prevent network from over head.
+for such that we use autofs.
+autofs needs to be installed and its files are present in etc/auto*
+
+auto.master file
+auto.master is a file that autofs first checks, inside the auto.master file we indicate where the mount-point should be and and where the related configurations are. auto.master works with other files in order to refer.
+format of master map:
+mount-point map-name options
+
+process:
+we set desired mount-point for example /mynfsMount
+
+ISO9660
+ISO 9660 is a file system for optical disck media and has 3 different extensions.
+Joliet: by microsoft, addds support for longer file names and unicode characters
+Rock Ridge: supports POSIX file permissions and ownerships, symbolic links and longer file names
+EI torito: enables a disc to boot an x85 compatible system.
+
+UDF
+the UDF (Universal Disk Format) is a more recent file system format managed by OSTA (Optical Storage Technology Association) and was created to overshadow the shortcomings of the ISO standard.
+
+HFS
+Hierarchical File System (HFS) is a proprietary file system developed by Apple Inc. for use in computer systems running Mac OS. Originally designed for use on floppy and hard disks, it can also be found on read-only media such as CD-ROMs. 
+
+mkisofs is a tool to create ISo9960/UDF/HFS files
+mkisofs -o file.iso directory-of-Iso/
+
+
+cryptsetup
+Cryptsetup is utility used to easily setup disk encryption based on DMCrypt kernel module
+
+LUK
+Linux Unified Key Setup-on-disk-format (LUKS) is the standard for Linux hard disk encryption. By providing a standard on-disk-format, it does not only facilitate compatibility among distributions, but also provides secure management of multiple user passwords. In contrast to existing solution, LUKS stores all setup necessary setup information in the partition header, enabling the user to transport or migrate his data very easily.
+
+
+
+### 204.1. Configuring RAID ###
+RAID (Redundant Array of Independent Disks, or Redundant Array of Inexpensive Disks) is a way of storing the same data in different places on multiple hard disks to protect data in the case of a drive failure. not all Raid levles provide redundancy.
+
+RAID works by placing data on multiple disks and allowing input/output operation to overlap in a balanced way. it stores data redundantly also increase fault tolerance. 
+Raid arrays appear to the operating sywstem as a single logical hard disk. it uses techniques of disk mirroring and disk stripping.
+	- mirroing copies identical data onto more than one drive
+	- striping paritions each drives' storage into unit ranges. the stripes of all the disk are inerleaved and addresses in order.
+mirroring and stripping technique can be combined.
+
+Parity is another method which involves saving of information across the disk arrays so that the same information can be used to recreate or reconstruct the affected data.
+
+
+RAID Controller
+A RAID controller can be used as a level of abstraction between the OS and the physical disks, presenting groups of disks as logical units. it improves performance and protection of data.
+
+RAID controller can be used in hardware and software-based RAID Arrays.
+	- In a hardware-based RAID product, a physical controller manages the array. When in the form of a Peripheral Component Interconnect or PCI Express card
+	- software-based RAID, the controller uses the resources of the hardware system. software-based may not enable as much performance robustness.
+
+RAID Levels
+When RAID was introduced 6 different RAID Levels were introduced, known as standrad RAID levels.
+note: there are also other non-standard RAID levels like RAID7 but are not popular.
+
+RAID Level Comparison
+
+RAID0
+Min of Disks: 2
+Fault Tolerance: none
+Disk Space Over-Head: none
+Read Speed: fast
+Write Speed: fast
+Cost: cheap
+Usage: high end worksations, data logging, real-time rendering, very transitory data
+
+RAID1
+Min of Disks: 2
+Fault Tolerance: 1 disk
+Disk Space Over-Head: 50%
+Read Speed: fast
+Write Speed: fair
+Cost: high(disks)
+Usage: operating ststem, transaction databases
+
+RAID5
+Min of Disks: 3
+Fault Tolerance: 1 disk
+Disk Space Over-Head: 1 disk
+Read Speed: slow
+Write Speed: slow
+Cost: high
+Usage: Data warehousing, web serving, archiving
+
+RAID6
+Min of Disks: 4
+Fault Tolerance: 2 disks
+Disk Space Over-Head: 2 disks
+Read Speed: slow
+Write Speed: slow
+Cost: very high
+Usage: data archive, backup to disk, high availability solutions, servers with large capacity requirements.
+
+RAID10
+Min of Disks: 4
+Fault Tolerance: up to one disk failure in each sub-array
+Disk Space Over-Head: 50%
+Read Speed: fast
+Write Speed: fair
+Cost: high(disks)
+Usage: fast databases, application servers.
+
+
+/proc/mdstat
+The linux kernel implements multipath disk access via the software RAID stack known as the md (Multiple Devices) driver.
+mdstat provides a way tocheck the state of the md drives. it also shows information about software RAID array if exists.
+
+partition type 0xFD
+Disk Drive need to be formated with 0xFD before play a role in RAID array. this format helps that if disk drives moved to another system it will be treated as RAID array in that system too.
+
+changing format of disk to 0xFD can be done via fdisk similar to swap.
+in fdisk it is known as fd (linux raid auto)
+
+mdadm
+mdadm is a tool for creating, managing, and monitoring RAID devices using the md driver in Linux. based on your distro you might need to install mdadm:
+
+mdad.conf
+normally linux system doesn't automatically remember all the components that are part of the RAID set. this infromation has to be added to etc/mdadm/mdad.conf. it helps to rebuild, reactive and modify the RAID. this file needs to be create.
+• mdadm --detail --scan => scans the available RAID lelves on the system
+• mdadm --detail /dev/md1 => gives more detail information about md storage.
+
+we can add RAID configuration and information to mdad.config by:
+• mdadm --detail --scan >> /etc/mdadm/mdadm.conf
+
+
+Removing a DIsk from array:
+We can’t remove a disk directly from the array, unless it is failed, so we first have to fail it
+• mdadm --fail /dev/md0 /dev/sdb1
+• mdadm --remove /dev/md0 /dev/sdb1
+
+Adding a disk to an Existing Array
+• mdadm --add /dev/md0 /dev/sdb1
+
+Stopping and Deleting a RAID Array
+• mdadm --stop /dev/md0
+• mdadm --remove /dev/md0
+
+deleting superblock from each drive
+• mdadm --zero-superblock /dev/sdb
+• mdadm --zero-superblock /dev/sdc
+
+
+
+### 204.2. Adjusting Storage Device Access ###
+Storage Types:
+- HDD: (Hard Disk Drive), a mechanical hard disks that stores data on magnetic platter.
+- SSD: (Solid-State Drive), they are non-volatile flash memory and they are more power effficient and have higher speed than HDDS.
+- NVMe:(Non-Volatile Memory express, devices that are like flash memory chips connected toa system via the PCI-E Bus.
+
+Storage Connectivity Protocols:
+IDE/ATA: popular Interface, used to connect hard disks can optical drives, speed: 133MB/s
+Serial ATA: serial version of IDE/ATA typically used for internal connectivity. speed: 16GB/s
+SCSI: popular standard for compute-to-storage connectivity. speed up to 640mb/s
+SAS: Serial attached SCSI, is a point-to-point serial protocol that provides alternatives to SCSI. soeed up to 12 GB/s
+FC: Fibre Channel a widely-sued-protocol for high-speed communication to the storage device. latest version speed up to 32 GB/s
+IP: IP is a network protocol that has beeen traditionally used for compute-to-compute traffic. ISCSI and FCIP protocol are common examples of using IP for compute-to-storage communication.
+
+
+hdparm
+hdparm is a tool for diagnosis and tuning of hard drives. it can set parameters such as drive cache, sleep mode, DMA (Direct Access Memory), and power management settings. however this interaction can cause memory lost and memory damage.
+
+• hdpram -I /dev/sdb => shows detailed information about the Disk.
+• hdparm -t /dev/sdb => run reading speed test on the disk
+• hdpram -B 125 /dev/sdb => Set the Advanced Power Management <1-255> 128-254 do not allow spin-down and 255 disables feature completely. also 1-127 permit spin-down.
+• hdpram -S 240 /dev/sdb => Set standby time.specifies how long to wait in idle (with no disk activity) before turning off the motor to save power. 0 can disbale feature,the values from 1 to 240 specify multiples of 5 seconds and values from 241 to 251 specify multiples of 30 minutes.
+• hdpram -d 1 /dev/sdb => set DMA on or off, values are 1 or 0
+
+
+sdparm
+sdparm is scsi version for hdparm, sdparm manipulate scsi specific attributes on hard disk.
+
+NVMe
+in linux the NVMe driver became natively included after linux 3.3. the NVMe devices should be shown under /dev/nvme*
+
+
+tune2fs on hard disk layer
+tune2fs command which is used by the system administrator to modify/change parameters on ext2, ext3 and ex4 type filesystems can manipulates disk drive from File System layer.
+
+by default every file system has some space reserved for root user. as a standard it is 5%. however we can change it.
+• tune2fs -l /dev/sda3 | grep -i reserved => to list the data related to reserved.
+• tune2fs -m 6 /dev/sda3 => it dedicates %6 of space to root
+• tune2fs -l /dev/sda3 | grep -i reserved => to check the outcome.
+
+When we have very huge partition, ext file system sparse lots of super blocks bakcups in different places of hard disk which consume noticeable space, we can Limit the number of backup superblocks to save space on large filesystems using:
+• tune2fs -s 0 /dev/sda1
+
+note:
+after any manipulation fsck should be run in order to save changes.
+
+
+sysctl
+sysctl is a tool to change kernel parameters at real time. it deals with /proc directory
+we use sysctl -a to list are parameters and as an example we know that sysctl -w net.ipv4.ipforward=1 is equivalent of echo or edit the file of /proc/sys/net/ipv4/ip_forward to "1". and for making it peristent we learned that sysctl has a configuration file which is in /etc/sysctl.conf and kernel parameters are defined there.
+
+
+what is LUN
+Logical Unit Number which is used to identify a logical unit, which is a device addreesed by the SCSI protocol or SAN (Storage Area Network) protocols.
+
+iSCSI (internet Small Computer System Interface)
+SCSI is a set of American National Standards Institution (ANSI) standard electronic interfaces that allow computer to communicate with peripheral hardware such as disk drive, tape dirves, CD-ROM drives, printers and ... more coherent and comprehensive.
+but what if we could do it remotely?
+iSCSI works on top of the TCP(Transport Control Protocol) and allows the SCSI command to be sent end-to-end over LANs and WANs or the internet.
+
+how does iSCSI work?
+ iSCSI works by transporting block-level data between an iSCSI initiator on a computer(as client) and an iSCSI target on a storage device(as server). The iSCSI protocol encapsulates SCSI commands and assembles the data in packets for the TCP/IP layer. Packets are sent over the network using a point-to-point connection. When packets arrived, the iSCSI protocol disassembles the packets, take out SCSI commands so the operating system will see the storage as a local SCSI device that can be formatted as usual.
+
+iQN, EUI
+each iscsi target or initiator is called iscsi node. all iSCSI nodes are identified by an iSCSI name. this naming allows to manage storage resources regardless of other kind of addresses. also it is used for authentication of targert/initiator.
+
+iSCSI addresses types:
+iSCSI Qualified Name (iQN)
+	- iQN format ‐ iqn.yyyy‐mm.com.xyz.aabbccddeeffgghh
+		- iqn: naming convention identifier
+		- yyyy-nn: Point in time when the .com domain was registered
+		- com.xyz: domain of the node backwards
+		- aabbccddeeffgghh: device identifier (can be a WWN, the system anem or any other vendor implementation)
+
+IEEE Naming convention (EUI)
+	- EUI format ‐ eui.64‐bit WWN:
+		- eui - Naming prexix
+		- 64-bit WWN -FC WWN of the host
+
+
+Configuration:
+
+on Server:
+for using iSCSI we need to prepare requirements:
+• install epel-release => to install EPEL repository.
+
+then we need to install scsi target packages.
+•  yum install -y scsi-target-utils
+
+then we need to configure target 
+• vim /etc/tgt/target.conf
+
+for changes, we need to restart service and enable it
+• systemctl restart tgtd.service
+
+use tgtadmin to scan the result:
+• tgtadm --mode target --op show
+
+note:
+check the port (default is 3260) and firewall configuration in order to not prevent communication of iSCSI.
+• firewall-cmd --add-port=3260/tcp --zone=public --permanent => adding port to firewall configuration
+• firewall-cmd --reload
+• firewall-cmd --zone=public --list-all
+
+on Client:
+first we need to install packages
+• apt install open-iscsi
+
+then configure the iscsi initiator config file.
+• vim /etc/iscsi/iscsid.conf
+
+then restart and enable the iscsid.service
+• systemctl start iscsid.service
+• systemctl enable iscsid.service
+note:
+don't forget to make the config persistent by chaning value of `node.startup = manual.
+• root@server2:~# echo "iscsiadm --mode node --targetname (Ip address):target00 --portal ipaddress --login" >> /etc/rc.local
+• systemctl enable rc-local.service 
+• chmod 750 /etc/rc.local
+
+we can check configuration by iscsiadm tool:
+• iscsiadm --mode discovery -t sendtargets --portal (ip address):(port), (ipaddress):target00
+
+if modification is correct we will see a new hard disk in out client /dev/sd*
+
+we can format or mount disk by `_netdev` commands
+
+
+
+### 204.3. Logical Volume Manager ###
+LVM (Logical Volume Manager)
+In traditional storage management, Operating system searchs for Disk Drives like /dev/sda, /dev/sdb and then looks for what partitions are available on the disks like /dev/sda1, /dev/sdb1 .Partitions are limited to the disks and they are not so flexible. Logical Volume Manager (LVM) bring us flexibility by creating an abstraction layer between Operating System and Disk Devices.
+
+Physical volumes (pv):
+A physical volume is typically a hard disk, though it may be a device that looks like a hard disk (ex:software raid device).
+
+Volume Groups (vg):
+The Volume Group is central level and heart of the LVM. It gathers together a collection of Physical Volumes and create a pool of different storage resources.
+
+logical volumes(lv):
+The equivalent of a disk partition in a non-LVM system. logical volume takes disk space from disk space which is available on volume group. On top of logical volumes we create File Systems( xfs, ext4, ...)
+
+LVM is capable of doing operations such as increasing, decreasing the size of a logical volume
+
+on physical disk we have physical extends(PE) which are equal to logical extends (LE)
+
+Redhat distros are based on LVM system. but for other distros we need to install it.
+• apt-get install lvm2
+
+In order to prepare a partition to be a physical volume in LVM, it is recommended to format it with LVM tag
+so in fdisk we choose disks that we want to use lvm for them and change the format.
+
+working with physical volumes (pv)
+• pvdisplay => it shows data of physical volumes
+• pvcreate /dev/sdb1 dev/sdc1 => it selects the disks and make them as physical volumes for LVM.
+
+physical volume commands:
+• pvdisplay: display physical volume details
+• pvscan: scans all disk for physical volume
+• pvs: report infor about physical volumes
+• pvcreate /dev/sdb1 /dev/sdb2: create physical volume
+• pvchange: activate, de-activate physical volume
+• pvmove: move data from one pv to another pv
+• pvremove /dev/sdb1: remove a physical volume
+
+
+working with volume groups (vg)
+first we need to create a volume group:
+• vgcreate myVolumeGroup /dev/sdb1 /dev/sdb2 => we add newly created pv as a new volume group with the name 'myVolumeGroup'.
+• vgdisplay => we can check the list of volume groups.
+
+volume group commands:
+• vgdisplay: display volume group details
+• vgscan: scans disk devices in the system looking for PV and VG
+• vgs: report infor about volume groups
+• vgcreate (vg name) /dev/sdb1 /dev/sdb2 .. : create a volume group
+• vgextend (vg name) /dev/sdb2 /dev/sdb1: add a new pv to vg
+• vgreduce (vg name) /dev/sdb2: remove pv from vg
+• vgexport (vg name): export vg from system
+• vgimport (vg name) /dev/sdb1 dev/sdb2: import vg to system
+• vgchange -a y (vg name): Activate vg, use '-a n' to deactive
+• vgremove (vg name): remove VG from the system
+• rename (vg name) (new vg name): rename vg
+• vgsync /dev/(vg name): sync stale PE in VG
+
+
+workin with logical volume(lv):
+
+• lvcreate --name (lv name) --size 1G (vg name) => it will create a new logical volume with a name from the volume group that is created on top of physical volume.
+• lvdisplay => it shows all logical volumes
+
+then we can format and mount the logical volume:
+• mkfs.ext4 /dev/MyVGTest/MyLVTest
+• mount /dev/MyVGTest/MyLVTest /mnt
+• mount => to check mount process
+
+we can resize volume with lvresize without unmounting it
+• lvresize --help => to get the manual of lvresize
+• df -h => to check disk free space
+• lvresize -L +1G(999M) -r /dev/MyVGTest/MyLVTest 
+note: if we don't want to use -r switch we have to use resizefs /dev/MyVGTest/MyLVTest command in order to get file system.
+
+logical volume commands:
+• lvdisplay: display logical volume details
+• lvscan: scan for logical volumes
+• lvs: show logical volume info
+• lvcreate --name --size 1G (name of lv): create logical volume
+• lvremove /dev/MyVGTest/MyLVTest: remove logical volume
+• lvrename (lv name) (new lv name): rename logical volume.
+• lvrextend -L 1G /dev/MyVGTest/MyLVTest: increase size of logical volume
+• lvreduce -L 1G /dev/MyVGTest/MyLVTest: decrease size of logical volume
+• lvchange -a y /dev/MyVGTest/MyLVTest: active logical volume or de-active (-a n)
+• lvsync /dev/MyVGTest/MyLVTest: sync stale LE of logical volume.
+• lvlnboot [-b/-d/-r/-s/-R/-v] /dev/MyVGTest/MyLVTest: set lv as root, boot, swap, dump volume.
+
+
+LVM snapshot
+snapshots lets us to freeze the current state of logical volume.Every thing which is added or removed doesn't make any changes in our snapshot and we can easily reverse to previous stat of volume. 
+
+• lvcreate -s --size 100M  --name MySnapshotTest /dev/MyVGTest/MyLVTest => creating an snapshot with size of 100M and adding new name.
+• lvs => shows list of snap shots
+
+note: 
+you should unmount the disk in order to restore it with snap shot.
+• umount /mnt  => unmounting the directory
+• lvconvert --merg /dev/MyVGTest/MySnapshotTest => it converts the data to the snapshot
+
+• mount /dev/MyVGTest/MyLVTest /mnt => remount the volume.
+
+
+/etc/lvm
+lvm.conf is loaded during the initialisation phase of lvm. This file can in turn lead to other files being loaded - settings read in later override earlier settings. File timestamps are checked between commands and if any have changed, all the files are reloaded.
+
+Metadata backups and archives are automatically created on every volume group and logical volume configuration change unless disabled in the lvm.conf file.
+
+the longivity of number of meta data archive can be determined by parameters in lvm.conf file.
+
+
+Logical Volume backup
+A daily system backup should include the contents of the /etc/lvm directory in the backup. Note that a metadata backup does not back up the user and system data contained in the logical volumes.We can manually back up the metadata to the /etc/lvm/backup file with the vgcfgbackup command.And we can restore metadata with the vgcfgrestore command.
+
+
+/dev/mapper
+The Device mapper is a generic interface to the linux kernel that can be used by different storage solutions.
+• ls -l /dev/MyVGTest/MyLVTest
+By using LVM or RAID or LUKS more md-X devices are created and used. 
+
+We can work with Device Mapper Directly with `dmsetup`
+• dmsetup ls
+
+RAID can give us performance and reliability, LVM causes flexibility
+
+
+
+### 205.1. Basic networking configuration ###
+in network configuration in Linux, setting can be done in defferent levels and each level has different tools.
+levels:
+run time -- ip addr and ...
+configuration -- Network Manager (nmcli), wicked , systemd-Networkd
+devices -- Network Service.
+
+ifconfig (interface configuration) (deprecated)
+utility to configure, manage and query network interface parameters. used for displaying current network configuration information, setting up an ip address, netmask or broadcast address to an network interface, creating an alias for network interface, setting up hardware address and enable or disable network interfaces.
+
+• ifconfig => displays all "Active" Network interfaces
+• ifconfig -a => shows display all network interfaces (weather enabled or disable)
+• ifconfig eth0 => it details on specific interface
+• ifconfig (interface) up/down => to enabe or disable a network interface
+• ifconfig (interface) (ip address) => assign an IP address to Network Interface
+• ifconfig (interface) netmask (netmask address) => assing a networkMask to net interface
+• ifconfig broadcast (ip addresss) => assing a broadcast network address
+• ifconfig eth0 (ip address) netmask (netmask addresss) => to assing ip and netmask together.
+• ifconfig (interface) hw ether (MAC address) => change the MAC address of Network interface
+
+
+Mapping multiple IP addresses on a single NIC
+Linux is capable of mapping multiple IP addresses to a single NIC (not only primary) by using `ip aliasing`
+note:
+Ip aliasing is possilbe only if ips are in same sub-netmask.
+• ifconfig (interface name):(string number) (Ip address)
+example: ifconfig enp3s0:0 94.232.174.2
+
+and for Removing
+• ifconfig (interface name):(string number) down => it will disable the interface
+
+to check that use:
+• ifconfig (interface name):(string number)
+
+
+Promiscuous Mode
+In normal mode, when a packet received by a network card, it verifies that the packet belongs to itself. If not, it drops the packet normally, but in the promiscuous mode is used to accept all the packets that flows through the network card.
+• ifconfig enp3s0 promisc/ -promisc => it enable or disable promiscous functionality on that interface
+
+MTU (Maximum Transmission Unit)
+MTU allows us to set the limit size of packets that are transmitted on an interface. not all interfaces supports MTU setting
+to check MTU of each interface use:
+• ifconfig enp3s0 | grep -i mtu  => grep information about mtu
+
+change setting
+• ifconfig enp3s0 mtu 1600 => changing the maximum transmission size to 1600 bytes
+
+
+IP
+ip command is an replacement for ifconfig. it is used to manage routing, devices, policy and routing
+
+• ip addr show: Display deep  information about all Network Interfaces
+• ip a show (interface name): Network Settings of specific Network Interface
+• ip link set (interface name) up/down: Disable / Enbale Network interface
+• ip addr add (ip address)/(mask) dev (interface name): assign an IP to network interface
+• ip addr del (ip address)/(mask) dev (interface name): remove an IP from network interface
+• ip addr broadcast (ip address) dev (interface): add broadcast address to the network interface
+• ip link set dev (interface name) address (your new mac address) => adding MAC address 
+• ip link set mtu 1500 dev (interface name): to set MTU of network device
+
+adding Alias to an Interface
+• ip addr add (ip address)/24 dev (interface name) label eth0:1 => to add alias ip to the interface
+• ip addr del (ip address)/24 dev (interface name) label eth0:1 => to remove the alias ip to the interface
+
+note:
+if we use ip addr add command to add alias, ifconfig doesn't show any thing because it doesn't know how to deal with it.
+
+set promiscuous
+ip link set (interface name) promisc on/off => to turn the promiscuous enable or disable
+
+config files:
+/etc/sysconfig/network-scripts/ for RedHat or /etc/network/interfaces for debians.
+
+
+route
+route is used to manage and manipulate ip routing table.
+• route => shows routing table.
+• route -n => shows numerical IP address instead of hostname
+• netstat -rn => is also another way to show routing table
+• ip route show => it also displays all scopes and link srcs.
+
+other commands:
+• route add/del default gw (ip address): adding/removing default gateway.
+• route add/del -net (ip address)/(netmask) gw (ip address) dev (interface name): add/remove route to table
+• ip route add (ip address)/(netmask) via (interface ip): add or remove route using ip.
+
+note:
+to make routing setting persistent, edit /etc/sysconfig/network-scripts/route-.. file to define static routes or interfaces. in debian => /etc/network/interfaces.
+
+
+ARP (Address Resolution Protocol)
+ARP is used to convert ip address to the physical address.
+
+- ARP: request MAC address via IP address
+- reverseARP: request IP address via MAC
+- nslookup: request IP address via host name
+- reverse nslookup: request host name via IP address
+
+
+commands for arp
+• arp -a => it shows arp table for inused interface
+• arp -v => shows more detailed information
+• arp -d (mac address) => delete mac address from ARP Table
+• arp -s (ip address) (mac address) => adds a new entry to arp table
+
+however arp is replaced by `ip n`
+
+
+iw, iwconfig, iwlist (wireless configuration)
+iw is a new tool which works similar as iwconfig to configure wireless devices.
+
+• iw dev (wire-less interface) link => getting info about wireless interface
+	similar to iwconfig (wireless interface)
+• iwlist (interface) scan => getting list of available SSIDs
+• iw (wireless interface) connect BB => connects to an Open network
+	similar to iwconfig (interface) essid BB
+
+
+
+### 205.2. Advanced Network Configuration and Troubleshooting ###
+
+we have 0 to 65535 ports
+0-1023:the Well Known Ports, also referred to as System Ports.
+1024-49151: the Registered Ports, also known as User Ports.
+49152-65535: the Dynamic Ports, also referred to as the Private Ports.
+and two most popular Internet transport protocols. Transmission Control Protocol (TCP) and the User Datagram Protocol (UDP) 
+
+
+netstat (network statistics)
+netstat outputs network connections form local host perspective, routing, interface statistics, connections and multicast information
+
+• netstat -s, --statistic: give summary by protocol type and message types
+• netstat -i, --interfaces: display a table of all network interfaces
+• netstat -r, --route: shows routing table information
+• netstat -a, --all: show both listening and non-listening sockets
+• netstat -t, --tcp: enables listening of tcp ports
+• netstat -u, --udp:enables listening of udp ports
+• netstat -l, --listening: prints only listening sockets
+• netstat -p, --program: shows PID and the name associated program
+• netstat -e, --extend: shows additional information
+• netstat -n, --numeric: shows numerical address
+
+• netstat -tulpn: useful switch for checking working ports and their processes.
+
+
+ss
+netstat read various /proc files to gather information. however this approach falls weak when there is a lot of connection to display. so we use `ss` command.
+
+The ss command gets its information directly from kernel space. The options used with the ss commands are very similar to netstat making it an easy replacement. also ss shows more information than that netstat and is faster.
+
+command options:
+• ss -l, --listening: Display only listening sockets
+• ss -4: data of ipv4
+• ss -6: data of ipv6
+• ss -a, --all: Display both listening and non-listening (for TCP this means established connections) sockets
+• ss -t, --tcp: Shows established or CONNECTED tcp connections
+• ss -u, --udp: Shows established or CONNECTED udp connections
+• ss -s, --summary: prints summary of status.
+• ss -o, --options: time information ofeach connection would be displayed.
+• ss -n, --numeric: do not try to resolve service names
+
+
+lsof
+To get a list of files which are opened by users and associated processes with them we use lsof (LiSt Open Files).
+
+commands options:
+• lsof -n: do not try to resolve Ip address to DNS
+• lsof -n /var/log: shows which processes have opened specific files.
+• lsof +D /var/log: List opened files under a directory
+• lsof | grep /dev
+• lsof -u (username): list files opened by a specific user
+• lsof -p 1357: all open files by specific process
+• lsof -t
+• lsof -i: list all network connections 
+
+
+Ping
+ping switches:
+• ping -v (ip address): verbose mode
+• ping -V: shows version and exits
+• ping -c 5: stope after sendig 5 ECHO_REQUEST packets 
+• ping -i 0.9: increase / decrease ping time interval
+• ping -O: Report outstanding ECHO REPLAY before sending next packet. This is useful together with the timestamp -D to log output to a diagnostic file and search for missing answers.
+• ping -w 10: Specify a timeout, in seconds, before ping exits regardless of how many packets have been sent or received
+• ping -s 100: Change the default packet size from 56 to 100
+• ping -R: Record and print route of how ECHO_REQUEST sent and ECHO_REPLY received
+• ping -a: Audible ping: Give beep when the peer is reachable
+
+ipv6
+ipv6 is used for pinging IPv6 
+
+nc
+netcat is a networking utility used for reading or writing from TCP and UDP sockets using an easy interface
+nc -l 80 => listen on port 80 and logs data on it.
+-z says that nc should just scan for listening daemons, without sending any data to them. can not be used with -l option.
+
+
+tcpdump
+tcpdump is command-line packet sniffers and analyzer tool which is used to capture or filter TCP/IP packets which recieved or transfered over a network on a specific interface.
+tcpdump also give us a option to save captured packets in a file in a pcap format.
+
+tcpdump options:
+• tcpdump -D: Display available interfaces
+• tcpdump -i (interface): capture Packets from specific interface
+• tcpdump -c 10 -i (interface, port): Capture only N number of packets
+• tcpdump -w file.pcap -i (interface,port): Capture and save packets in a file
+• tcpdump -r file.pcap: ead captured packets
+• tcpdump -n -i (interface): Capture IP address Packets
+• tcpdump -i (interface) tcp: Only TCP Packets are captured
+• tcpdump -i (interface) port (port number): Capture packets from specific port
+• tcpdump -i (interface) src (ip address): Capture packets from source IP
+• tcpdump -i (interface) dst (ip addresss): Capture packets from destination IP
+• tcpdump -i ens33 ipv6: Sniffing for IPv6
+
+
+nmap (Network Mapper)
+nmap is a security scanner. It is used to discover hosts and services on a computer network, whith the goal of building a "map" of the network. To accomplish it, Nmap sends specially designed packets to the target host(s) and then analyzes the responses. Nmap can adapt to network conditions including latency and congestion during a scan. 
+
+nmap features other than port scanning:
+- host discovery
+- operating system detection
+- service version detection
+- network information about targets, such as DNS names, device types and MAC address.
+- ability to scan for well-known vulnerabilities.
+
+nmap is not install on most of distros:
+apt install nmap.
+
+nmap -v scanme.nmap.org => it scans the domain and discovery its open ports. -v enables verbose.
+
+nmap target selection:
+• nmap (ip address): scan a single IP
+• nmap (10.1.1.1-100): scan a range of IP
+• nmap (scanme.nmap.org): scans a host
+• nmap 192.168.10.0/24: scans a subnet 
+• nmap -iL ListOfServers.txt: scans targets from a text file.
+• nmap -6 (ipv6): enables IPv6 scanning
+
+nmap ports commad:
+nmap -p (port number) (ip address): scan a single port
+nmap -p 1-100 (ip address): scan a range of port numbers
+nmap -F (ip address): fast-scan 100 most common ports
+nmap -p- (ip address): scan all 65535 ports
+
+note:
+nmap has many different techniques and options and can be learn through internet and documents.
+
+
+3-way handshake TCP
+1. Host A sends a TCP Synchronization packet to Host B
+2. Host B receievs A's SYN and Host B sends  Sync-Acknowledgment.
+3. Host a receievs B's SYN-ACK and host A send ACK.
+4. Hsot B receives ACK and TCP socket connection will be STABLISHED.
+
+by knowing 3-way handshake of TCP we can use nmap in much broader way.
+
+TCP SYN Scan (-sS)
+it is also called half-open scanning because this technique allows Nmap to get information from the remote host without the complete TCP handshake process, Nmap sends SYN packets to the destination, but it does not create any sessions, As a result, the target computer can’t create any log of the interaction because no session was initiated, making this feature an advantage of the TCP SYN scan
+• nmap -sS (ip address)
+
+TCP connect scan (-sT)
+completes the normal TCP three way handshake.  this technique is only applicable to find out the TCP ports, not the UDP ports. 
+• nmap -sT (ip address)
+
+UDP Scan (-sU)
+UDP scans send the UDP packets to the target machine, and waits for a response—if an error message arrives saying the ICMP is unreachable, then it means that the port is closed or it may have closed ICMP protocol.
+we can make the scanning more effective by using -sS along with –sU.
+• nmap -sU (ip address)
+
+FIN Scan (-sF)
+IDS (intrusion detection system): Detects threats and alerts
+IPS (intrusion prevention system): Prevent or mitigates threats.
+sometime TCP SYC scan is blocked by firewall and IDS and IPS scans might be deployed but firewall will usually block the SYC packets. thus a FIN scan sends the packet only set with a FIN flag, so it is not required to complete the TCP handshaking
+then the target computer will not be able to make a log of the scan due to advangate of FIN packet.
+we can perform an xmas scan (-sX) and null scan (-sN) that acts the same way
+
+Ping Scan (-sP)
+it uses to check if host is alive or not. ping scans require root access s ICMP packets can be sent, but if the user does not have administrator privilege, then the ping scan uses connect() call.
+• nmap -sP (ip address)
+
+Version Detection (-sV)
+used to detect the software version of target system. it uses information from open ports todetect the software versions. it uses TCP SYN scan to ind out which port is open and then it start to scan for version detection.
+• nmpa -sV (ip address)
+
+Idle Scan (-sI)
+it is an ideal attack. In Idle scan nmap doesn't send the packet from your real IP address, instead it generate the packets from the attacker machine. nMap uses another host from the target network to send the packets:
+nmap -sI (decoy (zombie-host) Ip address) (target IP address)
+
+there are other scan techniques like FTP bounce, fragmentation scan, ... which can be studied.
+
+
+
+### 205.3 Troubleshooting Network Issues ###
+network configuration files are different in Debian and Redhat distros.
+Debian: /etc/networks/
+RedHat: /etc/sysconfig/network-scripts
+
+you can take a look at them by `tree` command
+
+Debain based systems use a file for any available network interface. in RedHat distro each NIC has a specific file for its configuration.
+in debian systems Default gateway settings are in network configuration file but in Redhat the default gateway is configured in /etc/sysconfig/network.
+
+/etc/resolv.conf
+resolve.conf list DNS servers for internet domain name resolutions (DNS).
+• cat /etc/resolv.conf
+
+in some distros's versions /etc/resolv.conf can gets overwritten by several things. the scripts /etc/sysconfig/network-scripts/ifcfg-xxx files in redhat or /etc/network/interfaces in Debian , /etc/sysconfig/network 
+
+traceroute, traceroute6
+traceroute print the route that packet takes on network to reach a destination
+trace route uses ICMP but Traceroute utility uses the TTL field and life of the package in the IP header to achieve its operation.
+when the TTL is reached to 1, the router will discard the package and send back the "Time exceeded" packet to the source. The ICMP packet that is sent back contains the IP address of the router. So traceroute incrementally fetches the IP of all the routers between the source and the destination.
+
+traceroute commands:
+• traceroute -i (interface) (domain name/Ip address): specify the interface to use
+• traceroute (domain name/Ip address) -i: disable host name and IP address mapping.
+• traceroute (domain name/Ip address) -w 0.2: configure response wait time.
+• traceroute (ip address) -q 5: configure number ofqueries per hop (default 3)
+• traceroute google.com -f 8: Configure The TTL Value to start with
+• traceroute -6 ipv6.google.com: trace the route using IPv6
+
+mtr (my traceroute)
+it is a combination of traceroute and ping. and it is a powerful network diagnostic tool that enables reports of network status. it uses ICMP packets to test connection and traffic between two points on the Internet. also, like traceroute it gather information by TTL of packet.
+
+• mtr google.com => it will display real-time monitoring for traceroute and network status of google.com
+
+mtr options:
+• mtr -h, --help: print the summary of arguments
+• mtr -v, --version: prints version
+• mtr -r, --report: mtr will run for the number of cycles specified by the -c option, and then print statistics and exit
+• mtr -c, --count: sets to determine number of pings to the target machine.
+• mtr -n, -no-dns: force mtr to display numeric IP and NOT hostnames.
+• mtr -F serverslist.txt: reads from text file.
+• mtr -4: use IPv4 only
+• mtr -6: use IPv6 only
+
+hostname
+device or system hostnames are used to easily recognize a machine within a network in a human readable format.
+• hostname (new hostname) => it can change the host name temporary.
+• hostnamectl hostname (new hostname) => to change hostname permanently
+
+RHEL/CentOS based systems that use init, the hostname is changed by modifying /etc/sysconfig/network
+
+on Debian based it is in /etc/hostname
+
+
+/etc/host
+/etc/hosts => location where hosts file are configured
+custome host ip can be added to this file for development or easer usecase.
+also it can redirect specific ips to specific ips.
+for example 192.0.0.1 facebook.com => it will redirect facebook.com domain to local for not leting it to be direct to facebook :).
+or
+8.8.8.8 mydefaultns => so whenever mydefaultns is pinged it will actually ping 8.8.8.8. also multiple domain names can be set for a single IP
+
+host
+host is a simple program to lookup DNS queries.
+host (yahoo.com) => will show all IP addresses related to yahoo.com and also shows NS servers
+host -t MX (domain name) => will show only MX records from that domain name
+
+dig
+the dig tool is built to query DNS servers. it can do IP lookup for domain names and indicate IP, TTL, and all other information such as caching.
+
+dig @8.8.8.8 yahoo.com => it will ask ip of yahoo.com and records of it from 8.8.8.8 dns server.
+
+
+/etc/hosts.allow, etc/hosts.deny
+as a quick not tcp wrappers are used to restrict access to network services running on a linux sever. it is a host-based access control list and do not act as an ultimate security measure.
+
+in Linux, the extended internet service daemon (xinetd) replaced inetd, it perfomr the same functionality as inetd. it listen to multiple ports and invokes a requested service and it is more secure.
+
+TCP wrappers uses hosts.allow and hosts.deny in order of first allow and then deny list to determine if the client should be allowed to use a given service
+
+format of rules to add in hosts.allow and hosts.deny
+<services> : <clients> [: <option1> : <option2> : ...]
+the optional list of colon-separated actions indicate what should happen when a given rule is triggered
+vsftpd: 10.10.100.6
+
+wildcards 
+ALL: matches everything. Applies both to clients and services.
+LOCAL: matches hosts without a period in their FQDN, such as localhost.
+KNOWN: indicate a situation where the hostname, host address, or user are known.
+UNKNOWN: is the opposite of KNOWN.
+PARANOID: causes a connection to be dropped if reverse DNS lookups  return a different address in each case.
+
+note:
+not all network services support the use of TCP wrappers. libwrap should be included among shared libraries which used by a program to show TCP wrappers is supported
+• ldd /path/to/binary | grep libwrap
+• ldd $(which sshd) | grep libwrap
+
+example:
+for adding SSH and FTP (very secure FTP daemon: vsftpd ) to be allowed only by 94.232.176.44 we add these lines to hosts.allow and hosts.deny
+
+etc/hosts.deny:
+sshd, vsftpd: ALL
+ALL: ALL
+
+etc/hosts.allow:
+sshd, vsftpd: 94.232.176.44
+
+
+
+### 206.1 Make and install programs from source ###
+we can use packages such as `groupinstall` in Redhat systems and `build-essential` for debian based to install programs.
+
+there are 3 basic steps to install a program:
+1. Configure -> 2. Make (Compile) -> 3. make install (install
+
+for example we want to install cpuminer to mine some bitcoin.
+we use:
+1. wget https://sourceforge.net/projects/cpuminer/files/pooler-cpuminer-2.5.0.tar.gz => to download the package from source in the repository that this command is called.
+
+2.  now lets uncompress the zip file:
+	• tar -xvf (filename.tar): uncompress tar file
+	• tar -xvf (filename.tar.gz): unzip gzip file, .bz2 (bzip2),
+• mkdir cpuminer
+• cd /cpuminer
+• tar -zxvf ../pooler-cpuminer.tar.gz
+
+3. before compile our source code, we need to prepare all its requirements and dependencies. to do that we can run ./configure file of the source code itself to do that for us which should be inside the source code directory.
+• ./configure => it will check and build requirements for program to be compiled.
+note:
+by running configure we may get interrupted by some missed dependencies which can be find in README file of each program. and those independencies can be installed.
+
+4. after the files are generated by configure command, we need to compile the code by using  ` make ` command.
+after compiling a new file will be created with minerd which is miner daemon.
+
+5. in this step we nned to install the compiled program. 
+• make install
+
+6. run the program which is a miner.
+• minerd -a sha256d -o stratum+tcp://stratum.antpool.com:3333 -u MyName.1 -p (password)
+
+
+
+### 206.2 Backup operations ###
+in back up and restoring file, not all directories are required to take backup from. in linux system FSH standards, there are some directories that are prioritized to take back up from them.
+
+Directory	Priority	Description
+/etc/		High		system wide configurations required for programs
+/home/		High		Home directories of all users and personal files
+/usr/local/	High		contains users programs that are installed
+/var/lib		Medium	keeps logs and libraries data
+/var/mail/	Medium	mail datas
+/var/www/	Medium	web roots
+/var/spool/	Medium	printer queues 
+/var/log/		Low		system log files
+/opt/		Medium	add-on applications
+/usr/		low		Contains binary, libraries, documentation, and source-code.
+
+
+third party packages to take backup from system.
+1.Amanda:
+	Licencse: BSD
+	Language: C,Perl
+	Graphical user: Only for Enterprise
+	Command Line: Yes
+2. Backup PC:
+	Licencse: PGLv2.0
+	Language: Perl
+	Graphical user: Yes
+	Command Line: Yes
+3. Bacula Systems
+	Licencse: AGPLv3.0
+	Language: C,C++
+	Graphical user: Yes
+	Command Line: Yes
+
+
+tape
+using tapes for back up is cheap and it can store huge amount of data but its slow and some how old but it is still being used.
+for using tape on a device we need a rewidning tape device.
+tape back up files are created by using cpio, dd, tar and etc. tapes can be written/read by various program. 
+We can store several backups (tapes) on physical tape. Between each tape file is a “tape file mark”. This is used to indicate where one tape file ends and another begins on physical tape.
+mt command is used to position the tape (winds forward and rewinds to mark).
+
+mt commands used to control operations of the tape drive:
+• mt -f /dev/st0 rewind: rewind tape drive
+• mt -f /devst0 status: display status information about tape unit
+• mt -f /devst0 erase: erase the tape
+• mt -f /devst0 eject: eject tape driver
+• mt -f /devst0 eof: writes n EOF(end of file) marks in the current position of tape
+• man mt: use manual of mt to see list of tape position commands such as:
+	- fsf, fsfm, bsf, asf, fsr, bsr, fss, bss.
+
+how is data stored?
+all data is stored subsequently in sequential tape archive format using tar. the first tape archive will start on the physical beginning of the tape. (tar #0). the next will be tar#1 and so on.
+
+tar (tape archiver)
+we use tar to create tar files. actually tar is designed to archive files on tape devices.
+
+commands:
+• tar -cvf backup-directory.tar (directory-going-to-be-archived)/ => this command will archive directory or file that we name it and make it as archive with given name (backup-directory.tar). c means to compress, v means verbose ,f means forcefully.
+
+• tar -tvf backup-directory.tar => it will lists files inside the tar file.
+
+• tar -xvf backup-directory.tar (destination-directory)/ we can restore/extract tar file with this command
+
+note: you can delete files inside the original directory and then extract the backup.tar file inside it. extracted tar with restore the deleted files from what it has archived in itself.
+
+useful commands:
+• tar -cvf backup.tar (source-directory)/ : create tar backup file from origin directory
+• tar -cvf bachkup.tar.gz (origin-directory)/ : create tar.gzip backup file from origin file.
+• tar -cvjf backup.tar.bz2 (origin-directory)/ : create tar.bzip2 backup file.
+• tar -xvf backup.tar (optional: destination-path) : it will extract/uncompress tar or gzip or bzip2 file into the path if it is given, if its not then it will extract where it is called.
+• tar -tvf backup.tar : list content of tar or gzip or bzip2 files.
+• tar -xvf backup.tar (filename-inside-tar) : extract a single file from tar file.
+• tar -xvf backup.tar "file1.txt" "file2.conf" : extract multiple files from tar file.
+• tar -rvf backup.tar (origin-file/directory) : add files or directories to a tar file.
+• tar -xvfW backup.tar : verify tar Archive file.
+• tar -czf backup.tar : check the size of the tar archive file.
+
+
+rsync (remote sync)
+rsync is command for copying and synchronizing files and directories remotely as well as locally in linux system.
+
+advantages:
+- efficiency in copying and syncing file to remote systems.
+- supports copying lins, devices, owners, groups and permissions.
+- it is faster than scp (secure copy). because it uses remote-update protocol which allows to transfer just the differences between two set of files. first it copies all the content and then it copies only the changed blocks. 
+- rsync uses less bandwidth because it uses compression/decompression method while sending/receiving data for both ends.
+
+syntax of rsync is:
+rsync (options) [source] [destination]
+common options are:
+• -v : transfer verbosely.
+• -r : copies data recursively (but don't preserve timestaps and permissions)
+• -a : archive mode, it copies recusively and preserves symbolic links, file permissions, user & group ownerships and timestamps.
+• -z compress file data
+• -h human-readable, output numbers in a human-readable form.
+
+redundant options:
+• -max-size="200K" : set the max size of files to be tranferred
+• -remove-source-files: automatically delete source files after successful transfer
+• -bwlimit=100 :  set bandwidth limit and Transfer files
+• -dry-run: do dry run, just show what would be run.
+• -W : if you want to explicitly sync whole file. cause by default rsync syncs changed blocks and bytes only.
+
+usecase:
+• rsync -zvh backup-directory.tar /tmp/backup => copying and syncing the backup-directory.tar into /tmp/backup directory which is local.
+
+• rsync -avzh directory/ /tmp/backups/ => copy&sync a driectroy on a local computer.
+
+• rsync -azv directory/ root@(ip address):(directory)/ => copy a directory from a local server to a remote server
+
+• rsync -chavzP --stats user@(ip address):/path/to/copy /path/to/local/storage => copy file/directory from remote server to local machine.
+
+rsync over ssh
+rsync is mostly run on top of ssh protocol. and it use port 873 tcp/udp.
+• cat /etc/services | grep rsync
+
+for using rsync over ssh protocol and be sure of encrpytion of it we use specific options for that.
+• rsync -zve ssh backup-directory root@(ip address):/home/ => copy a directroy form a local server to a remote server with SSH.
+
+rsync -azve ssh root@(ip address):/directory-to-files /local-directory/ => copy a directroy from a remote server to a local server with SSH.
+
+other rsync useful commands:
+• rsync -azve ssh --progress directory/ root@(ip address):/directory => show progres while trasferring data with rsync.
+
+• rsync -azve ssh --include 'D*' --exclude '*' source-directroy root@(ip address):/home/ include and exlude file from base on parameters ( in this case it include files with D and exclude all others.
+
+
+dd (data duplicator)
+a power low level utility of Linux to copy and convert data. it can be used for making clones of volumes, filesystems, writing images on disks, and even erasing drives. the syntax of dd commands is:
+dd if=<input-source> of=<output-destination> [options]
+
+dd command:
+• dd if=/dev/sda of=/dev/sdb : clone one hard disk to another hard disk
+• dd if=/dev/sda2 of=/hddpar1.img : backup a partition to a file.
+• dd if=hddpart1.img of=/dev/sdb1 : restoring image to another disk
+• dd if=/dev/sdb2 | bzip2 hddpar1.img.bz2 : using bzip2 to compress when creating image.
+• dd if=/home/text.txt of=/mnt/final.txt : to copy a file to somewhere.
+
+note: dd command should be used with caution.
+
+
+
+### 206.3. Notify users on system-related issues ###
+
+wall
+wall displays a message or the content of a file to other users terminal but it is not active in debian base systems.
+• cat message.txt | wall => it will show message.txt with wall message.
+
+
+ssh login banner
+it is a good habit to configure a security banners for ssh logins
+there are two ways to display banner message. first is issue.net and second is using MOTD
+issue.net: display banner before password prompt
+motd: displa banner after the user login process.
+
+1. edit the issue.net file in configuration directory.
+• cat or vim /etc/issue.net
+
+2. then inside /etc/ssh/sshd_config file we edit Banner /etc/issue.net
+• Banner /etc/issue.net
+
+3. restart the ssh service
+• systemctl restart ssh.service.
+
+
+display SSH warning with MOTD
+• vim /etc/motd => editting the MOTD file 
+
+
+shutdown
+scheduling shutdown time and message
+• shutdown 10:10: “hh:mm” for hour/minutes
+• shutdown -h now: power off/halt the machine.
+• shutdown +15 "we are going down after 15 min" => adding message beside the timer.
+
+
+
+### 207.1. Basic DNS server configuration ###
+DNS structure
+1. Root
+2. Top Level Domains (TLDs): .org, .com, .de, .uk, .
+3. Second Level Domain (SLD): google, wikipedia, mocrosoft, 056
+4. Third Level DOmain (subdomains): www, technet, plus, target, ftp
+5. DNS name of the computer
+
+when you ask your DNS server to resolve a domain name, if it has that domain name IP in its cache it will direct you to that IP address other wise it will ask from its topper layer for domain name and this questioning goes back and forth.
+
+on some server or client OS you need to install ` bind9 dnsutils` to be able to configure the file in /etc/bind/
+
+DNS Resource Records (RRs)
+DNS is consist of resource Records which are stored in Zone files.
+Resource Records define data types in the DNS. Resource Records are stored in binary and can be read by DNS software but they are sent across network in plain text format. some common data in RRs are A record, MX records, AAA records, SOA records.
+
+DNS RRs Types:
+• A/AAAA : used to point a domain or subdomain to an IP address. A for IPv4 and AAA for IPv6
+• CNAME : Common/Canonical Name record points domain or subdomain to another hostname
+• MX : the Mail Exchange record are for mail delivery, required priority values and indicate whicwh mail server should be used first to send email.
+• NS : specifies an authoritative Name Server for given host.
+• SRV : Server Locator record is used to designate a host and port for certain services, such as LDAP for a domain.
+• SOA : Start Of Authority record specify core information about DNS zone, including the primary NS and email of the domain administrator, the domain serial number and several timers relating to refreshing the zone. it is an important record.
+
+
+nslookup (name server lookup)
+a network tool for querying DNS to obtain domain anem or IP address mapping.
+• nslookup google.com => receives Ip address of domai name 
+• nslookup (IP address) => it will do the reverse lookup for IP address
+• nslookup -query=mx google.come => it queries for MX records and their priority.
+• nslookup -type=soa google.com => query SOA records
+• nslookup -query=any dnslookup.com => queries for any time of DNS
+• nslookup google.com 8.8.4.4 => specify a custom DNS to query
+• nslookup -debug linux.com => enable debug mode for troubleshooting
+• nslookup -timeout=10 google.com => change timeout interval to wait for a reply.
+
+by default port 53 is used for DNS but if the port is customized we can use:
+• nslookup -port=54 customizeddns.com
+
+eventhough nslookup is deprecated and only but it can show PTR and AAAA records
+
+
+Authoritative Answer & Non-Authoritative Answer
+any answer that originates from the DNS server which has the complete zone file information avialable for the Domain is called authoritative answer.
+DNS servers will not have the complete zone file information available. instead they use cache file which has the result of all queries performed in the past for which it has got through authoritative response. when a DNS query is give, it searches the cache file and return the information in 'Non-Authoritative Answer'.
+
+
+host
+host command is another way to perfomr DNS lookups.
+common commands:
+• host -t ns google.com : find domain name servers, it can be -t cname or -t mx
+• host -C google.com: find domain SOA record
+• host google.com 8.8.4.4 : query specific DNS
+• host -a google.com : all information of Domain Records and Zones
+• host -4 google.com or -6 google.com : use IPv4 or IPv6
+• host -T google.com : by default, host uses UDP, -T options used TCP
+• host -w 10 google.com : set query time wait for reply
+• host (Ip address): perform reverse lookup on IP address
+
+
+dig (Domain Information Groper)
+dig is a network command-line tool for querying DNS. it is another useful tool for troubleshooting the DNS.
+
+common commands:
+• dig google.com : it will return stats about google.com domain name
+• dig +nostats google.com: it will turn of stats 
+• dig +short google.com: disable the verbose options of dig command
+• dig  google.come MX: query MX records for a domain 
+• dig  goole.com SOA : query SOA record for a domain
+• dig  google.com TTL : query TTL record for domain
+• dig  @8.8.8.8 google.com : using another DNS server for querying
+• dig  : shows dig command version and root DNS servers
+• dig google.com +nocomments +noquestion +noauthority +noadditional +nostats : queries only answer section
+• dig google.com ANY =noall +answer : qury all DNS records types
+
+we can store options in .digrc file under user's home directory but for each user it should be created in {home}/.digrc. you can follow manual of dig command for that.
+
+dig replaces nslookup and the host command and is part of bind tool.
+
+
+Different DNS servers
+someof famous DNS servers are:
+- bjdns. forked and now used as dbdns in debian
+- powerdns
+- dnsmasq
+- BIND (Berkeley Internet Name Domain)
+- Microsoft DNS
+for binding a DNS pay attention to this attributes:
+Authoriative, Recursive, Slave Mode, Caching, DNS security, TSIG, IPv6, Free-software, Interface and Descriptions.
+
+
+Different Types of DNS queries
+as its impossible to store all domain names and recors in the world in one DNS server, NS asls each other for getting information that make different types of DNS queries. 
+types of DNS query:
+- Recursive query
+- Iterative query
+- Inverse query
+
+Recursive name queries are generally made by a DNS client to a DNS server, or by a forwarder DNS server that is configured to pass unresolved name queries to another DNS server.
+
+An iterative name query is one in which a DNS client allows the DNS server to return the best answer it can give based on its cache or zone data(Delegation). If the queried DNS server does not have an exact match for the queried name, the best possible information it can return is a referral (that is, a pointer to a DNS server authoritative for a lower level of the domain namespace). The DNS client can then query the DNS server for which it obtained a referral. It continues this process until it locates a DNS server that is authoritative for the queried name, or until an error or time-out condition is met.
+
+some times because of security issues or any other reason we know the IP address of a Host but we want to verify that, so we ask host name of an IP address that we have and DNS Server answers our Reverse Query using PTR record it has.
+
+
+DNS Implementation types
+- Forwarding Name Server
+- Caching Name Server
+- Mater/Slave Name servers
+
+Forwarding: just passes the DNS query to another DNS server like ISP and home router.
+if the router has the record in it's cache it will represent it but if not it will forward it to ISP.
+
+
+BIND Caching DNS Server
+first we need to install the bind9 and bind9utils packages. 
+the file will be present in:
+etc/bind/ directory
+
+etc/named.conf
+name.conf (or name daemon configuration file) is main BIND DNS server configuration file. based on distro it might be different.
+
+note:
+in ubuntu, the bind configuration files are separated.
+
+./named.conf.option
+if we want to make the dns as a forwarder, we can configure this file or if we want to make our BIND caching DNS server, add `recursion:yes;` at the end of file.
+then restart bind service.
+
+for checking the BIND DNS on our machine we can use:
+dig @localhost google.com
+
+note:
+to check if query is working check hte query time to be 0msec.
+also TTL number shows how long our data would be valid in our cache.
+
+Caution:
+enabling recursion and make our DNS server public will make it a target from different attacks. so we use ACLs and other configuration to limit acceptable queries.
+
+
+/usr/sbin/rndc
+rndc (Remote Name Daemon Control) allos command line administration of the named daemon form the localhost and remote host in order to revent unauthorized access to the named daemon.
+BIND uses a shared secret ke method to grant privileges to hosts. this means an identical key must be present in both /etc/namedconf and the rndc coniguration file/ etc/rndc.conf
+rndc sends digitally signed names over TCP connections. and uses digital signature.
+
+rndc.key
+• /etc/bind# ls -al rndc* => it will also list rndc.key file
+
+we can remote and recreate rndc.key file to generate new signature
+• rm rndc.key
+• rndc reload => to reload the configuration and revalue rndc.conf
+• rndc-confgen -r /dev/urandom -a => it create a file and uses urandom to generate a random key.
+then we need to permit permissions
+• chown bind.bind rndc.key
+• chmod 640 rndc.key
+
+then restart and check the BIND.
+• systemctl restart bind9.service
+• systemctl rndc reload
+
+ note:
+by restarting bind all caches will be cleared so we use rndc tool to reflect zone changes but not clearing cache.
+• rndc reload
+
+rndc flushname google.com => it will flush specific record from cache file.
+
+
+Master/Slave DNS
+Master DNS serer (primary servr) is the original zone data handler and slave DNS server (secondary Server) is just a backup server which is used to copy the same zone information from the master server. the master slave will resolve all queries, but if the master slave goes unavaliable the slave server answers the queries. do not forget that it is impossible to modify or change zone data in slave server.
+
+
+Zone Tranfers - AXFR and IXFR
+when master nameserver is update the content of it needs to be tranferred to the the slave server. this process is called 'zone transfer'
+ther are two types of zone transfer:
+1. Full (AXFR) : full zone transfer with entire zone
+2. icremental (IXFR): the incremental zone transfer is a list of changes and update slaves.
+
+the incremental zone transfer requires the both provider to have maintaining journal of changes for each zone.
+in SOA record if serial numbers are not changed the BIND asssumes that the zone is unchanged.
+
+the zone transfer are mostly initiated by the slave server, although there are mechanism in place to alert slaves that they should check to see if a zone transfer is needed.
+• ig AXFR example.com @10.10.0.4 => check AXFR transfer.
+
+
+
+### 207.2. Create and maintain DNS zones ###
+there are two types of DNS queries, forward queries nad recursive queries. as a result, we need two types of zone for answering both types.
+- forward zone
+- reverse zone
+
+a forward lookup returns the IP address when supplied with a domain name. a forward lookup zone can contain other recrods such as MX, CName and etc. when we access google. a DNS server is looking in its forward lookup zone for the IP address of the site.
+
+a reverse lookup zone is used to lookup the domain name when supplied with an IP address. the reverse lookup zone contains PTR resource records. a PTR record allows doing a reverse lookup by pointing the IP address to a domain name. PTR points to A records
+
+
+DNS Zone syntax
+an example:
+""
+$ORIGIN 1.0.10.in-addr.arpa. 
+$TTL 86400 
+@    IN    SOA    dns1.example.com.    hostmaster.example.com. (
+            2001062501 ; serial                     
+            21600      ; refresh after 6 hours                     
+            3600       ; retry after 1 hour                     
+            604800     ; expire after 1 week                     
+            86400 )    ; minimum TTL of 1 day        
+
+
+1    IN    PTR    dns1.example.com.       
+2    IN    PTR    dns2.example.com.
+
+5    IN    PTR    server1.example.com.
+6    IN    PTR    server2.example.com.
+
+3    IN    PTR    ftp.example.com.
+4    IN    PTR    ftp.example.com.
+""
+
+$ORIGIN entry is used to make all other entries in the zone file, a FQDN (Fully Qualified Domain Name) and it always end with a dot ".".
+
+@ : is the Name value for the SOA record. 
+
+the semicolon ";" indicate that the rest of the line is comment and can be ignored by server.
+
+the trailing dots "." are used to prevent nameserver to append the current zone after the record. for example srv1.example.com would be srv1.example.com.in-addr.arpa.
+
+
+Start of Authority (SOA) record
+the SOA record is the first record in a properly configured zone. it contains information about the zone and tells the server to be authoritative for the zone.
+example:
+<domain.name.> IN SOA <hostname.domain.name.>     <mailbox.domain.name>
+                                <serial-number>
+                                <refresh>
+                                <retry>
+                                <expire>
+                                <minimum-ttl>
+
+• domain name: the name of the domain which the SOA belongs. the @ can be used so the namesever fill it automatically.
+• IN: the class of the  DNS record. IN stands for Internet.
+• SOA: the type of the DNS record
+• hostname.domain.name: which is known as hostmaster filed. it contains the e-mail addresss of the person respoinsible for maintaining the zone. 
+• serial-number: the serial number of the current version of the DNS database for this domain. if the secondary server's serial number is lower, it indicate that the secondary server's record are out of date and requires zone transfer from primary server.
+• refresh: tells a secondary server how often to pull zone from primary.
+• retry: if a refresh attempt fails a secondary server will retry after the interval specified in the retry field.
+• expire: the secondary server will stop serving the zone after the period specified in the expire field  expires and this expiration is caused when retry and refresh are both failed.
+• minimum-ttl: Time to live for every record in the zone. when changes are maed t oa zone, the default is often set at ten minutes or less.
+
+
+Address Type (A) records
+• <hostname or FQDN> IN A <IP-address>
+example: server1 IN A 192.168.10.111
+
+
+Canonical Name (CN) records
+• <alias-name> IN CNAME <real-name>
+example: dns IN CNAME server1.example.com.
+
+
+Nameserver (NS) records
+every domain can have one or more name servers. those servers are defined by NS records. Although the master name server is also defined in the SOA record, that server must have a full entry in the NS record definition
+
+• <domain.name.> IN NS <hostname.domain.name.>
+hostname.domain.name: The hostname of an authoritative server.
+
+
+Mail Exchange (MX) records
+MTA-mail Tranfer Agents have tobe able to figure out which host handles emails for the zone/domain
+<domain.name.> IN MX <priority> <hostname.domain.name.>
+example: mailserver2   IN MX 10 mailserver1.example.com.
+
+
+Pointer Records (PTR)
+<IP-digit>    IN    PTR    <FQDN-of-system>
+example:
+155.10.168.192.in-addr.arpa. IN PTR svc00.apnic.net.
+
+
+var/named
+zone files contain information about a namespace and by default they are stored in the named working directory. however it can be vary in different distros.
+in ubuntu we can check these files in bind directory.
+/etc/bind:
+• named.config.default-zones : all root DNS servers have been defined here
+• all files which start with db are zone files.
+• named.conf.options contains all the configuration options for the DNS server
+• name.conf.local defines our local host zone.
+
+in named.conf file there are two important sections that must be defined:
+1. options statement
+2. zones statement
+
+- Options Statement
+we can define system wide options
+common Attributes and Values of options:
+• allow-query : specifies which hosts are allowed to query the nameserver.
+• allow-recursion : allow recursive query on the nameserver
+• blackhole : specifies which host are not allowed to query the server.
+• directory : specifies the named working directory
+• forwarders: specifies a list of valid IP addresses for nameserver where requests should be forwarded for resolution
+• forward: defines the forwarding behavior of a forwarders:
+	• first : declares to list namesevers first then attempt to queryt the name server.
+	• only : declares to not resolve name if the forwarders directive fails.
+	• listen-on:  specifies the network interface on which named listens for queries. for example just a specific interface is allowed.
+
+• notify: controls if named notifies the slave servers when a zone is updated:
+	• yes : notifies slave
+	• no : doesn't notify the slave
+	• explicit : notify for specified severs.
+
+
+- Zones Statement
+a zone statement defines the attributes of zone, such as location of its configuration, and options. this statement can be used to override global options.
+a zone statement format:
+	zone <zone-name> <zone-class> {      
+    	<zone-options>;      
+    	[<zone-options>; ...] 
+	};
+
+
+DNS Dynamic Updates
+most servers simply don'y allow dynamic updates on their DNS records but if they do they don't allow all zones, they only allow it for specfici subnet or IP addresses.
+
+we can create updates manually by `nsupdate` command.
+values for configuring dynamic DNS servers are:
+allow-update
+file
+masters
+notify
+yes
+no
+explicit
+type
+delegation-only
+forward
+hint
+master
+slave
+zone-statistics
+
+
+Implementing Basic BIND DNS server
+https://borosan.gitbook.io/lpic2-exam-guide/2072-create-and-maintain-dns-zones#implementing-basic-bind-dns-server
+
+Implementing Master / Slave BIND DNS servers
+https://borosan.gitbook.io/lpic2-exam-guide/2072-create-and-maintain-dns-zones#implementing-master-slave-bind-dns-servers
+
+
+BIND9 Ports
+UDP 53 and TCP 53 ports need to be open for DNS BIND server.
+UDP Port 53 is used by clients to make dns queries that are less than 512 bytes. if data exceeeds 512 bytes the UDP will fail and client will try TCP 53.
+TCP Port 53 is used to get when response ata exceeds 512 bytes.
+
+for opening port 53/TCP&UDP
+• iptables -I INPUT -p udp --dport 53 -m state --state NEW -j ACCEPT
+• iptables -I INPUT -p tcp --dport 53 -m state --state NEW -j ACCEPT
+• systemctl restart ufw.service
+
+verification:
+- use telnet to check whether the ports for sides are open or not.
+- you can check /var/log/syslog to see what will happen during the port connection.
+- • dig @localhost host2.myzone => to verify if our slave is working properly or not
+
+if slave is working properly, if we stop bind9.service on master server the slave will still respond to queries.
+
+slave will make a zone in ` /var/cache/bind/db.myzone `
+server2: • updatedb
+you can find the db.myzone by:
+• locate db.myzone
+
+modifying the slave zone
+modifying the slave zone is impossible because it turns the zone into binary format for performance and security, but we can use ` named-compilezone ` which help us to convert raw bind zone data to text and vise versa.
+• named-compilezone -f raw -F text -o myzone.txt myzone db.myzone
+
+to add our text formatted file to our named.conf file we add ` masterfile-format text; to it.
+
+note
+for updating the master zone don't forget to increase the serial-number as well
+
+use dig AXFR @masterdnsserver yourdomain.com to complete zone transfer if its allowed
+
+
+
+### 207.3. Securing a DNS server ###
+
+Domain Name Security Extentions (DNSSEC)
+DNSSEC verify digital signatures embedded in the data. if the signature match with those stored in the master DNS server, then the data is allowed to continue.
+DNSSEC uses public key through internet to send and receive Datas.
+
+how DNNSEC Works:
+before continue we need to know some concepts such as RRsets, ZSK, RRSIG, DSKEY, KSK.
+
+Resource Records set (RRsets)
+RRsets are used to organize and group all records with the same type into a resource record set.
+
+DNSSEC uses two pair of keys, ZSK and KSK
+Zone Signing Keys (ZSK)
+each zone has a zone-signing key pair. (SK) the private portion of the key digitally signs each RRset in the zone. and hte public portion verifies the signature.
+
+RRSIG
+the private ZSK are stored in the name server as RRSIG records. so DNS server verify and confirm the records by RRSIG to show that records are belonged to it.
+the RRset, RRSIG and public ZSK are used to validate the response when resolver pull the DNSKEY record (which contains the public ZSK) from the name server
+
+however we need a way to also validate the ZSK. the solution is to verify the public ZSK with key signing keys
+
+Key Signing Keys (KSK)
+KSK validate the DNSKEY record by signing the public ZSK and creating a RRSIG for the DNSKEY.
+
+Validation Process:
+- Request the desired RRset which also returns the corresponding RRSIG record.
+- Request the DNSKEY records containing the ZSK and public KSK which also retruns the RRSIG for the DNSKEY RRset.
+- Verify the RRSIG of the requeste RRset with the public ZSK.
+- Verify the RRSIG of the DNSKEY RRset with public KSK.
+
+
+dnssec-keygen
+dnssec-keygen generates keys for DNSSEC (Secure DNS). first we generate KSK keys
+• mkdir dnsseckeys => creating a directory to hold keys in it.
+• dnssec-keygen -a RSASHA256 -b 512 -n ZONE -f KSK myzone.
+then list the content of the file to see the keys
+
+dnssec-keygen switches
+• -a :  Defines algorithm
+• -b : keysize
+• -n : nametype.
+• -f : set the specified flag in the flag filed of the KEY/DNSKEY record.
+
+dnnsec also need a pair of ZSK keys to sign the zone with them.
+• dnssec-keygen -a RSASHA256 -b 512 -n ZONE myzone
+
+dnssec-signzone
+dnssec-signzone signs a zone and produce a signed version of the zone.
+• dnssec-signzone -o myzone. -S db.myzoneFetching ZSK 63075/RSASHA256
+
+the dnssec also generate additional required NSEC and RRSIG records. so its required to add:
+• dnssec-enable yes;
+• dnssec-validation yes;
+• dns-seclookaside auto;
+
+
+Transaction Signatures (TSIG)
+TSIG is used to secure DNS messages and to provide secure server-toserver communication.
+TSIG protects:
+Zone Tranfer
+Notify
+Dynamic updates
+Recursive query messages, 
+etc
+
+Configuring TSIG
+for configuring TSIG we need to create a shared key and copy it on both servers, and then configure zone files to use that shared key.
+we can use dnssec-keygen tool to generate shared-key
+• dnssec-keygen -a HMAC-MD5 -b 128 -n HOST -r /dev/urandom mykey
+note:
+for implementing DNS-SEC we use ` -n ZONE ` but for TSIG we use ` -n HOST `
+
+it is required to create a key file for named.conf.tsig
+key "mykey" {
+    algorithm HMAC-MD5;
+    secret "b5aPd9u//WDzXeZIfF7vQw=="
+    };
+
+also we need to include key file inside named.conf
+• include "/etc/bind/named.conf.tsig";
+
+we need to change allow-tranfer to whom has the shared-key in named.conf.local file:
+allow-tranfer { (ip-address); }; --> allow-transfer { key "mykey" ; };
+
+to check that we use:
+• rndc reload
+
+
+Slave Side
+in slave side we need to add the TSIG shared-key
+we also add our shared-key to the slave server in the named.conf.tsig
+
+key "mykey" {
+    algorithm HMAC-MD5;
+    secret "b5aPd9u//WDzXeZIfF7vQw==" ;
+    };
+
+server (ip address of master) {
+    keys { "mykey" ; };
+    };
+
+also don't forget to include it in named.conf file:
+• include "/etc/bind/named.conf.tsig";
+
+
+DNS-based Authentication of Named Entities (DANE)
+DANE enables the administrator of a domain name to certify the keys used in that domain's TLS clients or servers by storing them in the Domain Name System.
+DANE Needs the DNS record to be signed with DNSSEC for its ecurity model to work.
+DANE allows a domain owner to specify which CA is allowed to issue certificates for a particular resource.
+
+
+TLSA Resource Record
+provides communication security across the internet, by using channel encryption
+
+
+split DNS Server
+Split Domain Name System is a way which separate DNS servers are provided for internal and external network for security.
+for instance:
+using a single external dns has security, consuming bandwidth and dependency issues.
+however, using split DNS server brings security and privacy.
+
+split DNS configuration:
+https://borosan.gitbook.io/lpic2-exam-guide/2073-securing-a-dns-server#split-dns-configuration
+
+
+chroot
+chroot refers to creating a isolated virtualized environment in a Unix operating system.
+This virtual environment runs separately from the main operating system's root directory. no program from inside can access the outside data. it is also called "chroot jail".
+A chroot jail is a way to isolate a process and its children from the rest of the system. It should only be used for processes that don't run as root, as root users can break out of the jail very easily.
+
+
+Configuring BIND to run in chroot jail
+https://borosan.gitbook.io/lpic2-exam-guide/2073-securing-a-dns-server#configuring-bind-to-run-in-a-chroot-jail
+
+
+
+### 208.1 Implementing a webserver ###
+A Web server is a program that uses HTTP (Hypertext Transfer Protocol) to serve the files that form Web pages to users. attributes to choose a web server are ability to handle server-side programming, security characteristics, adaptability with Operating system and other servers, search engine and site building tools that come with it.
+
+Apache
+an open-source HTTP server. the Apache HTTP Server ("httpd") file are mostly stored in /etc/httpd or /etc/apache2 directory but it can be vary depends of distros.
+
+on debian distros the configuration files are separated in multiple file. but in Redhat all configurations are locatedin httpd.conf or conf.d/ 
+
+
+after installation on ubunutu server 24
+the httpd file configuration of apache is actually apache2.conf file.
+however, on CentOS
+the httpd configuration is located in etc/httpd/httpd.conf file.
+
+
+Three main components of web server
+- Server Root: base directory that all of configuration, modules, for our apache instance is configured to be. 
+- Listen: allows to define port which can be used by web service and it bind the service to a specific IP address.
+- DocumentRoot: base directory for all contents that are going to be served. by default it is commonly placed in /var/www but it can be changed.
+
+web server logs
+Log levels: there are two file for logs in  /var/log/apache2 (ubuntu) or /var/log/httpd (centOS)
+1. Access Log: contains all information about whose accesssing the web server. Ip address, user agent and etc.
+2. ErrorLog: Determines and displays errors that are related to files. or security problems.
+
+we can restrci access to directories of content with 'allow' and 'deny' options:
+for example:
+<Directory />
+    Options None
+    Order deny,allow
+    Deny from all
+</Directory>
+
+- options none: will not allow user to enable any optional features
+- oder deny, allow: this s the order to which the Deny and Allow directives will be processed. it will deny first and allow next
+- Deny from all: deny request from everybody to the root directory.
+
+
+Apache Modules
+Apache is designed modular and we can add or remove modules based on our needs.
+
+for instance we can install php module to work with html files
+•  apt install libapache2-mod-php => we can install php module and use index.php file in /var/www.
+• yum install php => it will become available as /etc/httpd/modules/libphp5.so
+
+modules are save in apache directories as /mods-availalbe & /mods-enabled
+in centOS, they are in /httpd/conf.modules.d/
+
+
+tips for perl module for apache
+• apt install libapache2-mod-perl2 (ubuntu)
+• yum install mod-perl (centOS)
+
+perl is a server side programming language and the contents are processed in server first, for keeping it organized we can use a separated directory for perl.
+example: /var/www/perl
+
+and then we need to add perl to apache2.conf file with Directory definitions
+example:
+# Perl support
+Alias /perl /var/www/perl
+<Directory /var/www/perl>
+    AddHandler perl-script .cgi .pl
+    PerlResponseHandler ModPerl::PerlRun
+    PerlOptions +ParseHeaders
+    Options +ExecCGI
+</Directory>
+
+
+a2enmod, a2dismod
+apache uses a2dismod to disable a module and a2enmod to enable a module by removing or addig symlinks
+• a2dismod php7.0 => it disables the module from apache
+
+
+MPM (Multi Processing Modules)
+MPM allows web server to handle request and processes simultaneously.
+Apache offers three different MPMs:
+- prefork
+- worker 
+- event
+
+The prefork MPM uses multiple child processes without threading. Each process handles one connection at a time without creating separate threads for each
+
+The worker MPM uses several threads per child processes, where each thread handles one connection at a time. This is a good choice for high-traffic servers
+
+event MPM is similar to the worker MPM with multiple threads per child  process. however, it also have keepAlive or idle connections. thus free up memory that can be allocated to other threads. for event MPM PHP-FPM for instance should be used due to thread-safety
+
+checking PMP
+• apache2ctl -V | grep -i mpm (ubuntu)
+• httpd -V | grep -i mpm (centOS)
+
+we can check MPM files in /etc/apache2/mods-available/
+
+we can use a2dismod mpm_prefork or a2emond mpm_worker to enable and disable MPM
+
+
+Authentication for security and directory access
+we can use htpasswd which is part of apache2-utils to create username and password and protect access to files and directories of our web server contents and configurations
+
+we can check default sites
+• cat apache2.conf | grep -i includeoption
+
+also we can add some parts to default site by editing sites-enabled/000-default.conf
+•
+    <Directory /var/www/html/protected>
+
+        AuthType Basic
+        AuthName "This name will be appeared in dialog box"
+        #Passord file wich we will create using htpasswd tool
+        AuthUserFile /etc/apache2/webpass 
+        #Only user who have valid user nad pass word can access
+        Require valid-user 
+    </Directory>
+• 
+
+then we can create user and password by htpasswd wizard
+• htpasswd -c /etc/apache2/webpass user1
+
+to add more users we can omit -C
+• htpasswd (webpass) (user2)
+
+then we need to resatart apache service by apache2ctl which is part of apache2-util and act as daemon controller/ service controller.
+
+we can finally add a new index.html to www/html/protected to see if protection is working
+• elinks http://localhost/protected
+
+
+.htaccess
+.htaccess is a file alternative to secure content of directory. the idea is to use a separate file called htaccess inside the directory which we need to protect then by configuring htaccess we can define to which file the user can access.
+
+
+Redirection
+redirection is used when site needs people to request one address instead of another address. for instance:
+• moving to a different domain.
+• expanding to capture similar domains
+• creating a persistent experience in spite of page name changes
+• forcing SSL
+
+two methods of Redirect
+- Temporary Redirects : used for example of maintenance or temporary relocation
+- Permanent Redirects : data is moved to another location permanently. or we want to redirect older request to somewhere new and previous domain should not be used anymore.
+
+Redirect in Apache
+in Apache we can use tools for redirection such as `mod-alias` module for redirection tools. and more extensive redirecs can be created with `mod_rewrite`
+
+simple way to redirect in apache:
+#Redirecting form one directory to another directory
+•  Redirect /protected /redirected
+ 
+for doing redirection permanently we use 301 message or permament command
+• Redirect permanent /oldlocation http://www.example.com/newlocation
+• Redirect 301 /oldlocation http://www.example.com/newlocation
+
+for redirecting more than one page we use `RedirectMatch`
+RedirectMatch allows us to redirect entire directory.
+
+for example we want to match every request for /image to be redirected to a subdomain named image.example.com for example :
+• RedirectMatch ^/images/(.*)$ http://images.example.com/$1
+
+
+Apache Virtual Hosting
+Virtual hosting in Apache allows to host more than one website on a single linux machine. 
+types of virtual host:
+- Named Based Virtual Hosting
+	  we can host several domains/websites on a single machine with a single host.
+	  but for that we need to configure DNS of the domain to map it with its correct IP address and then configure apache to recognize it with the domain names.
+
+- IP Based Virtual Hosting
+	 we can assing a separate IP for each domain on a single server with single NIC or multiple NICs.
+
+configuration:
+https://borosan.gitbook.io/lpic2-exam-guide/2081-implementing-a-web-server#apache-virtual-hosting
+
+
+a2ensite, a2dissite
+a2ensite/a2dissite is a script that is used to enable/disable a website if there are mutliple virtual hosting block in the system. it does that by creating a symlink in /etc/apache2/sites-enabled
+
+
+
+### 208.2. Apache configuration for HTTPS ###
+Symmetric encryption
+symmetric encryption is a method of encryption that uses just one key, called a shared secret, for both encrypting and decrypting. but if some one get access to the key the whole afforts would be useless.
+
+Asymmetric encryption
+it is the process of using a public key from public/private key pari to encrypt plaintext and the using the corresponding private key to decrypt the ciphertext.
+
+Hashes
+Hashing is a one-way function that changes a plain text or data to a unique digest that is irreversible. if two messages have the same hash, we have high confidence that the messages are identical.
+
+Digital signatures
+combination of hashing and asymmetric encrpytion is digital signatures, digital signature assure us that the message is coming from a reliable source and data is not manipulated through te send/receive process.
+
+the Secure Socket Layer (SSL)
+SSL is a layer above the transport layer at both ends of hosts and it verifies the server identity and negotiate the asymmatric session key betwee the browser and the server. it uses hand shake method and it relies on digital signature and digital certification. digital certificates are a collection of information identifying a site, signed by some trusted third certification authority.
+digital cetificates contain:
+• the issuer's identity certification authority (CA)
+• the site's domain name and public key
+• expiry date
+• the signature of the CA
+
+
+How SSL works with Apache?
+in linux system SSL functionality can be done by using packages.
+
+Open SSL
+an open-source toolkit with wide range of cryptographic operations related to SSL
+open ssl is used for:
+• creation and mangement of public and private keys
+• creation of X509 certificates and certificate request
+• calculation of message hashes (digests)
+• encryption and decryption
+
+the mod-ssl module
+this module provides SSL support for apache.
+it includes:
+1. the module of mod_ssl.so
+2. a added config file to /etc/httpd/conf.d that has ssl configuration in it.
+Apache directives for SSL
+• SSLCertificateFile : the name of the file containing the site's digital certifcate
+• SSLCertificateKeyFile : the name of the file containing the site's private key
+• SSLCipherSuite : specifies the cipher that the browser may use
+• SSLEngine (off/on) : enable/disable SSL
+• SSLRequire : support access control based on multiple server variables, time etc.
+
+2 ways of SSL certifying
+1. generate private key and then create a certificate signing requst (.csr) and then send it to a real Certification Authority (CA) to sign it.
+2. create a self signed certificate and then cofngiure apache to use that.
+
+https://borosan.gitbook.io/lpic2-exam-guide/2082-apache-configuration-for-https#the-mod_ssl-module
+
+Issues with Virtual Hosting and use of SSL
+The problem with using name-based virtual hosts over SSL is that named virtual hosts rely on knowing what hostname is being requested, and the request can't be read until the SSL connection is established. The ordinary behavior, then, is that the SSL connection is set up using the configuration in the default virtual host for the address where the connection was received.
+it's possible to put multiple hostnames in a modern certificate and just use that one certificate in the default vhost, there are many hosting providers who are hosting far too many sites on a single address for that to be practical for them
+
+Server Name Indication (SNI)
+the solution of vhost and SSL protocol is called SNI. which allows the client to include the requested hostname in the first message of its SSL handshake. it allows server to determine the correct anemd virtual host for the request and set the connection.
+
+
+
+###  208.3. Implementing a proxy server ###
+A proxy server is a computer that acts as an intermediary between a desktop computer and the internet and allows a client machine to make an indirect connection to network servers and services.
+reasons to use proxy:
+- share internet connection on a LAN
+- speed up internet surfing
+- hide the IP address for anonymous surfing
+- implement internet access control
+- scan outbound content
+
+
+what is Squid
+Squid is a free open-source web proxy cache server that can use be used as web server caching daemon, cache DNS lookups, filter traffic and other network operations.
+
+etc/squid/squid.conf in ubuntu is huge due to rich documentation but common parts are:
+
+• port [mode] [option] : 
+this is the default port for the HTTP proxy server, by default it is 3128
+
+• cache_mem [bytes] : 
+Define the amount of emory squid can use for cache. 
+
+• maximum_object_size_in_memory [bytes] : 
+objects greater than this size will not be attempted to kept in memory cache.
+
+• cache_dir aufs Directory-Name Mbytes L1 L2 [options] : entry cache_dir defines the directory where all the objects are stored on disk. The numbers at the end indicate the maximum disk space in MB. ufs is squid storage format. by default disk cachins is not turned on.
+example:
+cache_dir ufs /var/cache/squid/ 100 16 256 : 100MB occupied disk space in the /var/cache/squid and creation of 16 subdirectories inside it, each containing 256 more subdirectories.
+
+• maximum_object_size [bytes] : 
+Set the default value for max-size parameter on any cache_dir
+
+note: after configuration is complete restarting the squid service is required.
+we need to configure our browser to goes trough proxy server
+for insance set manual proxy configuration of our firefox to be as localhost:3128
+
+or if we use lynx in terminal for web browsing we can use for example :
+• export http_proxy=http://192.168.52.135:3128
+
+
+ACLs (Access Control Lists)
+ACL allows to restirc access to website or monitor the access on a per user basis. it can be based on time, domain, or other identifying factors.
+
+the Squid ACL is consisted of two different components:
+1. the acl elements are directives lines that begin with the 'acl' and indicate types of data that are performed against any request transaction
+
+Different ACL Elements:
+src: source (client) IP addresses
+dst: destination (server) IP addresses
+myip: the local IP address of a client's connection
+arp: Ethernet (MAC) address matchingsrcdomain: source (client) domain name
+dstdomain: destination (server) domain name
+srcdom_regex: source (client) regular expression pattern matching
+dstdom_regex: destination (server) regular expression pattern matching
+src_as: source (client) Autonomous System numberdst_as: destination (server) Autonomous System number
+peername: name tag assigned to the cache_peer where request is expected to be sent.
+time: time of day, and day of week
+url_regex: URL regular expression pattern matching
+urlpath_regex: URL-path regular expression pattern matching, leaves out the protocol and hostname
+port: destination (server) port number
+myport: local port number that client connected tomyportname: name tag assigned to the squid listening port that client connected toproto: transfer protocol (http, ftp, etc)
+method: HTTP request method (get, post, etc)
+http_status: HTTP response status (200 302 404 etc.)
+browser: regular expression pattern matching on the request user-agent header
+referer_regex: regular expression pattern matching on the request http-referer header
+ident: string matching on the user's name
+ident_regex: regular expression pattern matching on the user's name
+proxy_auth: user authentication via external processes
+proxy_auth_regex: regular expression pattern matching on user authentication via external processes
+snmp_community: SNMP community string matching
+maxconn: a limit on the maximum number of connections from a single client IP address
+max_user_ip: a limit on the maximum number of IP addresses one user can login from
+req_mime_type: regular expression pattern matching on the request content-type header
+req_header: regular expression pattern matching on a request header contentrep_mime_type: regular expression pattern matching on the reply (downloaded content) content-type header. This is only usable in the http_reply_access directive, not http_access.
+rep_header: regular expression pattern matching on a reply header content. This is only usable in the http_reply_access directive, not http_access.
+external: lookup via external acl helper defined by external_acl_typeuser_cert: match against attributes in a user SSL certificate
+ca_cert: match against attributes a users issuing CA SSL certificate
+ext_user: match on user= field returned by external acl helper defined by external_acl_type
+ext_user_regex: regular expression pattern matching on user= field returned by external acl helper defined by external_acl_type
+
+2. acl rule consists of allow or deny action followed by a number of ACL elements.
+Different ACL types: 
+http_access: Allows HTTP clients (browsers) to access the HTTP port. This is the primary access control list.
+http_reply_access: Allows HTTP clients (browsers) to receive the reply to their request. This further restricts permissions given by http_access, and is primarily intended to be used together with rep_mime_type acl for blocking different content types.
+icp_access: Allows neighbor caches to query your cache with ICP.
+miss_access: Allows certain clients to forward cache misses through your cache. This further restricts permissions given by http_access, and is primarily intended to be used for enforcing sibling relations by denying siblings from forwarding cache misses through your cache.
+cache: Defines responses that should not be cached.
+url_rewrite_access: Controls which requests are sent through the redirector pool.
+ident_lookup_access: Controls which requests need an Ident lookup.
+always_direct: Controls which requests should always be forwarded directly to origin servers.
+never_direct: Controls which requests should never be forwarded directly to origin servers.
+snmp_access: Controls SNMP client access to the cache.
+broken_posts: Defines requests for which squid appends an extra CRLF after POST message bodies as required by some broken origin servers.
+cache_peer_access: Controls which requests can be forwarded to a given neighbor (cache_peer).
+htcp_access: Controls which remote machines are able to make HTCP requests.
+htcp_clr_access: Controls which remote machines are able to make HTCP CLR requests.
+request_header_access: Controls which request headers are removed when violating HTTP protocol.
+reply_header_access: Controls which reply headers are removed from delivery to the client when violating HTTP protocol.
+delay_access: Controls which requests are handled by what delay pool
+icap_access: (replaced by adaptation_access in Squid-3.1) What requests may be sent to a particular ICAP server.
+adaptation_access: What requests may be sent to a particular ICAP or eCAP filter service.
+log_access: Controls which requests are logged. This is global and overrides specific file access lists appended to access_log directives.
+
+examples in /squid.conf which is directive command that denies access to the unsafe ports of localhost:
+# Deny requests to certain unsafe ports
+http_access deny !Safe_ports
+
+note:
+1. acl consist of allow/deny keywords followed b ACL element
+2. access lists can have many rules
+3. access list rules are checked in the order they are written. list searching terminates as soo as one of the rules is over written by another.
+4. if a rule has multiple ACL elements it uses AND logic. it means all the conditions must be match in order for the rule to be a match. also OR can be used between rules too.
+for example:
+http_access allow acl AND acl 
+        OR
+http_access deny acl AND acl 
+        OR
+...
+
+example of implement an ACL in squid.conf
+first we need to define two ACL before applying it. we are going to add a destination domain acl and a time acl:
+• acl GOOGLE dstdomain .google.com
+• acl FRIDAY time Friday
+
+then we are going to make a http_access ACL with them for example stop visiting google on Fridays:
+• http_access deny GOOGLE FRIDAY
+
+
+Squid Authentication
+we can add user authenication in squid proxy as well. squid supports three authentication schemes:
+1. Basic (using auth_param)
+2. Digest (using enable-auth)
+3. NTML (using enable-auth)
+
+Basic defines what program is going to be used for authentication for example:
+• auth_param basic program /opt/squid/ncsa /etc/squid/passwd
+ncsa is a simple program which uses the same apache htpasswd type format, last argument for ncsa is where the user password file is stored. also we need to create password file(for that we might need to install apach2-utils (Deb)or httpd-tools (RedHat))
+you can check password of ncsa_auth by comparing them:
+• /usr/lib64/squid/basic_ncsa_auth /etc/squid/passwords 
+user1 Aa@123?
+OK
+
+
+other programs that can be used for authentciation:
+NCSA: Uses an NCSA-style username and password file.
+LDAP: Uses the Lightweight Directory Access Protocol
+MSNT: Uses a Windows NT (New Technology) authentication domain.
+PAM: Uses the Linux Pluggable Authentication Modules scheme.
+SMB: Uses a SMB server like Windows NT or Samba.
+getpwam: Uses the old-fashioned Unix password file.
+SASL: Uses SALS libraries.
+NTLM, Negotiate and Digest authentication
+
+https://borosan.gitbook.io/lpic2-exam-guide/2083-implementing-a-proxy-server#auth_param
+
+
+var/log/squid
+the logs give us information about squid workloads and performance also it records access information and system configuration errors and resource consumption.
+some log files needs to be activated in squid configuration file.
+- var/log/squid/access.log : most log file analysis program are based on the entries in access.log. we can find out who is using squid server and what do they do.
+- var/log/squid/cache.log : contains debug and error messages that squid generates.
+- var/log/squid/store.log : covers the objects currently kept on disk or removed.
+we can use `tail -f ` command to check logs in real-time mode.
+
+
+
+### 208.4 Implementing Nginx as a web server and a reverse proxy ###
+nginx is a open-source HTTP web server, reverse proxy, standard mail and TCP/UDP proxy server which is event-driven (asynchronous) architecture written in C and can additionally be configured as a load balancer.
+it became as a solution for the C10K problem which was about  web servers problem to handle ten thousand synchronized connections as a need in modern network. 
+
+apache vs nginx
+apache and nginx should not be considered as interchnageable component even though both are web servers they can provider different solutions for different purposes.
+
+Criterian:
+- Static speed : nginx is 2.5x faster than Apache
+- Dynamic speed : both are same
+- OS support: nginx works best in unix-based OS but apache works on all with same performance.
+- Security : both have excellent security
+- Flexibility : apache is highy customizable and nginx is difficult to customize modules for the server due to complex base architecture.
+- Support : both have wide community
+- Cost : apache is free but nginx plus is a feature for Nginx which is license to buy.
+
+
+Implementing a Basic Web Server with Nginx
+https://borosan.gitbook.io/lpic2-exam-guide/2084-implementing-nginx-as-a-web-server-and-a-everse-proxy#basic-web-server
+
+
+configuration options in Nginx are called Directives and directives are organized into groups called Blocks or contexts.
+
+Nginx allows to use specified server names that are not valid domain names. NGINX uses the name from the HTTP header to answer request.
+using non-domain hostnames is useful if our server is on a LAN or we know all of the clients that will be making request to our server.
+
+nginx deamon has a command tool ` nginx `
+example:
+nginx -? => to see the manual and help
+
+
+reverse proxy
+nginx is can server as reverse proxy, it seats between client and web server and can do caching, loadbalancing, acceleration, client authentication, bandwidth management and server abstraction which it means that client cannot se the actual server itself. thus server can be protected.
+
+configuring nginx for reverse proxy
+https://borosan.gitbook.io/lpic2-exam-guide/2084-implementing-nginx-as-a-web-server-and-a-everse-proxy#reverse-proxy
+
+
+
+### 209.1. SAMBA Server Configuration ###
+Samba and SMB (Server message Protocol)
+many operating systems, including Microsoft Windows, use the SMB protocol for client-server networking. Samba enables Linux / Unix machines to communicate with Windows machines in a network
+
+as a system administrator or engineer, we might be expected to know how to set up and maintain a network with multiple types of servers. two main Operating system are Microsoft and Linux, The first difference between Microsoft is in name resolution method.
+
+NetBIOS Name Resolution
+in windows world we have two types of names for resolving; first is the name for IP addresses. host name resolution uses a host's file and DNS for resolutions.
+the second kind is NetBOIS name, which is used by windows (SMB) type sharing and messaging. these are the anmes that are used for mapping a drive or connecting to a printer. these namesa re resolved iether by using an LMHosts file on the local machine or WINS server, or by broadcasting a request. 
+LMHosts (LAN Manager Hosts): used to enable DNS under windows when other methos such as WINS fail.
+WINS (Windows Internet Name Service): legacy computer name registration and resolution service that maps computer NetBIOS names to IP addresses. it is replaced by DNS
+
+so if we want to communicate with Microsoft windows OS we need to find a way to work with NetBIOS Name Resolution.
+
+host name resolution has a process but this process order can be modified but its default is:
+1. internal cache check
+2. LMHosts file is consulted to check if there is any NetBIOS name.
+3. local computer use NetBIOS resolver to contact with one or more name servers. that name server can be a Windows Internet Naming Server (WINS)
+4. the last resolution is to broadcast for the NetBIOS name. this approach is ineffective across routers which do not forward broadcast packets.
+
+the SMB protocol has since spawned multiple variants or implementations, also known as dialects, to meet evolving network requirements over the years.
+SMB protocol dialects: variant of the SMB protocol have improevd the original implementation.
+SMB protocols dialects:
+SMB 1.0 : Created by IBM for file sharing in DOS
+SMB 3.1.1 (2015): releaese with windows 10 and windows server 2016
+CIFS (Common Internet File System) (1996): CIFS only refers to a single implementation of SMB. Most modern systems use more recent dialects of the SMB protocol.
+
+Security Levels
+- Share-Level security: all subdirectories and files are accessible by using only a single password
+- User-level security: user is granted access rights to each file or directory based on inheritance of access rights over directories and subdirectories.
+
+
+SAMBA is an open source which supports file sharing and print services, authentication and authorization, name resolution, and service announcements between Linux/Unix servers and Windows clients.f
+
+Samba v4 is able to map a full Windows domain structure on Linux.
+Active directory covers: LDAP, Kerberos, DNS, DCE/RCP, samba 4 support for an active directory domain.
+
+note:
+NETBIOS superseded by DNS, authentication is centralized by kerberos, and centeralized data storage is implemented via LDAP. and only file server remained in same structure.
+
+
+Samba Daemons: 
+nmbd: provides NetBIOS name service and browsing support
+smbd: provides the file and print services to SMB clients
+webbindd: used for integrating authentication and the user databse into unix
+
+1. nmbd
+nmbd is also used for browsing protocols that make up the windows Network Neighborhood view. The default port is 137/UDP for listening to NMB (NetBIOS Management Block).
+
+nmblookup
+nmblookup is used to query NetBIOS names and map their IP address from network. it uses NetBIOS over TCP/IP queries.
+for example:
+name lookup for windows 7 clients
+• nmblookup WIN-7-1
+• nmblookup WORKGROUP => looking up for bunch of workgroup computers
+
+2. smbd
+smbd server provides file sharing and printing services for windows clients, responsible for user authentication, resource locking, and data sharing through the SMB protocol. the SMB traffic is listened on port 139/TCP and 445/TCP.
+
+samba provides file and print services to SMB/CIFS clients, which causes those clients to see the server as if it was a Windows system. so it can be used for anonymous file sharing.
+
+samba installation packages.
+there are four mostly used packages for samba:
+1. samba: provide software for the server
+2. samba-client: contains programs for clients to connect to server
+3. samba-common: softwares used both by samba server and client
+4. cifs-utils:  contains altes windows security changes.
+
+configuring anynomous shared file system:
+https://borosan.gitbook.io/lpic2-exam-guide/2091-samba-server-configuration#etc-samba-smb.conf
+
+smbcontrol
+smbcontrol is used to send commands to smb, nmbd and windbindd 
+for example:
+• smbcontrol sbmd reload-config => to reload smb.conf configuration withour restarting the service
+
+smbclient
+it communiciates with a LAN Manager server and offers interface for operations such as getting files from the server, putting files from local machine to servr and retrieving information of directories.
+• smbclient -L localhost => lists shares available on localhost.
+
+smbstatus
+it is used to list connected devices and shares they already have.
+• sambstatus => lists username,s machines and protocol versions with share paths and etc.
+
+net
+net in windows and DOS is used for managing network resources. this command also exists in linux worlds for managing shares and file resources.
+• net --help => to see manual and protocols that can be used such as ADS for Active Directory or RAP or RPC.
+• net status => list all smb connections
+• net status session => to list all sessions
+
+
+Securing Samba File sharing
+for securing shared file between different clients we can used a union password. windows and linux systems both save passwords in hashing format which is a one-way encryption and can improve security but the problems that the windows clients and Linux systems both uses different hashing formats.
+windows uses SAM (Security Account Manager) for registry of file and also stores paswords in hashed format as LM hash and NTML hash.
+linux on the other hand uses MD5 which is also replaced by SHA algorithm due to recommendations of SNA. we can use pam_unit module to change algorithms.
+
+the solution is to use separate mechanism to hash and store passwrods and use it for smb shares authentications.
+
+process of creating a shared directory to store user and passwords, creating password using `smbpasswd`.
+https://borosan.gitbook.io/lpic2-exam-guide/2091-samba-server-configuration#secure-samba-file-sharing
+
+we can verify samba shared by:
+• smbclient -L 192.168.0.1 -U myUser => it lists shared files from the IP address with the defined user, it will prompt password after it 
+
+mounting and unmounting samba share in linux
+https://borosan.gitbook.io/lpic2-exam-guide/2091-samba-server-configuration#mounting-the-samba-share-in-linux
+
+
+3. winbindd
+winbind service resolves user and group information on a server that is running Windows NT. this makes windows user and group information understandable by UNIX platforms. this is done by using Microsoft RPC calls, pluggable Authentication Modules (PAM) amd the Name Service Switch (NSS). 
+
+
+
+### 209.2 NFS Server Configuration ###
+Network File System (NFS) is a technology that allowed Linux/Unix systems to share files and folders over network.
+
+advantages of NFS
+• local access to remote files
+• standard client/server architecture
+• no need for same OS on machines
+• configuring centralized storage
+• secured by firewalls and kerberos.
+
+NFS v3 Components
+• nfs: translate remote file sharing request into request on the local file system.
+• portmap: it maps calls made by other machines to the RPC service. it uses rpcbind (not required in NFS v4)
+• rpcbind (not required in v4): it redirects client to proper port number to communicate with service.
+
+disadvantage of v3: not being secure due to RPC (Remote Process Call) and it only should be used behind the firewall in trusted environment.
+
+
+NFS v4
+• no rpcbind and portmapper.
+• NFSv3 has a nfslock service which run RPC processes to allow clients to lock files on server but NFSv4 has native file locking mechanism
+• NFSv3 has rpc.mountd service that is responsible for mounting and unmounting of file systems. in v4 there is no rpc.mountd
+• NFSv4 only uses TCP but v3 uses UDP/TCP ports
+
+
+important NFS configuration files:
+/etc/exports: Its a main configuration file of NFS, exported directories are defined in it in server end.
+/etc/fstab: to mount the NFS directory from reboot, we need to add entry to /etc/fstab configuration file.
+/etc/sysconfig/nfs: configuration of NFS to control RPC ports and other services's listening.
+
+/etc/exports
+this file containes main configuration of NFS, all exported files and directories on NFS Server end.
+line structure is like:
+• <export> <host1> (<options>) <hostN> (<options>)
+it is possible to use ip addresses and wildcards instead of hostN (hostName) to give read or write (rw)/(ro) permissions.
+methods are:
+- single host: one host is specified with fully qualified domain name, hostname or IP address.
+- wildcard: usings special characters such as * or ? to define group or particular hosts to connect. however wildcard should not be used with IP address but it can work if reverse DNS lookup fails.
+- IP networks: allows the matching of hosts based on their IP addresses with a larger network. for example 192.168.0.0/28 allows the first 16 IP addresses from 192.168.0.0 to 192.168.0.15 to access the exported file system.
+- netgroups: It permits an NIS (Network Information Service) netgroup name, wirtten as @<group-name>. this puts the NIS server in charge of access control for the exported file systems.
+
+options that are used:
+- ro: read only access
+- rw: read and write access
+- sync: synchronise nfs file system to the disk immediately
+- no_subtree_check: prevent subtree checking. nfs perfomrs cans of every directory below in order to verify its permission and details.
+- no_root_squash (not recommended):  If no_root_squash is used, remote root users are able to change any file on the shared file system and leave applications infected by Trojans for other users to inadvertently execute. because by default the NFS shares change the root user to the 'nfsnobody' user which prevents uploading of programs with the setuid (suid) bit set.
+
+Mapping user ID and group ID in NFS
+we need to use map uid and gid between client and server for users who access them. for example 2 user-client with same ID would be able to have same privilege on NFS-server because the UID were taken by their clients. to prevent it we can use choosing right uid and gid while we are creating users or using OpenLDAP to automaticall synronise accounts.
+
+but this options would be different from root user. the root has same ID over all clients thus we use " root_squash" to NOT map root client account to the server root account. but " no_root_squash) will map users root client account to the server root account.
+
+thus the configuration would be like this:
+• /nfsshare    centos7-2(rw,no_root_squash,sync) (ro)
+
+
+note:
+nfsd process is primary process that handles clients. but because RPC-based serviecs rely on rpcbind to make all connections with client requests. rpcbind must be available before nfsd services.
+• systemctl status rpcbind
+• systemctl status nfs.service
+• ps ax | grep rpc
+
+some other rpc services such as rpc.idmap for hybrid NFSv3 and NFSv4 systems are also part of RPC services in use for nfs.
+
+
+rpcinfo
+rpcbind provides cooridnation between RPC services and the port numbers for communicate with others.
+the rpc info command shows each RPC-based service with port numbers and RPC rpgoram number, version and IP protocol (TCP/UDP)
+prcinfo makes an RPC call to an RPC server and reports what it finds. and options can be used for it:
+• rpcinfo -p : shows ports and services
+
+
+TPC Wrapper
+rpcbind service uses TPC wrapper for access control and configuration on it will affect over all RPC services. however, /etc/host.allow and /etc/host.deny can be specified for access control rules.
+• etc/hosts.allow
+• etc/hosts.deny
+
+
+exportfs
+utility to show shares that are available.
+• exportfs -v : displays a list of share files and options on a server
+• exportfs -a : exports all shares listed in /etc/exports, or given name
+• exportfs -u : un exports all shareds listed in /exports or given name
+• exportfs -r : refresh the server's list after modifying /etc/exports
+
+
+nfsstat
+it let us config client connections to export
+
+
+NFS Client configuration
+https://borosan.gitbook.io/lpic2-exam-guide/2092-nfs-server-configuration#nfs-client-configuration
+notes:
+- mount and unmounting a shared directory
+- creating user and adding passwords to them with ID and name and using getent passwd usernfs1 to verification
+- using showmount to check available shareds on local machine
+- setting NFS required ports on the server firewall
+- verifying rpc service connections by rpcinfo
+
+note:
+to make mounted file for NFS permanent we should make configuration on `/etc/fstab` file.
+as it is a network file system it can make problems during boot process if network is not available so soft or hard mounting can be defined. soft will stop trying if network for shared file is not available but hard mount will continue trying upto the timeout option.
+we can define foreground or background to determines if the attempts for mounting happnes on the foreground so the boot process will wait until success or fail based on timeout value.
+we also can efine how many times the system will retry to mount during the boot
+rsize and wsize which are the maximum read and write sized requests.
+and ro and rw are for defining read and write permissions for mounted directory.
+example:
+• 192.168.10.133:/nfsshare    /mnt/nfsmounthere    nfs    hard,bg,timeo=300,rsize=1024,wsize=2048        0 0
+
+
+
+
+### 210.1 DHCP configuration ###
+DHCP (Dynamic Host Configuration Protocol) uses DORA steps to give an IP from DHCP server to a client
+1. DHCP Discover: client sends DHCP discover packet to all networks in broadcast in attempt of finding a DHCP server. (however routers can drop this packet and to fix it you can set Router to act as a DHCP relay agent and it will send DHCP request to DHCP server in unicast).
+2. DHCP Offer: the server will offer an address to the request of the Client. it will be a unicast due to MAC that is learned 
+3. DHCP Request : it is the message that client sends to indicate that it wants to use the IP that is offered
+4. DHCP Acknowledgement : an acknowledgement of DHCP server for the Request message of the client 
+
+• DHCP uses UDP port number 67 by default.
+
+DHCP packages for linux distribution
+dhcp
+dhcp-server
+dhcp3-server & dhcp4-server
+isc-dhcp-server (old use)
+
+we can check dhcp services on systemd base OS:
+• dpkg -L isc-dhcp-server => it will list related packages and configuration on system
+• apt-cache search dhcp => it will list packages that have dhcp name in them
+• systemctl list-unit-files --type=service | grep dhcp => it will list services on system and look specificly to dhcp.
+
+we can configure which interface, DHCP service listen on:
+• vim /etc/default/isc-dhcp-server
+	set INTERFACE='(interface-name)' 
+
+note: remember to configure firewall to pass DHCP service request.
+---------- iptables (CentOS/RHEL 6) ----------
+iptables -A INPUT -p udp -m state --state NEW --dport 67 -j ACCEPT
+service iptables save
+---------- firewalld (CentOS/RHEL 7)----------
+firewall-cmd --add-service=dhcp --permanent 
+firewall-cmd --reload 
+---------- uncomplicated firewall (Ubuntu)----------
+ufw allow  67/udp
+ufw reload
+ufw show raw
+
+
+/etc/dhcp.conf & /etc/dhcp/dhcp.conf
+it contains configuration of network infromation for the clients
+
+there are two types of statements in DHCP configuration file:
+1. parameters: state how to carry out a task, whether to perform a task or what network configuration options to send to the DHCP client
+2. declarations: specify the network topology, the clients, offer addresses for the clients or apply group of parameters to a group of declarations.
+options: they are parameters or values to control how the DHCP server to work.
+
+
+options and directives:
+# DNS Dynamic Updates
+	- Determine whether the DHCP server to attempt to update DNS server addresses or not 
+• ddns-update-style [style];
+valid values:
+- none: no attempt to update DNS server 
+- ad-hoc: updating based on a script value (deprecated)
+- interim: C language based update of DNS
+- standard: newset method (DHCP v4), incorporates new standards for Dynamic DNS Services.
+
+# IP Ranges:
+	- defines and identifies a network IP adn associated netmask as the network our server will maintain.
+• subnet [network] netmask [mask] {[options and directives]}
+Directives:
+- option routers "192.168.1.2" : define default Gate Way for clients
+- option subnet-mask "255.255.255.0" : subnet mask of clients which are going to receive an IP address
+- range 192.168.1.1 192.168.1.253 : define range of IP address to release
+- option domain-name 'example.com' : domain anem wghich our clients belong to
+- option domain-name-servers 8.4.4.8 : define DNS server IP address or HostName
+ISC server also receive parametes for lease value
+- min-leae-time 400 : define minimum lease length to force client to take 
+- default-lease-time 600
+- max-lease-time 7200 
+
+commands for dhcp server after modification
+• dhcpd -t -cf /etc/dhcp/dhcpd.conf => it will set and reconfigure base on changes.
+• systemctl restart isc-dhcp-server => to restart dhcp-servicea after changes
+• journalctl -xe => to see journal logs for dhcp-service process
+• dhclient -r => on client server, to request dhcp discover message
+checking which DHCP server has issues our address (client which received IP) we can check:
+• /var/lib/dhcp/dhclient.leases 
+
+
+DHCP logging
+logs are located in:
+/var/log/messages
+/var/log/daemon.log
+/var/log/syslog
+
+To check leases IP addresses from DHCP
+/var/lib/dhcp/dhcp/leases 
+
+
+Assign Static IP to DHCP Client
+we need to define a section in /etc/dhcp/dhcp.conf file where explicity specify clients MAC addresses and the FIex IP to be assigned
+• host [name] {[static network infromation]}
+key directives:
+- hardware ether 00:0c:29:9f:ee:a3 : define mac address of client
+- fixed-address 192.168.1.10 : reserved IP address
+- option host-name 'NTP-srv1' : client host name.
+
+example on /etc/dhcp/dhcp.conf :
+
+### add static IP address
+host NTP-srv1 {
+hardware  ethernet 00:0c:29:9f:ee:a3;
+fixed-address 192.168.1.110;
+}
+
+
+DHCP Relay Agent
+DHCP relay Agent listens on a subnet that do not have a DHCP server for DHCP request (or BOOTP) and then forward thos on to a specific DHCP server another network
+DHCP realy is like a piece of software which can be run on Network swtiches/routers or can be installed and modified on a linux machine.
+
+configuring Relay Agent
+https://borosan.gitbook.io/lpic2-exam-guide/2101-dhcp-configuration#dhcp-relay-agent
+note:
+- remember that the isc-dhcp-relay should be install on router act machine and dhcp server should be indicated to it.
+• /etc/default/isc-dhcp-relay
+- a range for device from other subnet needs to be added to DHCP pool if other subnet is necessary.
+- pay attention to interfaces for other subnets.
+- dhcrelay [IP of DHCP Server to Forward to]
+
+
+DHCP configuration on Client Machines
+for clients to use our DHCP server we need to modify interface configuration file.
+
+• in centOS /etc/sysconfig/network-scripts/ifcfg-(interfaceName):
+DEVICE=(interface Name)
+BOOTPROTO=dhcp
+TYPE=Ethernet
+ONBOOT=yes
+
+• in Ubuntu /etc/network/interfaces
+auto (interface Name)
+iface (interface Name) inet dhcp
+
+
+DHCP for IPv6 (DHCPv6)
+the server, clients and relay agents on ISC DHCP support both IPv6 and IPv4 but only one Protocol can be managed at a time.
+for dual support they must be started separately for IPv4 and IPv6.
+
+DHCPv6 server configuration:
+/etc/dcp/dhcpd6.conf
+/usr/share/doc/dhcp-<version>/dhcpd6.conf.sample
+
+the DHCPv6 service is named 'dhcpd6'
+
+DHCPv6 two modes:
+• statefull: Stateless configuration (also known as SLAAC-StateLess AutoConfiguration).
+statefull mode will keep track of the bindings, the service will know what IPv6 is assigned to what host.
+• stateless: the seerer does not assign IPv6 to clients. thi is done by 'autoconfiguration'.  the server is only used to assign information that autoconfiguration doesn't like domain-name, multiple DNS servers and other options that DHCP offer.
+
+
+radvd (Router ADVertisement Daemon)
+the routers of the local network have to run a program which answers the autoconfiguration requests of the hosts.
+on linux is called radvd, this daemon listen to router solicitation (RS) and answer with router advertisement (RA).
+RAs contain information which hosts use to configure their interfaces like, address prefixes, MTU of the link and information about default routers.
+
+router should be manually configured and interfaces and routes and other configurations needs to be added to router advertisement Daemon.
+
+radvd.conf
+radvd configuration are in /etc/radvd.conf 
+
+note:
+As we need radvd anyway it's the easiest, possibly combined with stateless DHCP. Don't bother with stateful DHCP unless we really need to manage addresses manually.
+
+
+
+### 210.2. PAM authentication ###
+PAM (Pluggable Authentication Modules)
+PAM is an abstraction layer which seats between programs and authentication source. it handles the process of negoriating with authentication sourcea nd take the result back to the program.
+it reduce the concern of authentication needs for developers over their program.
+
+any program like passwd or swtich user (su) that deal with username and passwrod use PAM for example pam_lib. 
+PAM configuration file is in /etc/pam.d directory. PMA is modular and uses different modules whicwh are placed in /lib/security.
+you can check it by:
+• ldd $(which login) => it will list all library that are used for login.
+
+/etc/pam.d
+/etc/pam.d contains PAM configuration files for PAM-aware application. pam.conf was used but after earlier versions it became deprecated and only used if the pam.d directory does not exist.
+each file that deals with PAM have a configuration file in pam.d/
+
+
+format of files are usually like:
+<service>    <module-interface>    <control-flag>    <module-name>    <module-arguments>
+
+1. Service: defines wht service it is, for example SSH, FTP or etc. for making better distinguiesh each service has its own configuration file with its name inside pam.d/
+for instance we can `cat login` file to check it.
+
+2. module_interface: four types of PAM module interface are available.
+• auth: verifies validity of passwords, set credentials for groups an memberships or kerberos tickets.
+• account: verifies acccess and check account allowance for particular time of a day or expiration of user account
+• password: for chaning passwords
+• session: confiugres and manages user sessions. modules with this inerface also can mount user directory and make user's mailbox available.
+
+3. control-flag: it controls the result of PAM's generated success or failure results.
+keywords to set the configuration:
+• requisite: the module result must be successful for authentication to continue. and in failure user will be notified by required or requisite module
+• required: same as requisite but if the test fails the user is not notified until the result of all module tests complete.
+• suffiicient: the module result is ingnored if it fails. however if no previous modules flagged `required` have failed it will authenticate user to the service.
+• optional: only  become necessary for successful authentication when no other modules refer the interface.
+• include: match the given parameters and appends them as an argument to the module from other source.
+
+4. pam module name
+5. module arguments: 
+
+
+/lib/security or /lib64/security or /usr/lib/x86_64-linux-gnu/security
+there are directories for pam modules and new autnetication module will be placed in this file for PAM.
+
+common modules:
+• pam_unix: configure authentication via /etc/passwd and etc/shadow
+- man pam_unix => to see values and management groups
+ we can modify /etc/pam.d/system-auth to remember user 3 previous passwords and does not let her to set them again.
+
+• pam_cracklib: it provides stength-checking for passwords and ensure that password is not too weak. it does that by dictonaries, the previous passwords and rules about the use of numbers, upper and lowercase and other characters. based on distro its name can differ.
+
+• pam_limits: limits system resources that can be obtained by user-session. it also can affect on users with uid=0. by default limits are taken from /etc/security/limits.conf or /limit.d/
+we use /etc/security/limits.conf instead of pam_limits.so cause pam-limits.so is used by other services as well an manipulation can affect on others.
+example: adding limit to user to login more than once in /limits.conf
+- limitedUser		hard		maxlogins	1
+
+• pam_listfile: allows or denies actions based on the presence of items in it. it is a textfile and can contain usernames per line. it also accept value of user, tty, rhost, ruser, group or shell.
+
+• sssd: determine how authentication process is going to happen. sssdcan authenticate base on LDAP, ActiveDirectory, Nis, etc.
+pam_sss.so is the PAM interface to the System Security Services Daemon (SSSD). errors and results are logged through syslog.
+
+
+nsswitch.conf
+determines the order that files or services are used to perfomr either authentication or authorative responses to some thing on the system. it is typically used for dealing with DNS entries.
+
+note:
+one of ways to troubleshoot pam if is not applied is by controlling nsswitch.
+
+
+
+### 210.4. Configuring an OpenLDAP server ###
+LDAP (Lightweight Directory Access Protocol) consists of protocols that allow a client toaccess centrally stroed information over network. it can be used for authentication, shared directroy, mailing, address books , etc.
+
+LDAP uses port 389/TCP for unecrypted communication and port 636/TC over TLS-encrypted cchannel. it is common for LDAP servers to listen on alternative ports too.
+
+LDAP Directory tree structure
+LDAP directory has a tree structure. all entries called (objects) of the directroy have a defined position within this hierarchy. this hierarchy is called the directory information tree (DIT)
+
+entries at higher level hierarchy, represent larger groupings/organizations. the leaf nodes of the tree represent the individuals or resources.
+
+
+Naming Model
+defines how entries and data in the DIT (Directory Information Tree) are uniquely referenced.
+
+definitions:
+• Object: referred to as a record or an entry and represent a single item in the directory. this object provides a description based on the structure of the schema.
+• Schema: define the characteristics of an object
+• Attribute: This is a part of an object.
+• LDIF: stands for LDAP Interchange Format. used to create objects withing LDAP directories. 
+• DC: (Domain Component) is one of the domain that is reflected in hierarchy
+• OU: (Organizational Unit)
+• CN: (Common Name) is the name of object (often a username, but not always)
+• DN: (Distinguished Name) directories must have a unique name and this unique name is ocreated by CN and one or more DN (example: cn=user,dc=abc,dc=com)
+
+SSSD (System Security Service Daemon) can be used authentication of user accounts for LDAP server
+
+
+OpenLDAP
+it provides a distributed directory service. it stores information associated with users that can be used to authneticate them for login and can provide other information about users.
+it is commnly used in Linux but can be compared to Active Directory on Windows as a service with hierarchical based user information.
+
+OpenLDAP packages
+- openldap-server : main LDAP server package
+- openldap-clients : this contains all required LDAP clients utilities.
+- openldap : packages contains the LDAP support libraries.
+
+note: there is another LDAP service called SLAPD (stadalone LDAP Daemon) and SLURPD (stand-alone LDAP update replication daemon) originally evolved within the long-running project that developed the LDAP protocol).
+
+/etc/ldap
+where the ldap file exist
+
+/etc/ldap/ldap.conf
+used to set system-wide default to be appied when running LDAP client tools (like ldapsearch or ldapadd)
+
+slapd.conf or slapd.d
+main server configuration file that contains information needed by the slapd LDAP server.
+
+slapd.conf or dynamic runtime configuratione engine
+openLDAP is moving toward On-Line configuration (OLC). this method enables most configuation hcange to be made without starting and stopping the LDAP sever.
+
+note:
+LDAP configuration should be perfomred via LDAP operations for example, idapadd, ldapdelete or ldapmodify and NOT directly through LDIF files or slapd-config
+
+
+/etc/ldap/schema/*
+Directory that contains a set of default schema specifications which describe the different object classes that are available by default with the OpenLDAP Software
+
+slapcat
+generates an LDAP Directory Interchange Format (LDIF) output based upon the contents of a slapd database
+• slapcat -b cn=config => we define where configuration databse is placed to show us. (-b: bsuffix)
+- bsuffix : use the specified suffix to determine which database to generate output for.
+
+
+to start LDAP we need to update variables of 'olcsuffix' and 'olcRootDN'
+- olcSuffix : Database suffix, it is the domain name for which the LDAP server provides the information.
+- olcRootDN : Root Distinguished Name (DN) entry for the user who has the unrestricted access to perfrom all administration activities on LDAP, like a root user.
+- olcRootPW : LDAP admin password for the above RootDN.
+
+
+slappasswd
+the OpenLDAP password utility, it is ued to generate an userPassword value suitable for use with ldapmodify, slapd.conf rootpw configuration directive or the slapd-config olcRootPW configuration.
+• slappasswd => it will envoke wizard
+
+
+to add something to the LDAP directory first we need to create a LDIF file. the LDIF file should contain all attributes that are required for the entries that you want to create, modify or change.
+• vim mydb.ldif
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+replace: olcSuffix
+olcSuffix: dc=example,dc=com
+
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+replace: olcRootDN
+olcRootDN: cn=ldapadm,dc=example,dc=com
+
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+replace: olcRootPW
+olcRootPW: {SSHA}un1ELmHXVCdBQOOx+eK0V9hWtGYj1RYF
+
+
+ldapmodify
+ldapmodify opens a connection to anLDAP serverm binds, and modifies or adds entries. the entry information is read from standard input or from file through the use of the -f option. ldapmodify also checks the ldif file for any syntax error.
+• ldapmodify -Y EXTERNAL -H ldapi:/// -f mydb.ldif
+
+
+slaptest
+check the suitability of the OpenLDAP slap.conf file. there is no slapd.conf in v2.4 but it works.
+• slaptext -u -v => -u switch enables dry-run mode (it doesn't fail if database cannot be opened but config is fine) and -v for verbose.
+
+
+LDAP v2.3 (and prior)
+in v2.3 we need to configure databse-specific directives in slapd.conf
+directives:
+• databse: the type of databse (i.e Berkely Database) and it should be determined first.
+• suffix: the domain for which the LDAP server provides information and should be changed.
+• rootdn: the Distinguished Name (DN) for user with unristircted access. (i.e: "cn=Manager,dc=my-domain,dc=com")
+• rootpw: the administrator password is set with rootpw. we can use hash created by slappasswd.
+• directory: the directory where the database directories are stored on the server.
+
+we can test and verify the slapd.conf 
+• slaptest -u -v -f /slapd.conf
+
+
+/var/lib/ldap
+contains file related to LDAP directory database such as background databases and log files. none can manually edited.
+the LDAP directory databse type and location is defined in /etc/ldap/ldap.conf
+
+Note:in ldap v2.4, slapd runs as ldap user by default, if you attempted to start it (or loaded ldif etc..) as root user, it'd create files with incorrect permission. Try chown -R ldap.ldap /var/lib/ldap to fix the permissions and start the service.
+• chown -R ldap:ldap /var/lib/ldap
+
+
+ldapsearch
+opens a connection to an LDAP server, binds, and performs a search using specified parameters.
+example:
+• ldapsearch -x -b '' -s base '(objectclass=*)' namingContexts => 
+-x means use simple authentication, -b for defining search base that we want to run search on (which is blan in our example because we want to search for everything). -s indicates the base we want to use (in this case we define all objects) and finally we want all of the names.
+
+OpenLDAP Back-end Database
+note that BDB (Oracle Berkeley DB) is deprecated and support will be dropped so the mbd back-end should be used instead.
+
+
+slapindex
+it reindex entries in a SLAPD database. it makes extnesive use of indexind and caching to speed data access.
+
+spladadd & slapdelete 
+ Adds or delete entries from an LDAP by accepting input via a file or stadnard input.
+
+
+loglevel
+Level    Keyword        Description
+-1        	any				enable all debugging
+0						no debugging
+1        	(0x1 trace)		trace function calls
+2        	(0x2 packets)		debug packet handling
+4        	(0x4 args)    		heavy trace debugging
+8        	(0x8 conns)    	connection management
+16     	(0x10 BER)    		print out packets sent and received
+32 	        (0x20 filter)    	search filter processing
+64        	(0x40 config) 		configuration processing
+128       	(0x80 ACL)    		access control list processing
+256       	(0x100 stats)    	stats log connections/operations/results
+512       	(0x200 stats2)   	stats log entries sent
+1024      	(0x400 shell)    	print communication with shell backends
+2048       (0x800 parse)  	print entry parsing debugging
+16384      (0x4000 sync)    	syncrepl consumer processing
+32768      (0x8000 none)    	only messages that get logged whatever log level is set
+	
+note: multiple log levels can be used:
+#  (1 + 8 + 128 + 256)=393
+loglevel 393
+
+
+logfile
+by default LDAP sends logs to syslog but it can be configuredto send logs to logfile.
+# Logging
+#  - trace function calls (1)
+#  - connection management (8)
+#  - ACL processing (128)
+#  - stats log connections/operations/results (256)
+#  (1 + 8 + 128 + 256)=393
+loglevel 393
+
+logfile   /var/log/ldap.log
+
+
+
+### 210.3. LDAP client usage ###
+
+
+### 211.1 Using e-mail servers ###
+
+Emailing Steps:
+1. using mail client application like thunderbolt squirrelMail which are called Mail User Agent (MUA). for sending mail.
+2. the mail submission agent (MSA) receives electronic mail messages from mail user agent (MAU) and cooperate with a mail transfer agent (MTA) for delivery of the mail.
+3.the message is sent to the mail server tasked to transport emails. it is called Mail Transport Agent (MTA). on the internet MTA communiciate with one another using the protocol SMTP (Simple Message Transport Protocol). it is also called SMTP server.
+4.the recipient's MTA then delivers the email to the incoming mail server (called the MDA for Mail Delivery Agent) which stores the email. also the MTA can function as MDA for filtering mails.
+
+two main protocols on MDA (Mail Delivery Agent)
+• POP3 (Post Office Protocol) used by MUA for retrieving email and in certain cases, leaving a copy of it on the server
+• IMAP (Internet MEssage Access Protocol) also used by MAU and coordinate status of emails (read, delete, moved). across multiple email clients. it copies every message is saved on the server and synchronizes.
+
+both can be secured by TLS or SSL.
+
+MX Record
+MX records are the mail DNS record (we discussed about earlier in DNS Course). These records are used by MTAs to determine the authorative mail server for any particular e-mail message.
+
+MUA
+Mail User Agent. This is whatever application we use to create and send e-mail (Like Thunderbolt, Evolution, SquirrelMail, etc).
+
+MSA
+Mail Submission Agen. Acts as an intermediary or gateway between the MUA and an MTA to strat the transfer of e-mail.
+
+MTA
+Mail Transfer Agent. Accepts e-mail from the MUA and sends it (if needed) to the receiving mail address (could be another MTA if this is not the destination.
+
+Mail Transfer Agents (MTA) for Linux
+
+1.Send Mail: also known as Proofpoint. it has a lot of limitation compare to moder MTAs.
+
+2. Exim: free MTA developed for Unix Based OS. it is flexible in routing mails through network and has facilities for incoming mail monitoring.
+feature:
+- no support for POP and IMAP protocols
+- Supports protocols such as RFC 2821 SMTP and RFC 2033 LMTP email message transport(LMTP is an alternative to normal SMTP for situations where the receiving side does not have a mail queue )
+- configurations such as ACL, content scanning, encryption, routing control
+- excellent documentation
+- utilities such as Lemonade which is an assortment of SMTP and IMAP.
+
+4. Qmail: free, open source modern Linux MTA. it is simple, reliable, efficient and offer extensive security features.
+features:
+- run on multiple Unix Based OS
+- automatic per-host configuration
+- clear separation between addresses, files and programs.
+- full supoort for address group
+- each users can manage their own mailing list
+- Supports VERPS (Variable Envelope retunr Path address on request)
+- automatic prevention of mailing list loops
+- supports ezmlm mailing list manager
+- no random list supported
+
+4. Postfix: cross-platform mail server, fast and reliable
+features:
+- junk mail control
+- multiple protocol supports
+- Database support
+- Mailbox support
+- Address manipulation support 
+
+
+Postfix configuration
+
+/etc/postfix/
+configuration file are in /etc/postfix and /usr/share/postfix
+
+main.cf / main.cf.proto
+it is the main configuration file and it has documentation in it
+
+to see customized setting we can use `postconf`
+• postconf -n => shows only configuration parameters that have value in main.cf
+without -n postconf shows all settings.
+
+note:
+for the error: /etc/postfix/main.cf: No such file or directory
+just reconfigure the postfix packages in local use.
+• sudo dpkg-reconfigure postfix
+• sudo /etc/init.d/postfix
+
+important variables:
+- myhostname: specifies the internet name of host, for none public postfix servers it uses get hostname if it is not set.
+if DNS entry exists for mail server we should set what our hostname is with Full domain.
+
+- mydomain: set domain name for mail server.
+
+- disable-vrfy-command:it avoids e-mail address mining and make scanning for e-mail addressses more difficult. if email is going to be publicly available it sohuld be enabled (yes).
+• disable_vrfy_command = no
+
+- inet_interfaces: it determines what interfaces on our server that the postfix process will listen for connections on. for configuring an internal mail server for all clients, we should set it to "all".
+
+- mydestination: list of all domain or systems or hosts that the posfix accept email from.
+if we are accepting mail from domains outside localhost, we should have mx records for our mail server in our DNS. because deliver email to the host which doesn't have appropriate mx records won't be possible.
+
+- relay-domains: we can use mydestination or we can use full host domain name that we are going to accept mail and then relay email to another domain
+
+- relayhost: defines next connection that we have for SMTP.
+
+
+postfix listens on Port 25/TCP
+
+
+note:
+most of modern MTA are backward compatible to SendMail and have sendmail emulation layer. so sendmail commands also can work with other MTAs. 
+for example, `mailq` to check mail queue which is equivalent of `sendmail -bp`.
+
+
+mailing command
+https://borosan.gitbook.io/lpic2-exam-guide/2111-using-e-mail-servers#mail-command
+note: the mail it self has a wizard like terminal interaction and 'help' command also can be used.
+
+• mail => to see mailbox
+• mail -s "subject" user@localhost => to start sending a message to another user
+
+Mail Command               Description
+-------------------------  --------------------------------------------
+t [message list]		type message(s).
+n                         		goto and type next message.
+e [message list]           	edit message(s).
+f [message list]           	give head lines of messages.
+d [message list]           	delete message(s).
+s [message list] <file>   append message(s) to file.
+u [message list]           	undelete message(s).
+R [message list]           	reply to message sender(s).
+r [message list]           	reply to message sender(s) and all recipients.
+p [message list]           	print message list.
+pre [message list]         make messages go back to /var/mail.
+m <recipient list>         	mail to specific recipient(s).
+q                          		quit, saving unresolved messages in mbox.
+x                          		quit, do not remove system mailbox.
+h                          		print out active message headers.
+!                          		shell escape.
+| [msglist] command     pipe message(s) to shell command.
+pi [msglist] command   pipe message(s) to shell command.
+cd [directory]             	chdir to directory or home if none given
+fi <file>                  		switch to file (%=system inbox, %user=user's
+                           		system inbox).  + searches in your folder
+                           		directory for the file.
+set variable[=value]      set Mail variable.
+
+
+/var/spool/postfix
+its the place where postfix holds mails and the data. directories inside it will only have information if postfix configuration is holding e-mail for some reason or if it is waiting to deliver it, otherwise most of these directories(except pid or corrupt) should always remain empty.
+
+/var/spool/mail
+by default all mail is delivered to the /var/spool/mail/<usernames>
+when postfix recieve a message, if its going localy then it goes to /var/spool/mail directory on the local system, if it is going to be send it some where else , ( it will exist in /var/spool/postfix directory long enough to send the e-mail out and then it wiil flush and clear the directory once it has been successfully sent
+
+
+Logging
+postfix uses the syslog daemon for its logging. when /etc/syslog.conf is configured.
+• /var/log/mail.log
+
+email aliase
+email aliases are desgined for e-mail system to take an e-mail that is for one destination address, and then send it to a different one
+/etc/aliases
+used to redirect mail for local recepients
+
+newaliases
+after each changes in /etc/aliases we need to re-create binary file aliases.db. so we need `newaliases` command to re-create aliases.db and then start postfix again
+• systemctl stop postfix.service
+• newaliases
+• systemctl start postfix.service
+
+
+virtual
+allow us to control e-mail for other domains especially in a multi domain systems or seperate servers.
+/etc/postfix/virtual
+
+https://borosan.gitbook.io/lpic2-exam-guide/2111-using-e-mail-servers#virtual
+
+
+
+
+
+
+
+
+
+
+

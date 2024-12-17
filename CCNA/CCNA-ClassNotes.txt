@@ -1786,7 +1786,7 @@ DHCP procedures:
 
 2. DHCP Offer: the DHCP will offer an address to the request of the Client. it will be a unicast due to MAC that is learned (Broadcast or Unicast
 
-3.DHCP Request: it is the message that client sends to indicate that it wants to use  the IP that is offered (Broadcast)
+3.DHCP Request: it is the message that client sends to indicate that it wants to use the IP that is offered (Broadcast)
 
 4. DHCP Ack: it is an acknowledgement of DHCP server for the Request message of the client (Broadcast or Unicast)
 
@@ -1800,7 +1800,7 @@ if the server is centralized it won't receive the DHCP clients' broadcast DHCP m
 the router will forward the clients' broadcast DHCP messages to the remote DHCP server as unicast messages.
 
 
-DHCP servr configuration in IOS
+DHCP server configuration in IOS
 • R1(config)#ip dhcp excluded-address 192.168.1.1 192.168.1.100 => specify a range of addresses that won't be givent to the DHCP clients. (for example for further configuration)
 
 • R1(config)#ip dhcp pool [name-of-pool] => it creates a DHCP pool with specificed name
@@ -1857,7 +1857,7 @@ SNMP Components
 
 • Managed Devices:
 	- SNMP Agent: is the SNMP software running on the managed devices that interfact with the SNMP manager on the NMS. it sends notifcations to/receives messages from the NMS.
-	- The Management Information Base (MIB): is the structure that contains the variables that are managed by SNMP. Each variable is identified with tan Object ID (OID). for instance, interface status, traffic throughput, CPU usage. etc.
+	- The Management Information Base (MIB): is the structure that contains the variables that are managed by SNMP. Each variable is identified with an Object ID (OID). for instance, interface status, traffic throughput, CPU usage. etc.
 
 
 SNMP Object IDs are organized in a hierarchical structure.
@@ -1879,15 +1879,15 @@ message Class	Description									Messages
 -Response		sent in response to a previous message/request	Response
 
 Read message:
-Get: request sent from the manager to the agent to retrieve the value of a varialbe (OID) or multiple variables.
-GetNext: a request sent from the manager to the agent to discover the available variables in te MIB.
+Get: request sent from the manager to the agent to retrieve the value of a variable (OID) or multiple variables.
+GetNext: a request sent from the manager to the agent to discover the available variables in the MIB.
 GetBulk: a more efficient version of the GetNext message. introduced in SNMPv2
 
 Write message:
 Set: a request sent from the manage to the agent to change the value of one or more variables. then agent will send a response with new values.
 
 Notifcation:
-Trap: a notifcation sent from the agnet to the manager. manager does not send a Response to acknowledge, so these messages are 'unreliable'
+Trap: a notifcation sent from the agent to the manager. manager does not send a Response to acknowledge, so these messages are 'unreliable'
 Inform: a notification message that is acknowledged with a Response messages. it is used for communications between managers, but updated for agents too.
 
 

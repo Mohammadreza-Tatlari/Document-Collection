@@ -99,6 +99,12 @@ firewall configuration on ubuntu 24.0 is based with iptable kernel firewall
 sudo iptables -L => to check all the rules running on OS
 iptables [options] [chain] [criteria] -j [target]
 
+• dpgk -S 'command name' => it looks for packages that the command is coming from
+•elinks (ip address/ domain name) => to open the html or http request of website on terminal.
+• elinks or lynx command packages for web browsing over terminal.
+• use dpkg -L squid | grep ncsa_auth (in ubuntu) or locate ncsa_auth for finding packages related to application
 
 
+
+### 210.1 DHCP configuration ###
 				
