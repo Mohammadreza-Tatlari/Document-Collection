@@ -1,0 +1,178 @@
+https://sbcode.net/zabbix/install-provision-linux/
+
+essential parts about zabbix-7 topic is about to be written followed by sbcode.net documentation.
+
+### ### ###
+
+### 2 - Download and Install The Zabbix Repository ###
+
+following the manual of zabbix installation to install zabbix server
+https://www.zabbix.com/download
+note:
+for package installation arm64 is mostly used on OS running on RasberryPi for instance.
+
+
+
+### 3 - Create the Initial Database ###
+we can use ` service (mysql/postgrsql) status ` or `systemctl status (mysql)` to check whether we have this programs installed on OS other wise we can install it from `mysql-server`
+
+Setting the log_bin_trust_function_creators variable to 1 relaxes these restrictions:
+It allows users to create functions even without the SUPER privilege.
+It allows the creation of functions that are not DETERMINISTIC.
+its disadvantage:
+security issues  and replication issues. thats why after zabbix datastore creation it should be disabled again.
+
+note:
+use -v (verbose) in import initial schema and data to be sure that datastore is being created and monitor it.
+
+for verification u can use:
+• mysql > show databases; => to see database that is created for zabbix;
+
+• mysql > use zabbix; => to switch to the zabbix datastore.
+• mysql > show tables; => to see all tables
+
+• mysql > select * from users; => to see all users
+
+use ` systemctl status zabbix-server ` to check status of zabbix server and remember to enable it if it is not
+
+
+
+### 4 - Log in and Configure Zabbix Server Front End ###
+
+in zabbix-frontend wizard be careful, the first user & password that you are providing is the password that is related to user working in your database.
+
+the default zabbix web server password is:
+user: Admin
+password: zabbix
+note:
+you can change password in zabbix dashboard Users > Users 
+
+
+
+### 5 - Configure a Domain name for the Zabbix Server  ###
+you can assign a domain name for your zabbix server (it can be your local DC NS :) )
+
+you need to add a A record to your DNS provider and that A record should Point at your zabbix-server.
+
+
+
+### 6 - Configure SSL for Zabbix Server Front end ###
+you can use https://certbot.eff.org/ to configure local TLS and SSL connection over HTTP.
+
+remember to select the current Web-server and operating server in which for ubuntu it is called "Linux (snapd)".
+
+* note: for TLS you do need a Domain Name First.
+
+for installation:
+• sudo snap install --classic certbot
+
+
+
+### 7 - Configure Firewall ###
+for configuring firewall be sure that:
+SSH 22/TCP is open for remote connection.
+HTTP TCP/80 is open for HTTP and CertBot for revalidation of IP (optional)
+HTTPS TCP/443 for secure HTTP connection.
+
+Also it is best practice to create a Secure Tunnel connection to your zabbix server thus the only IP that can connect to your monitoring is only you.
+you can also assign a range of IPs to the firewall.
+
+
+
+### 8 - Overview So Far ###
+always remember to make a Diagram about what you have done with details about each component of the project.
+for instance:
+the connection in webserver which consist of:
+- zabbix-frontend on Port 433 , 80 TCP
+- zabbix Server on Port 10051
+- MySQL on Port 3306 which frontend and webserver are connected to.
+- local zabbix agent on Port 10050 which is connected to zabbix-server via 127.0.0.1 (zabbix agent on web-server is used to give information about zabbix-server itself).
+
+note:
+zabbix server and zabbix agent version should match otherwise it can make problems.
+
+
+
+### 9 - Install Zabbix Agent on Same Network as Zabbix Server ###
+follow the zabbix agent installation on: 
+https://www.zabbix.com/download?zabbix=7.2&os_distribution=ubuntu&os_version=24.04&components=agent_2&db=&ws=
+
+in /etc/zabbix/zabbix_agentd.conf, this parameters needs modification:
+1. Server
+2. ServerActive: if the 
+3. Hostname : is the name that zabbix-server/zabbix-proxy is going to use to name the host.
+
+- passive check on agent: it means that Zabbix-Server/proxy will send request to agent to retrieve data from it.
+- active check on agent: it means that agent will send data automatically to zabbix server/proxy base on an interval timer.
+thus:
+if zabbix agent is on active check, the "ServerActive" parameter should be modified
+if zabbix agent is on passive check, the "Server" parameter should be modified.
+
+Adding a new host:
+important parameters that are required for adding a Host:
+- Host Name: it should match with the end-Host that data is being recieved.
+- Templates: the OS and the Service that the Zabbix is retrieve data from it.
+- Host Group: the Host should belong to a host Group for better organization and Consistency.
+- Interface and Port: if it is a passive check by server (which it means that server sends request to agent) Ip address of the end host with and Protocol should be set.
+- Monitored by:  If server or Proxy is retrieving data.
+
+security purpose:
+we can only allow zabbix-server to be able to have connection with port 10050 so it will be more secure. however this rules should be added at the end of project.
+
+
+
+### 10 - Install Zabbix Agent Active on a Windows Host Behind a Firewall ###
+CGNAT (Carrier-Grade Network Address Translation)
+CGNAT is a network address translation (NAT) method used by internet service providers (ISPs) to share public IP addresses among multiple customers. thus it can not be a static IP so for that we can use an Active Agent to send data to the Static Based IP Of Zabbix-Server. also CGNAT will prevent hosts from port forwarding.
+
+installation of Zabbix Agent Windows Wizard:
+in Wizard,
+- zabbix server IP/DNS : is the zabbix server in which the agent will connect to
+- Server or Proxy active checks: for Active Proxy.
+
+configuration caution:
+- be sure that the ports are open for both sides and are not blocked by firewall.
+so actually zabbix agent connect to server via port 10051
+- if agent is active and it pushes data to server/proxy, in the server the interface is not required. (should be double checked!)
+so simply if agent is on Active mode, it means that the port 10051 of zabbix-server or 10052 of zabbix-proxy should be open to it. and port 10050 is not required cause it is one way sending data. but if pasive is active so the 10050 should also be added cause in this case server will send request to 10050 of agent on end-host.
+note:
+the passive or active of agent will be demonstrate on host > items > Type.
+
+
+
+### 11 - Install Zabbix Agent on CentOS on a different Cloud Provider ###
+
+
+
+### 13 - Enable PSK (Pre-Shared Key) Encryption for Zabbix Agents ###
+PSK is usually used for traffic that is passing through the public internet.
+however, if your policy is that the local connections should also use PSK it is okay.
+
+configuration:
+- On end-host (linux):
+	• openssl rand -hex 32: creates a 256 bit PSK secret on end-host
+	• mkdir /home/zabbix/secrets/ => creating a directory to hold secrets
+	• openssl rand -hex > secret.psk => creating a psk secret filewith openssl
+	• chown zabbix:zabbix secret.psk => only zabbix user can read/write the file
+	• chmod 640 secret.psk => changing premission to not let anymone to read it.
+      -• /etc/zabbix/zabbix_agent > TLSConnect=psk => enable psk TLS connection on agent.
+	• /etc/zabbix/zabbix_agent > TLSAccept=psk => agent will reject if data is not encrypted in PSK.
+	• /etc/zabbix/zabbix_agent > TLSPSKFile=/home/zabbix/secrets/secret.psk=> location where the psk is created
+	• /etc/zabbix/zabbix_agent > TLSPSKIdentity=Win-Terminal-Srv1 =>telling zabbix server/proxy which key name to use
+	
+- on zabbix-server
+	• in Host > Encryption => add PSK and PSK check, add PSK Identity equal to end-host and create random openssl -hex 32 for PSK field.
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
