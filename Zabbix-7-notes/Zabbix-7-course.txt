@@ -164,15 +164,108 @@ configuration:
 	• in Host > Encryption => add PSK and PSK check, add PSK Identity equal to end-host and create random openssl -hex 32 for PSK field.
 
 
-	
+
+### 14 - Creating Host Items ###
+you can create a customized Item from Hosts and receive them only.
+it can improve speed and bandwidth of the network by reducing more request packets.
+also using template can cause so much overload over server so it is recommended to use Items creation.
+
+Data Collection > Hosts > Items > Create Item(top button).
+parameters:
+• Type: the data that is coming from which protocol.
+• Key: the parameters that needs to be monitored
+• Type of Information:
+	- Numeric (unsigned): it can be from 0 to infinite
+	- Numeric (float): it can contain Negative Number
+	- Character: data that contains text and char in it
+	- Log: information that has format, like date 
+	- text: log texts
+	- 
+• update Interval: the time that it will be requested or pushed.
+• Timeout: it will consider the host to be unavailable.
+• History: time of storing the data on database.
+• value mapping: the customized value that will be shown in monitoring for parameters.
+• Unit: it received values like "B" for byte or "%" for percentage , etc to show the information in that format 
+
+Zabbix Agent Ping	Zabbix Agent (active)	agent.ping	
+Free Space	Zabbix Agent (active)	vfs.fs.size[C:,free]	B
+CPU (User)	Zabbix Agent (active)	system.cpu.util	%
+
+creating an item
+https://www.zabbix.com/documentation/current/en/manual/config/items/item
+
+zabbix agent
+https://www.zabbix.com/documentation/current/manual/config/items/itemtypes/zabbix_agent
+
+Unit Symbols
+https://www.zabbix.com/documentation/current/manual/appendix/suffixes
+
+note:
+in Items, "Execute Now" Option is only available for Passive Items because it is the server that is requesting for value.
 
 
 
+### 15 - Creating Host Triggers ###
+triggers are used for re-evaluating a host when the parameter that is received from it is pased from specific expectation. for example the value is higher than the maximum threshold.
+
+Data Collection > Hosts > Triggers > Create Trigger
+
+Examples of time-based functions are nodata(), date(), dayofmonth(), dayofweek(), time(), now()
+
+for example:
+NODATA 60 seconds	Disaster		nodata(/host/agent.ping,60)=1
+Less than 5GB free	High			last(/host/vfs.fs.size[/,free])<5000000000
+High CPU Usage 75% for 2 minutes	Warning	avg(/host/system.cpu.util[,user],2m)>75
+
+useful documents for creating trigger:
+https://www.zabbix.com/documentation/current/en/manual/config/triggers
+
+trigger functions:
+https://www.zabbix.com/documentation/current/en/manual/appendix/functions
 
 
 
+### 16 - Set up the Email Media Type ###
+we can add email to zabbix for notifying admins. the mail server can be used for disaster alerts for instance.
+
+• Alert > Media types > mail
+however there are so many other ways that can be used to send notification
+also template for email can be modified.
+
+note: for email on SMTP protocol we need a mail server which most organization do provide.
+
+you should also enable Alerting from Actions Section
+Alerts > Actions > Trigger Action > enabling "Report problems to Zabbix administrators"
+
+the Media Should be also enabled for each user after the Alert is added.
+Users > Users > (select a User) > Media > Add.
 
 
 
+### 17 - Creating Host Graphs ###
+you can see each component graph for each host by going to:
+data collection > hosts > click on Items > then click on 3 horizontal dots > and select Graph from the drop down menu.
+you can also go to:
+Monitoring > Latest data > (filter the Host) optional > and select the graph at the end of host name space.
+
+side note:
+for creating Items from each host to Monitor we can use cloning options which can be seen when we are in New Item Component Windows.
+
+for creating a Graph:
+Data collection > Hosts > Click on Graph > create a new Graph 
+
+note:
+you can also add Triggers to be shown on Graphs
+
+
+
+### 18 - Convert Host Items Triggers and Graphs To A Template ###
+we create template for triggers hosts and their items to make it easy to add new hosts base on similar parameters and goals.
+tamplates are in:
+Data Collection > Template 
+
+we can aslo add hosts setup or items and graphs to a template by using "Copy" option in their tabs and copy them in to desired template.
+
+remember that when a host is created and is up based by a template, the items or graphs cannot be editted unless the modification are done on template directly.
 
 

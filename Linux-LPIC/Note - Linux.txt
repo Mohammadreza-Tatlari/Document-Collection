@@ -94,6 +94,7 @@ Install the Converted Package:
 sudo dpkg -i package.deb
 
 lsb_release -a => checks the version (Linux Standard Base) details
+hostnamectl => it will print information about OS
 
 firewall configuration on ubuntu 24.0 is based with iptable kernel firewall
 sudo iptables -L => to check all the rules running on OS
