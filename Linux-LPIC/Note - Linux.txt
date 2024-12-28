@@ -106,6 +106,4 @@ iptables [options] [chain] [criteria] -j [target]
 • use dpkg -L squid | grep ncsa_auth (in ubuntu) or locate ncsa_auth for finding packages related to application
 
 
-
-### 210.1 DHCP configuration ###
 				

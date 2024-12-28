@@ -264,8 +264,218 @@ we create template for triggers hosts and their items to make it easy to add new
 tamplates are in:
 Data Collection > Template 
 
-we can aslo add hosts setup or items and graphs to a template by using "Copy" option in their tabs and copy them in to desired template.
+we can also add hosts setup or items and graphs to a template by using "Copy" option in their tabs and copy them in to desired template.
 
-remember that when a host is created and is up based by a template, the items or graphs cannot be editted unless the modification are done on template directly.
+remember that when a host is created and is up based by a template, the items or graphs cannot be edited unless the modification are done on template directly.
+
+
+
+### 19 - Template Dashboards ###
+you can create a template for dashboards and it is located in:
+Data Collection > Templates > Dashboard Button
+
+when a template for dashboard is created the data which is being demonstrate on each graph or visualization will be contain of place holders become that visualization is going to be used for hosts.
+
+note:
+some data like gauges or clock should not be persisted on database for more than 7 days because they can affect performance and long run issues.
+
+
+
+### 20 - Global Dashboards ###
+in the global dashboard we have three main components:
+Global View: which is the main zabbix dashboard and its difference is that it can show data from multiple hosts.
+Zabbix Server: which is consist of a diagram of Hosts and Nodes.
+zabbix server health: which contain graph and visualization about zabbix server condition.
+
+
+
+### 21 - Creating a Network Map ###
+it is possible to create a Diagram/map of a network inside the zabbix and assign triggers to them to have a better visualization of network.
+Monitoring > Maps > Create a New Map.
+
+in map we can use macros to make Labels and Each node property as dynamic name for example using {Host.Name} for label of the zabbix node:
+https://www.zabbix.com/documentation/current/en/manual/appendix/macros/supported_by_location
+
+
+
+### 22 - Reading Windows Event Logs ###
+in windows OS logs are preserved in Event Viewer > Windows Logs and each section has its own logs.
+
+these logs are holding are activities that are happening on the windows. so we can use them to monitor it on our zabbix server.
+note:
+be sure that the logs are logged on by Local system and not other accounts, to check it go to:
+Services > ( service Name) > properties > Log On. and it should be on Local System account to be send by Agent to Zabbix Server/Proxy
+
+to create an Item for Event logs it is recommended to add that Item to a Template:
+Data Collection > Templates > Items > create Item.
+example of a Failed Login Item:
+	Important Properties:
+		it needs to be an Active check to receive logs from Events
+		Key value can be: eventlog(Security,,,<eventid>,,<mode>)
+			- security indicated the section which it belongs
+			- eventid relates to ID number which it is in SystemLog
+			- the action that happens for logs (ie: skip; which only checks when there is new event logs)
+			- Type of inofmation is Log
+		https://www.zabbix.com/documentation/current/en/manual/config/items/itemtypes/zabbix_agent/win_keys
+
+
+
+### 23 - Item Preprocessing with Regex ###
+https://www.zabbix.com/documentation/current/en/manual/config/items/preprocessing
+
+pre-processing means to add something to the data before monitoring it.
+for instance when we receive log data from a host it might include some useless information inside that too. so we need a way to filter it out in order to not fill our database with useless information.
+
+for instance we can use regex to filter out the data that is being collected from log files.
+for that we can use:
+https://regex101.com/
+
+for instance we do regex on Failed Login logs:
+Account Name:\t\t(.*)  \1=> it will filter out the whole text and only shows the lines which have "Account Name" in it and if there is 2 output similar it will show the second one.
+
+to imply the preprocessing step, we should go do:
+Templates > Items > (Open or create an Item) > preprocessing tab.
+and add the regex parameters in to parameters tab and also add the output (\1 or \0) to it.
+
+
+
+### 24 - Item Preprocessing with JavaScript ###
+it is also possible to do preprocessing with JS similar to regex but keep in mind that in zabbix v7 the javascript version that is supported is ES5 so variables like const and let are not allowed.
+
+for instance:
+var lines = value.split('\n')
+var lineZero = lines[0]
+var accountName = ''
+lines.forEach(function (line) {
+  if (line.trim().substring(0, 13) === 'Account Name:') {
+    accountName = line.substring(14).trim()
+  }
+})
+return accountName + ' : ' + lineZero
+
+https://www.zabbix.com/documentation/current/en/manual/config/items/preprocessing/javascript
+
+
+
+### 25 - Remote HTTP monitoring using Web Scenarios ###
+we can monitor a website if that website is in range of our host or it also can be out of zabbix domain. but remember that this web check actually happens by zabbix server or proxy itself and not by agent so it means that request to fetch data will be sent from the zabbix server to that website. however it is also possible to send the data as a pretender.
+
+to do so:
+template > (desired host) > web > create new scenario.
+scenario and steps 
+
+it is possible to add query parameters and status checks for query parameters.
+
+to check out web, in latest data filter out "scenario". 
+
+
+9-Web Monitoring
+https://www.zabbix.com/documentation/current/en/manual/web_monitoring
+Real-life scenario
+https://www.zabbix.com/documentation/current/en/manual/web_monitoring/example
+
+
+
+### 26 - JSON API Monitoring with the HTTP Agent Item ###
+we can do JSON API operation by Zabbix. for instance GET data from a website API and monitor it on zabbix server. it is also possible to do POST or PUT request on API too.
+it also doesn't matter which host is request the API because it is the Server/Proxy which is request that API call.
+
+to add API based Item:
+Template > Items > create Item > Type: HTTP Agent. (items can be filled based on request and json format).
+
+also it is possible to do preprocessing on JSON values for that we can used:
+https://jsonpath.com/
+JSON Path Examples:
+https://www.zabbix.com/documentation/current/en/manual/config/items/preprocessing/jsonpath_functionality
+
+to test preprocessing value first we need to check "Get Value from host" and then add the fetch data after JSONPath implimentation.
+
+note:
+when we do pre-processing we also can changed the format of items to desired way cause we have already filtered out the outcome.
+
+it is also possible to used direct URL instead of filtering out with JSONPath.
+
+if HTTP request has authentication it should be consider to add that in Item's value which is "HTTP authentication" and based on security it can be vary.
+
+
+
+### 27 - Log File Monitoring ApacheNginx HTTP Status Codes ###
+Monitoring Log files - HTTP status COdes of an Apache or Nginx web server.
+* we can adapt this feature to monitor production webserver.
+
+there are some steps to be able to read logs from web-servers on devices.
+firstly we are trying the access log on zabbix-server itself.
+
+to monitor logs from these services (ie: nginx):
+1. we should first located the log files that are on Linux, which are usually in:
+/var/log/(nginx/apache2)/
+
+2. we need access.log file but we need to be sure whether zabbix have access to it or not.
+to do so:
+• ls -lh => to see which groups have access to the files.
+• groups zabbix/zabbix agent => to check which group zabbix is belonged to.
+• usermod -a -G (adm) zabbix => adding zabbix to the group that has access to log files.
+• sudo -H -u zabbix bash -c 'tail -f /var/log/nginx/access.log' => we commit a tail command as zabbix user to be sure that zabbix has access to log file.
+
+3. then we need to use regex expression in order to filter out the data that is being received for the nginx log file.
+we can use regex101 website 
+example of a regex being used:
+^(\S+) (\S+) (\S+) \[([\w:\/]+\s[+\-]\d{4})\] \"(\S+)\s?(\S+)?\s?(\S+)?\" (\d{3}|-) (\d+|-)\s?\"?([^\"]*)\"?\s?\"?([^\"]*)\" => this regex file also have escape quotations in order to be used in HTTP agent Items in zabbix. ( " " ) remember to use double quote.
+note:
+in regex we have defined groups so in we can use \8 for <output> to should 8th group. so it means only status codes.
+
+4. then we need to add a new Item in zabbix template with the Type: Zabbix agent (active). the key need to be " log[]:  Log file monitoring "
+
+5. add trigger base on status error of 404 in order to check whether the web service is being under pen testing or etc.
+	5.1 go to triggers
+		• Item : zabbix HTTP Nginx (or whather it is selected that receives status of web server)
+		• Last of (T): based on 1min Time
+		• V (value): 404
+		• Result: >= 10
+		• OK event generation: None (in order to not be closed if status is changed on next logs)
+		• allow manual close.
+
+
+
+### 28 - Dependent Items ###
+Creating dependent items means that the agent doesn't need to run possibly identical queries on a host many times in order to extract parts of a value. The master item runs once on the host, and then the Zabbix server/proxy updates the dependent items each time the master item is updated.
+
+dependent Items can be used for situation in which there is a Item that consist of lost of information and Regex riched or the resource for data processing of it is on high demand.
+
+to do so, similar to creating an access.log for nginx we can make it as a master item and assing dependent Items to it:
+Master:
+	name: HTTP Access Log
+	Type: zabbix Agent (active)
+	Key: log[var/log/nginx/access.log,"^.*",,,skip,,,,]
+	type of Information: Log
+Dependent Item:
+	• Name: HTTP Web Server Status
+	• Type: Dependent Item
+	• Key: HTTPStatusCode
+	• Type: Numeric
+	• Master Item: HTTP Access Log
+		Preprocessing:
+			Regular Expression: ^(\S+) (\S+) (\S+) \[([\w:\/]+\s[+\-]\d{4})\] \"(\S+)\s?(\S+)?\s?(\S+)?\" (\d{3}|-) (\d+|-)\s?\"?([^\"]*)\"?\s?\"?([^\"]*)\"    output: \8	
+
+it is also recommended to create a separate dashboard for dependent Items:
+	• create a dashboard with the name and add dependent Items to that.
+	note: the created dashboard can be access from; Hosts > Dashboards > (select name of the dashboard from top bar).
+
+
+
+### 29 - Execute Bat File on Remote Windows Host with Zabbix Agent ###
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
