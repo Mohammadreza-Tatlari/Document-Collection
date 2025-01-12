@@ -461,21 +461,471 @@ it is also recommended to create a separate dashboard for dependent Items:
 	• create a dashboard with the name and add dependent Items to that.
 	note: the created dashboard can be access from; Hosts > Dashboards > (select name of the dashboard from top bar).
 
+actually by creating a dependent Items connected to master Item with a dashboard for instance the HTTP status, we can see at which time line the status code is changed and if so for example which path where selected.
 
 
 ### 29 - Execute Bat File on Remote Windows Host with Zabbix Agent ###
+we can run a bat file (BATch file) which is an executable file for windows from zabbix server.
+to do that we can use either zabbix agent active or agent passive. however, which agent passive we can test the outcome because the trigger is send from zabbix-server/proxy.
+
+for that we need to first create or send a bat file to our end-host windows client.
+for instance;
+
+example.bat:
+@echo off
+set d=%date%_%time%
+set d=%d:.=%
+set d=%d::=%
+set d=%d:/=%
+COPY c:\temp\abc.txt c:\temp\abc_%d%.txt >nul && (echo 1) || (echo 0)
+: this file creates a backup file and name it with the date time it is taken.
+
+in zabbix server:
+1.add new Item in your template
+2. assign properties:
+Name		Backup Example
+Type	Zabbix 	agent (active)
+Key			system.run[C:/temp/example.bat]
+
+for mode: no wait means that the outcome is not important for zabbix. but wait means the outcome needs to be shown in zabbix-server. defaut is wait.
+
+https://www.zabbix.com/documentation/current/en/manual/config/items/itemtypes/zabbix_agent#system.run
+
+note:
+the system.run is disabled by default due to security but it can be enabled in agent file of end-host:
+AllowKey=<pattern> - which checks are allowed; <pattern> is specified using a wildcard (*) expression
+DenyKey=<pattern> - which checks are denied; <pattern> is specified using a wildcard (*) expression
+for instance: 
+AllowKey=[system.run[C:/temp/example.bat]
+
+patterns can consist of specific rules, directories, permission or locations.
+for further patterns check the link below:
+https://www.zabbix.com/documentation/current/en/manual/config/items/restrict_checks
+
+note: after changes restart the agent.
+
+note that it is recommended for items to come with trigger.
 
 
 
+### 30 - Execute a Shell Script using Zabbix Agent ###
+
+
+*** CREATE A PLOT TO USE WHAT YOU HAVE LEANED ***
+
+in linux system bash script is used for exection of command or programs.
+it is similar to windows bat file.
+
+in linux end-host:
+1.first create a directory for zabbix:
+	mkdir /home/zabbix/
+2. add the script bash file:
+	nano ./checkssl.sh:
+```````````````````````````````````````````
+data=`echo | openssl s_client -servername $1 -connect $1:${2:-443} 2>/dev/null | openssl x509 -in /dev/stdin -noout -enddate | sed -e 's#notAfter=##'`
+
+ssldate=`date -d "${data}" '+%s'`
+
+nowdate=`date '+%s'`
+
+diff="$((${ssldate}-${nowdate}))"
+
+echo $((${diff}/86400))
+``````````````````````````````````````````
+note:
+the script actually checks the certification expiration date and send it back to terminal.
+it also have optional port number which can be given.
+if certbot is used the expiration will be automatically regenerated.
+
+3. give permission of execution to it: chmod a+x checkssl.sh
+sudo -H -u zabbix bash -c 'heckssl.sh google.com' => you can check if permission is allowed.
+
+4. create an Item for it with properties of:
+- Name: SSL Certification Check with option google.com
+- Type: Zabbix agent
+- Key: system.run[/home/zabbix/checkssl.sh google.com]
+- Type of information: Numeric (float)
 
 
 
+### 31 - User Defined Parameters ###
+user defined parameters is similar to system.run command but its difference is that it deosn't need permission to be assigned because the commands and parameters are given by the user itself. also that parameter will be used in zabbix-server items parameters.
+
+for example:
+1. first create a parameter in end-host
+in /etc/zabbix/zabbix_agentd.conf add:
+• UserParameter=isalive,echo 1 => this command will create a parameter name "isalive" and it echos 1 in terminal.
+
+we can test it by:
+• zabbix_agentd -t isalive => it test that parameters.
+
+2. then restart zabbix agent
+in the zabbix-server add new host item.
+- name: is alive
+- agent active/passive (with passive we can check it on server.)
+- key: isalive ( what that is created in UserParameter
+- Type of information (numeric unasigned)
+
+
+Flexible User Parameters
+we can also create parameters that accept dynamic inputs. for example we can used them instead of system.run.
+
+1. add userparameter to the zabbix agent configuration file.
+• UserParameter=checkssl[*],/home/zabbix/checkssl.sh $1 $2 => this line create a parameter name "checkssl" and accepts any input, then it will run /home/zabbix/checkssl.sh with 2 parameters that it will receive.
+
+	1.2 you can check it by:
+	• zabbix_agent -t checkssl[example.com, 443 (443 is optional)].
+		1.3 restart agent service.
+
+2. create new Item in zabbix server.
+-Name:				checkssl (domain you want)
+-Key:				checkssl[example.com,443]
+-Type of information:	Numeric (unsigned)
 
 
 
+### 32 - Calculated Items ###
+a calculated item allows to create a calculation based on the values of some existing item and it is similar to dependent items. for example want to calculate the hourly average of some item value or to calculate the total value for a group of items.
+the difference between calculated and dependent is that the calculated is used to store data and conduct a process on them.
+
+example:
+going to receive the query counts of mysql and then calculate on them based on how much volatation it got over time. for example number of queries over time.
+* it helps us to see if our data base is busy or not.
+
+1. add the new userParameter to agent configuration:
+• UserParameter=mysql.queries, mysqladmin status | cut -f4 -d":" | cut -f1 -d"S"
+	- test it by:  zabbix_agent -t mysql.queries
+2. add a new mysql config file to /var/lib/ in order to allow zabbix user to use mysqladmin privileges
+	• mkdir /var/lib/zabbix
+		• nano .my.cnf
+			• add these lines to it which are user/password of zabbix in mysql
+				[client]
+				user='zabbix'
+				password='password'
+3. restart the agent and test it by:
+	• sudo -H -u zabbix bash -c 'zabbix_agentd -t mysql.queries'
+
+4. add new item for mysql.queries
+-Name:		MySQL queries Running Total
+-Type:		Zabbix Agent
+-Key:		mysql.queries ( what that is added on userparameter)
+-Type:		numeric
+
+5. add a calculate Item that shows fluctuation of changes over time.
+-Name:		fluctuation of MySql queries
+-Type:		Calculated
+-Key:		mysqlChanges
+-Formula:	change(/Zabbix server/mysql.queries)
+
+6. add another item that shows the average change.
+-Name:		Average Changes of MySql queries
+-Type:		Calculated
+-Key:		avgMysqlChanges
+-Formula:	avg(/Zabbix server/mysqlChanges,#5)
+
+7. create a graph and add them all to that graph
+
+8. add a forcast item that will predict the next value for the database queries.
+-Name:		Forecast of Changes of MySql Questions
+-Type:		Calculated
+-Key:		forcastMysqlChanges
+-Formula:	forecast(/Zabbix server/mysqlChanges,1h,10m,"exponential")
+
+
+https://www.zabbix.com/documentation/current/en/manual/config/items/itemtypes/calculated
+
+https://www.zabbix.com/documentation/current/en/manual/appendix/functions
+
+https://www.zabbix.com/documentation/current/en/manual/appendix/functions/aggregate
 
 
 
+### 33 - Global Scripts ###
+global script in older zabbix version was in Administrator tabs and was called a Administration Script.
+global script is used to execute command on behalf of zabbix server.
+this commands can be as simple as pinging an end-host or execute a compicated command.
+some predefined scripts are located in:
+alerts > scripts > (ping, Traceroute, Detect Operating system.
+
+note:
+before using the global script it should be first activated on zabbix server/proxy in the cofiguration file:
+/etc/zabbix/zabbix_server.conf:
+• EnableGlobalScripts=1 => enabling the global script 
+# note
+in order of using Zabbix agent/proxy:
+remember to enable "EnableRemoteCommands" on zabbix_proxy.conf file.
+
+• restart the zabbix-server service
+
+for some commands such as ping or traceroute or OS detection, the firewall between server/proxy and the end host does effect the result.
 
 
+Detecting OS
+zabbix uses nmap to detect end host Operating System, and nmap does that by scanning specific ports in order to figure out the Operating system. so two things are important here.
+1. the nmap command should be added to permitted in order to be executed by zabbix server.
+• in visudo:
+	• zabbix ALL=(ALL) NOPASSWD: /usr/bin/nmap => this line into privileges will allow zabbix to run the nmap without password.
+
+in previous versions of Zabbix, some commands such as "free" or etc should be also added to allowkey/denykey of zabbix_agent. also zabbix agent can execute command on be half of zabbix server for instance:
+
+Stopping Starting Windows Services
+on alert > script > create new script:
+-Name: 					Windows/Restart Print Spooler
+-Type: 					script
+-Execute on:				Zabbix agent
+-commands:				powershell -NoProfile -ExecutionPolicy bypass Restart-Service -Name 'Spooler'
+-user group: 				zabbix administrator
+-Host group:				Windows server (your choice)
+-Required host permission: Read
+
+to get status of service:
+• powershell -NoProfile -ExecutionPolicy bypass Get-Service -Name 'Spooler'
+
+note that you cannot restart zabbix agent service, cause it will be stop and won't be started again. unless you have a another service that has privilege to restart zabbix agent and send the restart command to that.
+
+https://www.zabbix.com/documentation/7.0/en/manual/web_interface/frontend_sections/alerts/scripts?hl=Scripts%2Cglobal%2Cscripts%2CGlobal
+
+
+
+### 35 - Install and Configure Zabbix Proxy ###
+
+for zabbix proxy installation on server follow the zabbix manual:
+https://www.zabbix.com/download?zabbix=7.0&os_distribution=ubuntu&os_version=22.04&components=proxy&db=mysql&ws=
+
+zabbix server configuration:
+• zabbix proxy active/passvie mode:
+ProxyMode:
+passive mode (1): it means that the proxy will only process when a new role or command is send to it.
+active mode (0): (recommeded), the proxy server will always try to keep in sync itself with server.
+
+• server= (ip address) the ip address of the zabbix server(s) that zabbix proxy is going to communicate. ( if the proxy is an active proxy otherwise the activeServer should be set)
+
+• hostname = (proxy hostname) it should be match with the one that is going to be defined in zabbix server.
+
+• port = the proxy default listening port is 10051 but it can be changed.
+
+• DBName= the database name that it is going to be connected to proxy.
+( it is recommended to add proxy database into /tmp/zabbix_proxy.db directory for security and performance reasons.
+
+# note:
+Proxy usecase is broad, for example you can use a small raspberry PI proxy for your CGNAT (Carrier-Grade Network Address Translation) which is when the end-host are located in remote and the IPs are dynamic and not static.
+
+
+
+### 36 - Configure Zabbix Agent on the zabbix Proxy ###
+installing zabbix agent on zabbix proxy is useful to send back data that is related to zabbix proxy itself, such as database integration or zabbix_proxy health.
+
+to do so first,
+1. we need to install zabbix agent on zabbix proxy server.
+2. configure agent server address (if passive) / serverActive (if Active) and host name
+
+note: zabbix agent and zabbix proxy on same machine actually don't really know about actual state of each other they will treat each other as different hosts
+the proxy will do passive checks on agent and agent will do active checks to send information to zabbix proxy.
+
+3. add a new host in zabbix server, and the information that is going to be given is from the perspective of zabbix proxy:
+- hostname: (host name defined in agent)
+- template: (linux zabbix agent)
+- interface: address:127.0.0.1 Port: 10050 (this is the ip from the perspective of proxy)
+
+4. for zabbix to look for client in its localhost we also need to do a hard reload cache.
+	4.2: for speeding up the process we use:
+	• sudo zabbix proxy -R config_cache_reload => it hard reloads the proxy instead of restarting service.
+	4.3: we can also config "ConfigFrequency" in order to change time that the proxy server requests for new configuration from zabbix server.
+
+( this updating cache dilemma is fixed in latest zabbix updates)
+
+
+### 37 - Reconfigure Zabbix Agents to use Zabbix Proxy ###
+
+in adding hosts to proxy server two methods should be considered.
+first, if the proxy is in active check, in adding a new host, in the host attributes, the interface should also be added. (the interface from perspective of active proxy).
+
+if the proxy is in passive mode and the agent running on end-host is active, the proxy IP address should be configured on the end-host device and no interface is needed in adding the item in zabbix server. (however, for both scenarios the proxy IP should be informed to agents.
+
+note:
+in windows end hosts when the proxy is going to be added to zabbix_agent.conf file, the name of proxy can be used instead of IP address of the proxy.
+
+note:
+if a client is using agent active on proxy active server the client won't have the availability key on it.
+
+
+
+### 38 - Install Zabbix Agent on MacOS Behind the Proxy ###
+the installation of zabbix agent on MacOS is a little bit different but similar to linux.
+it is also important to note that zabbix agent on macOS is only on passive mode. so no activeServer needs to be configured.
+
+
+https://sbcode.net/zabbix/agent-osx-firewall/
+
+https://www.zabbix.com/documentation/7.2/en/manual/concepts/agent2
+
+
+
+### 39 - Zabbix Server Health ###
+
+we can monitor the processes and server health over of zabbix
+in Dashboard > All dashboards > zabbix server health
+
+1. Value processes per second:
+shows how zabbix server is busy at the current moment and it consist of different kind of processes running on zabbix.
+
+
+2. utilization of data collectors
+shows different items that is being monitor and information about which protocol their are using to send data or if they are in passive or active mode and etc.
+
+in default it should not be really high. but if there is a problem, the value with increase and it will be a demonstration that some for example a trigger is used that is hard to process or host is having a problem.
+
+
+3. utilization of internal process
+they are lots of thing happening behind in zabbix for example discovery rules, alerting, working out if host is available, house keeping. all these processes can be monitor from here and similar to data collectors utilization the processes should be on low percentage unless there is a problem.
+
+
+4. cache usage
+cache is used in zabbix in order to improve performance and speed, it demonstrate the data that is cached in memory. the more it takes from cache the faster it gets but be aware to not overload the memory usage.
+cache usage is fine until it rise over 80% and configuration is the most that uses the caches.
+
+note:
+cache size can be changed in zabbix configuration and the parameter is " CacheSize " and its default value is 8Mb but it should be changed as more hosts will be added to zabbix.
+
+
+7. Value cache effectiveness
+it demonstrates two values, 1. the value cache hits, 2. the value cache misses.
+the value cache hit means that the data is accessible from memory cache and the miss means that the data needs to be retrieved from the storage or database.
+the hit value should always be high and miss value should be as low as possible, otherwise there is problem in caching.
+
+
+8. Queue size:
+ a queue and the request/response is handled as soon as possible. Some requests on hosts don't resolve quickly due to many reasons, such as the host may be switched off, or may be experiencing other resource issues such as high CPU, low memory, low network bandwidth or just in the process of restarting.
+
+To see a list of items in the queue, and which host they relate to, visit the page Administration ⇾ Queue ⇾ Queue details.
+
+some queues may stuck in long term no response error such as discovery rules for network interface.
+for that we can disable them on each host. but it should be reviewed and documented.
+
+note:
+"unlink and clear" on template field for each host means to clear the data that is being collected.
+
+another way to check out zabbix server health from hosts:
+Monitoring ⇾ hosts ⇾ (select dashboard of a host ) ⇾ on top bar select "zabbix server health".
+
+
+
+### 40 - Zabbix Proxy Health ###
+
+with use of zabbix agent on zabbix proxy server we can also collect information related to zabbix proxy server.
+for that we need to change some configuration.
+
+in the hosts, select the host that is responsible/charge	of collecting data from zabbix proxy, and add new template called " zabbix proxy health ". it may become two templates which is fine.
+then in Monitoring ⇾ hosts ⇾ (host related to collect info from proxy) ⇾ dashboard:
+you will see an extra dashboard with the name " zabbix proxy health ".
+
+
+
+### 41 - Enable PSK Encryption for Zabbix Proxy ###
+
+if any encryption is done between the agent and the zabbix server before that, that encryption would only be applied between agent and proxy (if it is). because the zabbix proxy copies a copy from all the secrets that exists in zabbix server to itself in order to communicate with other hosts. but it doesn't have an encrypted between proxy and server. thus the secret of agents can be also visible due to lack of encryption between them.
+
+steps:
+1. create a directory in proxy for zabbix 
+• mkdir /home/zabbix
+
+2. add a secret.psk file to it with the secret number
+• openssl rand -hex 32 => generate a zabbix proxy
+• nano/vim secret.psk => create a secret.psk file inside that directory and add the secret number.
+
+• change permission of secret.psk file:
+	• chown zabbix:zabbix secret.psk
+	• chmod 640 secret.psk
+
+3. add secret to proxy config file.
+• etc/zabbix/zabbix_proxy.conf
+	• TLSConnect = psk
+	• TLSAccept = psk (not mandatory) if zabbix server is the intiator and not the proxy it will be mandatory.
+	• TLSPSKIdentity= (name to be identified for psk exchange)
+	• TLSPSKFile = /home/zabbix/secret.psk (the file that is created)
+
+save and restart the proxy.
+
+4. in zabbix server > proxies > (select the proxy in used) > encryption > select PSK.
+	• add identity ( which is defined in proxy server)
+	• PSK : just add another random number that is created by openssl command.
+
+note:
+with PSK enabled the zabbix server will no longer treat multiple proxies with same names because each will use a different PSK and identifier.
+
+
+
+### 42 - Item Cloning to Create a PCI DSS Windows Template ###
+https://sbcode.net/zabbix/item-cloning-pci-dss/
+use cloning option to make a template dedicated to only monitor Event Logs of windows clients.
+
+to do so we can create a failed log on ( from session 22) and also a trigger for that and then make clones to monitor other EventIDs.
+the important Events are:
+
+EventID 4608 : Windows is starting up
+EventID 4609 : Windows is shutting down
+EventID 4610 : An authentication package has been loaded by the Local Security Authority
+EventID 4611 : A trusted logon process has been registered with the Local Security Authority
+EventID 4612 : Internal resources allocated for the queuing of audit messages have been exhausted, leading to the loss of some audits
+EventID 4614 : A notification package has been loaded by the Security Account Manager
+EventID 4616 : The system time was changed
+EventID 4624 : Successful Logon
+EventID 4625 : Failed Logon
+EventID 4634 : An account was logged off
+EventID 4657 : A registry value was modified
+EventID 4660 : An object was deleted
+EventID 4663 : An attempt was made to access an object
+EventID 4670 : Permissions on an object were changed
+EventID 4674 : An operation was attempted on a privileged object
+EventID 4720 : A user account was created
+EventID 4722 : A user account was enabled
+EventID 4723 : An attempt was made to change an account's password
+EventID 4725 : A user account was disabled
+EventID 4726 : A user account was deleted
+EventID 4727 : A security-enabled global group was created
+EventID 4728 : A member was added to a security-enabled global group
+EventID 4729 : A member was removed from a security-enabled global group
+EventID 4730 : A security-enabled global group was deleted
+EventID 4731 : A security-enabled local group was created
+EventID 4732 : A member was added to a security-enabled local group
+EventID 4733 : A member was removed from a security-enabled local group
+EventID 4734 : A security-enabled local group was deleted
+EventID 4738 : A user account was changed
+EventID 4740 : A user account was locked out
+EventID 4767 : A user account was unlocked
+EventID 5143 : A network share object was modified
+EventID 6144 : Security policy in the group policy objects has been applied successfully
+
+it is also possible to make a master Item that logs all data from the Event Viewer like this:
+
+eventlog[Security,,,,4608|4609|4610|4611|4612|4614|4616|4624|4625|4634|4657|4660|4663|4670|4674|4720|4722|4723|4725|4726|4727|4728|4729|4730|4731|4732|4733|4734|4738|4740|4767|5143|6144,,skip]
+
+
+
+### 43 - Importing Templates ###
+we can do import or export templates in 3 format file:
+1. YAML
+2. XML
+3. JSON
+all these files are open sourced and each can be edited.
+Templates > (select a Template ) > on down bar select Export.
+Template > from top bar select Import.
+note that in importing templates, we can modify whether a items or other component should be added or not or if there is a missing value how should it be treated.
+
+
+
+### 44 - Slack Media Type ###
+slack is a powerful tool for receiving alert or messages, thus slack can be used for receiving data information from zabbix.
+Media Type is zabbix consist of many applications and protocols in order to be used to send and receive notification from zabbix server.
+
+first of all a slack account needs to be stablished with a channel, then the slack Bot token and channel can be added to Zabbix media to send notification with it.
+Alert > Media Type > Slack
+
+follow tutorial video if you want to add slack to media
+or 
+https://sbcode.net/zabbix/media-types-slack/
+
+
+
+### 45 - Telegram Media Type ###
 
