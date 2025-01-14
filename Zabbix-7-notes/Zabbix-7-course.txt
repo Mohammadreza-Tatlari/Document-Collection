@@ -928,4 +928,137 @@ https://sbcode.net/zabbix/media-types-slack/
 
 
 ### 45 - Telegram Media Type ###
+similar to slack, telegram can be used to receive notification from zabbix server.
+to do that first we need to create a bot in botfather and then give it proper name and user authority.
+steps are:
+1. in @BotFather, use Menu bar and select /newbot
+2. choose a name for it
+3. create a username for bot and follow instruction.
+3. then copy the HTTP API token and in > Alert > Media > Telegram > Token Field.
 
+then u need to add the bot into a group or channel to let it send notification to that. to do so.
+1. you need to be able to see the API logs and information being passed by Token so use this like in your web browser to see all information the bot is intracting:
+https://api.telegram.org/botXXX:YYY/getUpdates (replace the XXX: YYY with your HTTP API Token you just got from Telegram)
+for example:
+https://api.telegram.org/bot764543238:AAHA5324y45dfgsdkLo/getUpdates
+2. add your bot in a group or channel and then use the link about to extract the ID number of the group/channel that you want the bot to send data (it usually is a ID number with negative sign).
+exameple:
+-5234111
+3. then add that number to the {Alert SENDTO} field in Zabbix server.
+
++ https://core.telegram.org/bots/api#getting-updates
++ https://www.zabbix.com/documentation/current/en/manual/appendix/macros/supported_by_location
+
+### 46 - Customising Trigger Alert Messages with Macros ###
+Macros are used in various situations, these macros are variables, identified by a specific syntax.
+for example:
+{ALERT.MESSAGE} => which is a macro and inside that message any message can be defined.
+
+macros with " $ " sign are user defined macros.
+macros with " # " sign means that are added by Discovery rules
+
+there is not a single centralized location to see all macros because each host and template can have its own macros so to see macros:
+• Data collection > Hosts > (select the host) > on top bar select Macros > (list of all macros from inherited and host based).
+• Administration > Macros
+• Templates > (select a template) > Macros 
+
+for test
+create a trigger with macro name instead of static values for Windows Clients
+-Trigger-
+• Name: Disk Space Above 2GB - the current is: {ITEM.VALUE}
+Expression:
+	• Item: FS [(C:)]: Space: Used
+	• function: last() - Last (most recent) T value
+	• result > 2G
+
+this trigger will show warning related to used disk and the amount of occupied disk space
+monitor it in:
+Monitoring > Problems.
+
+
+
+### 47 - Add Disk Space History Graph To OS Linux Template ###
+this part is an introduction to LLD (Low Level Discovery) rules and how we can monitor data on a graph.
+
+in more advanced depth, discovery rules are used to find end-host detailed information. by specifying process to them, when a new device is discovered these LLDs look for matching data inside those end-host and when they find them they create graph, item, trigger, etc based on what has been modified.
+thus, there is no need to create each item,trigger or graph separately
+to see dicovery rules
+• Templates > ( on template Names ) > discovery
+or
+• host > discovery
+
+note:
+after each change on discovery rule components, pay attention that update interval can be vary.
+
+(Item prototypes)
+
+(discovery rules filter )
+
+
+
+### 48 - Trigger Prototypes and Triggering within a Range ###
+by using discovery rules (LLD - Low Level Discovery) we can set trigger and item prototypes for each host that is going to use that discovery and also with a specific trigger to that.
+for going to that configuration there are several ways. for example chaing it throw  Template:
+• Data collection > Templates > ( a Template ) > Discovery > Item Prototypes & Trigger Prototypes.
+or from Hosts:
+• Hosts > Discovery > Item prototypes & Trigger Prototypes.
+
+remember if the discovery rules are being send to host agents through Proxy server, the proxy server configuration cache should be restarted in order to receive new configuration sooner.
+• sudo zabbix proxy -R config_cache_reload 
+
+note:
+in adding Prototype Trigger, if the Item that is going to have a trigger is an Item Prototype then in "Create Trigger" the Item should be selected from Item Prototypes.
+
+we can create a multipe expression triggers for example between 10% and 20% which multiple expressions will be added to trigger but there should not be a conflict.
+
+
+
+
+### 49 - Configure Trigger 'Ok Event Generation' to Minimize Alert Flapping ###
+Triggers that alert problems and the resolutions too frequently can cause a symptom commonly referred to as Alert Flapping. we can edit Ok Event Generation properies of a trigger to either delay the OK (resolved) event for a period of time, or try disabling it and adding the option to manually close the problem.
+
+important to not make tolerance too sensitive. for instance writing conditional expression for trigger with OK event generation expressions. or increase/decrease recovery expression time stamp.
+note that not "everything" is required to be notified. 
+Template > Triggers > 
+• Problem expression.
+• Recovery expression
+Trigger prototype properties:
+
+
+
+### 50 - Execute Python Script on Remote Linux Host with Zabbix Agent ###
+why do we need to execute python, bat or bash file on the end host client?
+they are several reasons that we may want to do such an action, for example to troubleshoot a problem or to increase capability and potentiality of the zabbix for instance writing a script that will collect data from a service and send tha to zabbix server in customized way.
+
+note:
+on some OS the python3 is installed so for example the command "python -v" won't work and instead "python3 -v" can show you version of python.
+
+to do so, same as bash or bat file;
+1. create a directory file for zabbix and add the script file to it.
+• mkdir /home/zabbix/
+• vim script.py
+2. add script to the script.py file:
+"
+import random
+print(random.randint(0,36))
+" => this script creates random number and shows it
+
+save and test: 
+python3 script.py
+
+3. remember that this command should also be added to AllowKey
+sudo vim /etc/zabbix/zabbix_agentd.conf
+	• AllowKey=system.run[python3 /home/zabbix/script.py]
+3.2 restart agent:
+	systemctl restart zabbix-agent
+
+4. add the item to zabbix server UI
+
+Name				Generate Random Number - Python script
+Type					Zabbix agent
+Key					system.run[python3 /home/zabbix/script.py]
+Type of information	Numeric (Or Text if you want to see the error message in the latest data)
+
+
+
+### 51 - Execute Powershell Scripts to Check Windows Updates ###
