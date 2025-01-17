@@ -1062,3 +1062,477 @@ Type of information	Numeric (Or Text if you want to see the error message in the
 
 
 ### 51 - Execute Powershell Scripts to Check Windows Updates ###
+powershell files are better for sophisticated task than BAT file. in this section we will add 2 scripts that are  going to be used as userParameters for zabbix windows agent and one with administration permission.
+
+notes:
+before executing these scripts, some of them may take long time to return values thus we need a way to increase the timeout of zabbix agent and zabbix proxy.
+• in zabbix-agent.conf file => Timeout=15
+• in zabbix_proxy.conf file => Timeout=15
+• in zabbix_server.conf file => Timeout=25 (for administration script) 
+
+steps to add scripts:
+1. first add script file to an organized directory inside the windows end host
+	- mkdir C:/zabbix-scripts/
+
+
+2. add scripts to directory with ".ps1" extension :
+__ CountUninstalledUpdates.ps1 __
+``
+#Count Uninstalled Updates
+#Author: Sean Bradley
+#License: BSD-3-Clause-Attribution
+#Attribution: https://sbcode.net/zabbix/powershell-windows-updates/
+[Int]$Count = 0
+$Searcher = new-object -com "Microsoft.Update.Searcher"
+$Searcher.Search("IsAssigned=1 and IsHidden=0 and IsInstalled=0").Updates | ForEach-Object { $Count++ }
+Write-Host $Count
+
+``
+Command: 
+• powershell -NoProfile -ExecutionPolicy bypass -File "C:\zabbix-scripts\DaysSinceLastUpdate.ps1"
+
+__ DaysSinceLastUpdate.ps1 __
+‍‍‍‍‍‍‍‍``
+#Count Days Since last Windows Update Was Run
+#Author: Sean Bradley
+#License: BSD-3-Clause-Attribution
+#Website: https://sbcode.net/zabbix/powershell-windows-updates/
+$date = Get-Date
+$diff = (Get-HotFix  )[-1] | Select-Object InstalledOn
+$diff3 = New-TimeSpan -Start $diff.InstalledOn -end $date
+write-host $diff3.days
+
+``
+Command
+• powershell -NoProfile -ExecutionPolicy bypass -File "C:\zabbix-agent-scripts\CountUninstalledUpdates.ps1"
+
+__ ListUninstalledUpdates.ps1 __
+``
+#Lists Windows Updates whether Installed or Not and Severity
+#Author: Sean Bradley
+#License: BSD-3-Clause-Attribution
+#Website: https://sbcode.net/zabbix/powershell-windows-updates/
+$Searcher = new-object -com "Microsoft.Update.Searcher"
+$Searcher.Search("IsAssigned=1 and IsHidden=0").Updates | Format-Table title, MsrcSeverity, IsInstalled | Out-String -Width 256
+
+``
+Command:
+• powershell -NoProfile -ExecutionPolicy bypass -File "C:\zabbix-scripts\ListUninstalledUpdates.ps1"
+
+
+3. add UserParameters for "CountUninstalledUpdates" & "DaysSinceLastUpdate"
+to do so add UserParameters value inside zabbix-agent in windows clients:
+• UserParameter=DaysSinceLastUpdate,powershell.exe -NoProfile -ExecutionPolicy bypass -File "C:\zabbix-scripts\DaysSinceLastUpdate.ps1"
+• UserParameter=CountUninstalledUpdates,powershell -NoProfile -ExecutionPolicy bypass -File "C:\zabbix-scripts\CountUninstalledUpdates.ps1"
+
+4 add Items to Template/Host for CountUninstalledUpdates & DaysSinceLastUpdate
+_DaysSinceLastUpdate_
+Name				Days Since Last Windows Update
+Type					Zabbix agent
+Key					DaysSinceLastUpdate
+Type of information	Numeric (unsigned)
+Update interval		1d
+
+_CountUninstalledUpdates_
+Name				Count Uninstalled Windows Updates
+Type					Zabbix agent
+Key					CountUninstalledUpdates
+Type of information	Numeric (unsigned)
+Update interval		1d
+
+
+5. and add AllowKey for "administration script" in agent config file:
+5.1. in zabbix-agent.conf file:
+• AllowKey= system.run[powershell -NoProfile -ExecutionPolicy bypass -File "C:\zabbix-scripts\ListUninstalledUpdates.ps1"]
+
+5.2 create a new script in Alerts > scritps > Create script
+Name		List Windows Updates
+Scope		Manual host action
+Type			Script
+Execute on	Zabbix agent
+Command	powershell -NoProfile -ExecutionPolicy bypass -File "C:\zabbix-scripts\ListUninstalledUpdates.ps1"
+
+
+
+### 52 53 - Creating Custom Low Level Discovery Rules Part 1 & Part 2###
+zabbix by default uses low level discovery (LLD) rules and base on them create Items, Triggers and graphs.
+it can be done by scripts that are given to agent/server/proxy that will be run base on what is defined in their configuration and execution file for example:
+
+some inbuilt Zabbix agent Discovery Rules that are similar to what we define in for instance UserParameter:
+• vfs.fs.discovery : Used by Mounted Filesystem Discovery
+• net.if.discovery : Used by Network Interface Discovery
+• vfs.dev.discovery : Used by Block Devices Discovery
+all these commands are define to exploit data from host OS and will return JSON formated outputs.
+to test that use zabbix execution command over these discovery rules:
+• zabbix_agentd -t vfs-dev.discovery => it will show an array of JSON file will data in it
+example:
+ {
+    "{#IFNAME}": "Realtek PCIe GbE Family Controller-VirtualBox NDIS Light-Weight Filter-0000",
+    "{#IFGUID}": "{2253380D-WSW2-631C-3G31-55233322CS}"
+  },
+
+misc:
+https://jsonformatter.org/ use jsonformatter for readability
+
+now lets write our own discovery rules that will go into OS and print out all services that are being run on end-host on linux hosts
+
+to do so:
+1. create a directory soley for zabbix in linux based end-host
+•mkdir /home/zabbix/
+
+
+2. then add the python script that act as "systemctl list-unit-files" to list all service but it will list all services and convert them into JSON format that will be easy to read for zabbix server.
+
+__ service_discovery.py __
+``
+# Copyright 2020,2021,2022 Sean Bradley https://sbcode.net/zabbix/
+import sys
+import os
+import json
+
+SERVICES = os.popen('systemctl list-unit-files').read()
+
+ILLEGAL_CHARS = ["\\", "'", "\"", "`", "*", "?", "[", "]", "{", "}", "~", "$", "!", "&", ";", "(", ")", "<", ">", "|", "#", "@", "0x0a"]
+
+DISCOVERY_LIST = []
+
+LINES = SERVICES.splitlines()
+for l in LINES:
+    service_unit = l.split(".service")
+    if len(service_unit) == 2:
+        if not [ele for ele in ILLEGAL_CHARS if(ele in service_unit[0])]:
+            status = service_unit[1].split()
+            if len(status) == 1:
+                if (status[0] == "enabled" or status[0] == "generated"):
+                    DISCOVERY_LIST.append({"{#SERVICE}": service_unit[0]})
+            else:
+                if (status[0] == "enabled" or status[0] == "generated") and status[1] == "enabled":
+                    DISCOVERY_LIST.append({"{#SERVICE}": service_unit[0]})
+
+JSON = json.dumps(DISCOVERY_LIST)
+
+print(JSON)
+
+``
+testing
+• python3 /home/zabbix/service_discovery.py
+• sudo -H -u zabbix bash -c 'python3 /home/zabbix/service_discovery.py'
+
+
+3. add them in to agent UserParameters and remember to restart the agent configuration cache
+• UserParameter=service.discovery,python3 /home/zabbix/service_discovery.py
+• UserParameter=service.isactive[*],systemctl is-active --quiet '$1' && echo 1 || echo 0
+• UserParameter=service.activatedtime[*],systemctl show '$1' --property=ActiveEnterTimestampMonotonic | cut -d= -f2
+
+test the service.discovery
+• zabbix_agentd -t service.discovery
+• sudo -H -u zabbix bash -c 'zabbix_agentd -t service.discovery'
+• sudo service zabbix-agent restart
+
+
+now lets create template for our discovery rules
+
+1. Adding Template
+Data Collection > Templates > Create a Template
+-Name: 		Linux Services - Manual
+-groups:		Linux Servers
+
+
+2. Creating discovery for the template
+(select template) > discovery > create discovery
+
+-Name			Service Discovery
+-Type			Zabbix Agent (active)
+-key				service.discovery ( the user parameter that has been defined)
+-Update Interval	1h
+
+
+3. Create Prototypes for Other two UserParameters
+we have created 2 other UserParameters:
+1. check whether the service is running or not
+• zabbix_agentd -t service.isactive[zabbix-agent]
+2. check whether service is restarted or not
+• zabbix_agentd -t service.activatedtime[zabbix-agent] (each time service restarts the time will change)
+
+now lets create Item Prototypes
+
+• checking whether service is active or not:
+Template >Discovery > Item Prototype > add new Item Prototype:
+
+_Is Service Active_
+-Name			Service Active : {#SERVICE}
+-Type			Zabbix Agent (active)
+-Key			service.isactive["{#SERVICE}"]
+-Type of info		Numeric (unsigned)
+-Update Interval	1m
+-Create Enabled	Un-ticked (optional) 
+note: Create Enabled with enable the Item as soon as it is created which will query over lots of items and cause traffic. but remember you have to enable them one by one
+
+_Service Activated Time_ (if it is restarted or not)
+-Name			Service Activated Time : {#SERVICE}
+-Type			Zabbix Agent (active)
+-Key			service.activatedtime["{#SERVICE}"]
+-Type of info		Numeric (unsigned)
+-Update Interval	1m
+-Create Enabled	Un-ticked (optional)
+note: remember you have to enable them one by one
+
+Trigger Prototypes
+now lets create trigger for prototype Items we have created
+
+_Trigger Service Not Active_
+-Name				Service Not Active : {#SERVICE}
+-Severity			Disaster (Optional)
+-Expression			last(/Linux Services by Sean/service.isactive["{#SERVICE}"])=0
+-OK event generation	Expression
+-Create Enabled		Un-ticked (optional)
+
+_Trigger Service Restarted_
+-Name				Service Restarted : {#SERVICE}
+-Severity			Warning (Optional)
+-Expression			change(/Linux Services by Sean/service.activatedtime["{#SERVICE}"])<>0
+-OK event generation	Expression
+-Create Enabled		Un-ticked (optional)
+
+
+Finally add the template to a Linux host and check monitoring and remember to enable items you want if you didn't enabled the services.
+
+
+
+### 54 - Setup SNMP Hosts in Zabbix ###
+SNMP  (Simple Network Management Protocol) uses Port UDP/161. devices that support SNMP are routers, switches, printers, servers, workstations and other devices found on IP networks like UPS Power Supplies, industrial Fridges, Storage devices etc.
+
+before anything, we should check if the end host has snmp service on it and if so we need to configure it.
+to check that,
+1. check status of snmp in linux server by:
+	• systemctl status snmpd.service
+if snmp is not installed, install its daemon by:
+	• apt install snmpd
+
+note:
+consider firewall rules in order to allow communication between hosts
+
+2. change the configuration of snmp to allow other host to retrieve snmp request from it and also change the community name for security.
+it is worth to mention that it is a good practice to turn off IPv6 if it is unused due to hardening.
+so in /etc/snmp/snmpd.conf file:
+• agentAddress udp:161
+• rocommunity mycommunity  default    -V systemonly
+• #rocommunity6 public  default   -V systemonly
+
+testing
+test that by your zabbix host with snmpwalk command.
+if snmpwalk is not installed then install it by:
+	• apt install snmp => it will download all neccessary tools for zabbix server.
+
+• snmpwalk -v2c -c(communityName) (Ip address of the end-host) => it will retrieve information to check whether snmp work or not.
+
+3. in zabbix server add template to the host you are going to monitor by SNMP
+
+_Host Z_
+-Host name: 			(Host Name)
+-Templates: 			Generic by SNMP
+-Interface:			(IP address of end-host) (Port usually 161)
+-SNMP version:		mostly snmpv2 (depends on usecase)
+-snmp community:	{$SNMP_COMMUNITY} or handly added.
+
+{$SNMP_COMMUNITY}: it can be changed in 2 ways:
+internally in Host > Macros > Inherited and host macros > {$SNMP_COMMUNITY}
+globally in Administration > Macros > {$SNMP_COMMUNITY} 
+
+
+
+### 55 - Query SNMP Hosts using OIDs ###
+
+zabbix has many other sophisticated and more detailed SNMP templates to retrieve information.
+zabbix agent is one of items that Uses OID (Ojbect ID) for SNMP.
+SNMP Object IDs are organized in a hierarchical structure. for example:
+.1.3.6.1.2.1.1.5 => 1.iso 3.indetified-organization 6.dod 1.internet 2.mgmt 1.mib-2 1.system 5.sysName
+for more information check out oid-info.com
+base on the ID and the root privilege we can retrieve diffrerent information from end-hosts.
+you can check the OID from hosts in:
+Data Collection > Hosts > Items (that is part of SNMP Template) > SNMP OID
+
+we can test SNMP OID by using "snmpgent" command
+• snmpget -v2c -c(communityName) (IP address of endhost) (OID)
+
+for creating host Item with SNMP Agent these attributes are related:
+Type:			SNMP agent
+Key:				(Key name for the item)
+Host Interface:	(IP address):(SNMP port)
+SNMP OID:		(SNMP OID that is allowed on end-host)
+
+
+Zabbix Linux SNMP
+linux SNMP template consist of much more attributes than Generic SNMP and is a choice for linux based end-hosts.
+•host > template > Linux by SNMP
+
+note:
+each template or SNMP Item may use different OID root to retrieve data from end host. however the SNMP service running on end-hosts should allow these OID to request information.
+to allow that we need to change configuration on snmpd conf file:
+/etc/snmp.snmpd.conf:
+in Access control setup
+• view   systemonly  included   (.1.3.6.1.2.1.25.1)
+
+snmp OID uses prefixes for example to allow OID of 1.3.6.1.4.1.2021.4.6.0 you just need to add .1.3.6.1.4 to snmp configuration view.
+
+allowing root information will return huge bulk of response and may also cause performance issues.
+
+note:
+some items of Linux SNMP may use preprocessing value that might cause problem in getting data.
+
+however, snmp is not a recommended technology to use over OS based hosts and it can bring burden on network traffic. due to requests.
+
+
+
+### 56 - Query SNMP Hosts using MIBs ###
+MIB ( Management Information Base ) textual way of OID but it is problematic and little bit hard to troubleshoot
+for instance:
+• snmpget -v2c -cmcommunity (IP address) (OID ex:1.3.6.1.2.1.1.1.0)
+will be:
+• snmpget -v2c -cmycommunity (IP address) NMPv2-MIB::sysDescr.0
+
+using MIB by default is disabled on zabbix server
+to use MIB we need to also install snmp-mibs database which will be used to translate MIB into OID on requestor OS
+• apt install snmp-mibs-downloader
+so for example if snmp-mib is going to be requested from proxy, the proxy should have MIB translator
+
+adding Item to Zabbix UI
+we are going to add interface input and output base on MIB
+to test that we can use:
+• snmpwalk -v2c -cmcommunity (IP address of endhost) (MIB ex: IF-MIB::ifInOctets.1)
+• snmpwalk -v2c -cmcommunity (IP address of endhost) (OID ex: 1.3.6.1.2.1.2.2.1.10.1)
+
+Items Property:
+_Interface in Octets_
+-Type:			SNMP agent
+-Key: 			IF-MIB::ifInOctets.1 (just in order to be unique)
+-Host Interface:	(IP address of host)
+-SNMP OID:		IF-MIB::ifInOctets.1 (because the mib-translate is installed on zabbix server it will work)
+
+expand:
+you can clone this item and create another with " IF-MIB::ifOutOctets.1 "
+note:
+remember to restart zabbix server configuration in order to use MIB
+
+
+we can see MIB description for each OID by chaning configuration file:
+/etc/snmp/snmp.con (not the daemon)
+• #mibs : => comment out the mibs line
+
+
+
+### 57 - Set up a Network Discovery Rule and Action to Auto Configure SNMP Devices ###
+
+Network Discovery Rules allow us to find all SNMP active devices in Network and base on them it will imply Template to them.
+
+to create a Discovery:
+Data collection > Discovery > Create Discovery rule 
+-Name: 				Discovery For SNMP Devices
+-Discovery By:		Proxy
+-IP range:			172.24.1.1-250 or 172.24.1.0/24 
+-Discovery check:		SNMPv2 (It depends on your check) however it is initated by proxy/server
+	-SNMP community: 		Defined Community Name
+	-SNMP OID:				Defined OID or MIB
+
+
+the progress of Network is somehow unpredictable but we can monitor it by tcpdump tool
+1. download the package for tcpdump
+• apt install tcpdump
+1.1 run the tcpdump to listen over the port that you have defined to search for devices (ex port 161 udp for our case)
+• sudo tcpdump -n -s0 port 161 and udp 
+
+note:
+there are many ways to use tcpdump check out the documentation.
+
+
+adding Discoverty Action
+we can use Actions for when a device is discovered how should it be treated.
+to do that go to:
+Alerts > Actions > Discovery Actions > Create action
+-Name:				select a unique name of Discovery Action
+-Condition:			(you can define condition for devices for example if it has TP-Link in its data
+	-Type:			Received Value
+	-Value: 			(TP-Link) (optional)
+-Operation:			add devices into group,host,template,etc
+	-1. add to host group:		Network Devices (if exists)
+	&
+	-2. Link Template:			Generic by SNMP
+
+
+further more we can add discovery for switches and routers and assign Template with related version to them.
+also it is worth noting that to find out the devices version we can use OID in SNMP and look for the version of devices and even add conditional state in action discovery to assign related template if the version is matched.
+
+https://sbcode.net/zabbix/lld-actions-snmp/
+https://www.zabbix.com/documentation/current/en/manual/discovery/network_discovery/rule
+
+
+
+### 58 - Setup SNMP Traps ###
+SNMP Trap acts as active check, it send back data to proxy or sever
+before seting up snmp trapper we should acknowledge:
+1. SNMP Trap uses UDP 162 to listen on so we configure end-host devices to send the trap massages to the port 162 of the proxy/server
+2. snmptrapd will then send the received data to "zabbix_trap_receiver.pl" file which it will format information into incoming messages.
+3. the message will be saved into /tmp/zabbix_trap.tmp file.
+4. zabbix proxy reads "zabbix_trap.tmp" file and sends to the zabbix server snmptrap.fallback item.
+
+
+1.enabling the snmptrap on zabbix proxy
+in /etc/zabbix/zabbix_proxy.conf
+• StartSNMPTrapper=1
+• SNMPTrapperFile=/tmp/zabbix_traps.tmp
+
+Restart the zabbix Proxy service
+
+
+2. download the zabbix trap receiver
+• sudo wget https://git.zabbix.com/projects/ZBX/repos/zabbix/raw/misc/snmptrap/zabbix_trap_receiver.pl -O /usr/bin/zabbix_trap_receiver.pl
+
+now give executable permission to it:
+• sudo chmod a+x /usr/bin/zabbix_trap_receiver.pl
+
+install snmptrapd which will listen on port 162 and logs SNMP Trap and Inform messages
+• apt install snmp snmp-mibs-downloader snmptrapd
+
+modify snmptrap conf file and add community name and be able to run trap receiver
+ in /etc/snmp/snmptrapd.con:
+• authCommunity execute mcommunity
+• perl do "/usr/bin/zabbix_trap_receiver.pl 
+
+note: check if the perl exist on the proxy server 
+• perl -v
+otherwise, install it
+• apt-get install perl libxml-simple-perl libsnmp-perl
+
+also it is recommended to enable the SNMP MIBs Translator if any MIB is received.
+in /etc/snmp/snmp.conf
+# mibs:
+
+restart the snmptrapd 
+
+if you have TP-Link router, change the community name and IP address of Trap inside the SNMP setting
+System Tools > SNMP setting
+
+snmp configuration on Cisco Switch
+Switch>enable
+Switch#configure terminal
+Switch(config)#snmp-server enable traps
+Switch(config)#snmp-server host 192.168.1.109 version 2c mycommunity
+Switch(config)#exit
+Switch#copy run start
+Switch#disable
+Switch>show snmp
+Switch>exit
+
+to check out Items:
+Monitoring > Latest Data > (look for trap )
+
+we can create Item base on recieve data by changing attributes of a cloned Trap Item into:
+Name: 				SNMP Traps (Reload Command)
+Key:					SNMPtrap[<regex>] (for regex: Reload Command)
+
+reload the snmp proxy config
+
+
+for troubleshoot two files are consider 
+• /tmp/zabbix_trap.tmp
+• zabbix_trap_receiver.pl
