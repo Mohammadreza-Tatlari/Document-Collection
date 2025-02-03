@@ -1,7 +1,7 @@
 
 # Service Discovery For Linux
 
-## Overview
+D Overview
 
 this template find and check status of all services that are running on Linux Hosts.
 
@@ -11,12 +11,12 @@ this template find and check status of all services that are running on Linux Ho
 1. Is Service Active
 	: checks if the discovered service is active or not by returning binary
 
-2. Service Active Time:
+2. Service Active Time
 	: receives the active time of service.
 
 > note: services are created with enabled uncheck. so services will be discovered but will not be enabled.
 
-• Trigger Prototypes:
+#### Trigger Prototypes:
 1. Service Not Active:
 	- sends disaster alert if service is not being active
 
@@ -24,10 +24,10 @@ this template find and check status of all services that are running on Linux Ho
 	- Sends warning whether the enabled item is restarted
 
 
-Requirement:
-1. The service_discovery.py file which is a simple script that lists service should be places in a directory that allow zabbix user to run it.
+### Requirement:
+1. The service_discovery.py file which is a simple script that lists service should be placed in a directory that allows zabbix user to run it.
 
-2. three UserParameters need to be added to zabbix agent (active) configuration file which are:
+2. three UserParameters are required to be added to zabbix agent (active) configuration file which are:
 
 ```sh
 UserParameter=service.discovery, python3 /home/zabbix/service_discovery.py 
