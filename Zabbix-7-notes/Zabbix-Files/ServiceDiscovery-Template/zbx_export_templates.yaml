@@ -1,0 +1,43 @@
+
+zabbix_export:
+  version: '7.2'
+  template_groups:
+    - uuid: 0a5f8aebf84e4bfbad57d27510fdb5ac
+      name: Linux-Hosts
+  templates:
+    - uuid: 426b53b6319a4de7be33a6ffe6d8f27e
+      template: 'Service Discovery'
+      name: 'Service Discovery'
+      groups:
+        - name: Linux-Hosts
+      discovery_rules:
+        - uuid: 4c06374c478c4373a5bcf06ef347dd92
+          name: 'Service Discovery'
+          type: ZABBIX_ACTIVE
+          key: service.discovery
+          delay: 1h
+          item_prototypes:
+            - uuid: 8da92fe45dc64981961c0311b8f956ac
+              name: 'Service Active Time: {#SERVICE}'
+              type: ZABBIX_ACTIVE
+              key: 'service.activatedtime["{#SERVICE}"]'
+              status: DISABLED
+              trigger_prototypes:
+                - uuid: 14e1d713abd248258c1b7de8c4537190
+                  expression: 'change(/Service Discovery/service.activatedtime["{#SERVICE}"])<>0'
+                  name: 'Service is Restarted: {#SERVICE}'
+                  status: DISABLED
+                  priority: WARNING
+                  manual_close: 'YES'
+            - uuid: 3bea45445bb74a59924e27a9a549d901
+              name: 'Service Active {#SERVICE}'
+              type: ZABBIX_ACTIVE
+              key: 'service.isactive["{#SERVICE}"]'
+              status: DISABLED
+              trigger_prototypes:
+                - uuid: dfee9be8de51499d903b90245ccb278a
+                  expression: 'last(/Service Discovery/service.isactive["{#SERVICE}"])=0'
+                  name: 'Service Not Active: {#SERVICE}'
+                  status: DISABLED
+                  priority: DISASTER
+                  manual_close: 'YES'
