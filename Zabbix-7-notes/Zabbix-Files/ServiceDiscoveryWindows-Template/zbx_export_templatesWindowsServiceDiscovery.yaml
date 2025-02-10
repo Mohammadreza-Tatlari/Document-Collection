@@ -1,0 +1,34 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 8baad787ebfb4d2d83a48fe2ede168e1
+      name: 'Windows Servers'
+  templates:
+    - uuid: 66e6779aaf624ef089e088ca1f1ddc5d
+      template: 'Windows Services'
+      name: 'Windows Services'
+      description: |
+        This Template is Created By Mohammadreza Tatlari.
+        
+        It is used to Discover Windows Services and Create an Item and A Trigger for each one.
+      groups:
+        - name: 'Windows Servers'
+      discovery_rules:
+        - uuid: 4424cde95d2a4ce4979d86e33618c5b5
+          name: 'Windows Service Discovery'
+          type: ZABBIX_ACTIVE
+          key: service.discoveryWindows
+          delay: 1h
+          item_prototypes:
+            - uuid: 88539d74c2af4d19bf9644d564398253
+              name: 'Windows Service Active: {#SERVICE}'
+              type: ZABBIX_ACTIVE
+              key: 'service.isactivewindow["{#SERVICE}"]'
+              status: DISABLED
+              trigger_prototypes:
+                - uuid: 191a0555d6794725a8c2bee1ca22bf61
+                  expression: 'last(/Windows Services/service.isactivewindow["{#SERVICE}"])=0'
+                  name: 'Service Not Active : {#SERVICE}'
+                  status: DISABLED
+                  priority: HIGH
+                  manual_close: 'YES'
