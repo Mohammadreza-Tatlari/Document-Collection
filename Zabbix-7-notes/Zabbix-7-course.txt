@@ -1536,3 +1536,111 @@ reload the snmp proxy config
 for troubleshoot two files are consider 
 • /tmp/zabbix_trap.tmp
 • zabbix_trap_receiver.pl
+
+
+
+### 59 - Triggers on SNMP Traps ###
+for SNMP Trap fallback Item we can create a trigger that will be activated base on parameters that it find to do so similar to creating other triggers this time we use " find function"
+Host > Trigger > snmp trapper fallback ( related fallback ) > Problem expression 
+Function: 			find() - Check occurrence
+Value: 				(ex: ColdStart)
+Result:				1
+
+
+
+### 60 - Using the Zabbix Get Command ###
+zabbix get is a tool to get data from zabbix agent
+you don't need to have zabbix server, proxy or agent running on the same OS to use the zabbix agent utility, but you need to have correct version.
+
+to use zabbix get first we need to have the same repository version and the use the command to install it:
+• sudo apt install zabbix-get
+
+comamnds:
+• zabbix_get -h => for help use
+• zabbix_get -s <host-name-or-IP> -p 10050 -k agent.ping => ping the host IP
+• zabbix_get -s <host-name-or-IP> -p 10050 -k system.cpu.load[all,avg1]
+• zabbix_get -s <host-name-or-IP> -p 10050 -k agent.version
+• zabbix_get -s <host-name-or-IP> -p 10050 -k agent.hostname
+
+• zabbix_get -s <host-name-or-IP> -p 10050 -k vfs.fs.discovery
+
+when zabbix_get request is call to another host, the zabbix agent on that host thinks that it is a server that is requesting it so the zabbix agent.
+so in order to work it needs to have the IP of the querier to answer that.
+to do so in the agent.conf file of the end-hosts add another IP to server field.
+
+note:
+if PSK or TLS is used then the PSK should be added in Command Line
+
+it is also possible to run Scripts with the Zabbix_get Command
+
+https://www.zabbix.com/documentation/current/en/manual/concepts/get
+
+
+
+### 61 - Zabbix Sender and Trapper ###
+similar to zabbix_get command that retrieve information from zabbix agent on behalf of server/proxy, the zabbix Sender sends data to server and acts as zabbix Agent.
+
+for using zabbix sender on a network that has server/proxy keep in mind that the version is important.
+
+to use it, first it needs to be installed on end host.
+• sudo apt install zabbix-sender
+
+• zabbix_sender -h => to see help and options
+• zabbix_sender -zd 127.0.0.1 -s "Linux Ubuntu" -k db.connections -o 43
+
+to send data from the end-host to the server/proxy first we need to create a corelated item that will show the data on the zabbix server.
+Data collection > (select the host that sender is going to be used) > Item > create Item.
+
+_ Random Number Sender _
+-Name:				Random_Generator
+-Type:				Zabbix Trapper
+-Key:				(just a unique Key Name)
+
+test the sender:
+• zabbix_sender -z (zabbix-Server IP) -s "(name of end-host in zabbix server)" -K Random_Generator -o 123 => -z is for zabbix server IP, -k is for the key that is being used in Item of the host 
+
+then you should see the value of 123 in latest data of the host Ubuntu-Host
+
+
+sender can also run script and send the output to zabbix server:
+
+
+
+### 62 - Setup MySQL Monitoring ###
+
+
+user is created to grand privileges to run the defined userParameters in the configure file
+
+
+
+### 63 - Users Groups Roles ###
+user groups allow use to isolate the permission and monitoring access of users and group of users. for example each group can only monitor data that are defined for them and only related to them so no need to make different monitoring app and all can use a same server but with different dashbaords and different accesses.
+
+all configurations are present in:
+Users > Users Role & User Groups & Users 
+
+guest user:
+guest user dashboard is great to be used as a Monitoring that is being demonstated on a room full of assistance and techniques but not more cause the data can be sensitive.
+
+for customizing user privileges we can create user role and assign different access to it and then add user in them.
+
+-> Group (Which Host it can view/manage)
+-> Role	(Which UI elements it can view/access)
+
+User Groups
+- we have a "disabled" user group which if any user is in that group will be disabled
+-"enabled Debug mod" is another user group that allow to see zabbix query logs and is useful for developing
+- "no access to the frontend" group is for users that have access via API for example the access of Grafana
+
+
+
+### USER API Roles ### (Scheduled)
+
+
+
+### 64 - Grafana Zabbix Plugin ###
+
+
+
+
+

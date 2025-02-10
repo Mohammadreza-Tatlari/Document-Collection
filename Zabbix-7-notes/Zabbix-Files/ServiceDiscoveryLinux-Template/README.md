@@ -30,7 +30,7 @@ this template find and check status of all services that are running on Linux Ho
 2. three UserParameters are required to be added to zabbix agent (active) configuration file which are:
 
 ```sh
-UserParameter=service.discovery, python3 /home/zabbix/service_discovery.py 
-UserParameter=service.isactive[*],systemctl is-active --quiet '$1' && echo 1 || echo 0
+UserParameter=service.discovery, python3 /home/zabbix/service_discovery.py
+UserParameter=service.isactive[*], systemctl is-active --quiet '$1' && echo 1 || echo 0
 UserParameter=service.activatedtime[*], systemctl show '$1' --property=ActiveEnterTimestampMonotonic | cut -d= -f2
 ```
