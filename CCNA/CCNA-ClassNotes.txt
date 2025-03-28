@@ -644,7 +644,8 @@ in FHRPs
 
 - end hosts in the network are configured to use the virtual IP as their default gateway.
 
-- the active router replies to ARP request using the virtual MAC address, so traffic destined for other newtorks will be sent to it.
+- the active router replies to 
+ request using the virtual MAC address, so traffic destined for other newtorks will be sent to it.
 
 - if the active router fails, the standby becomes the next active router.
 the new actvie router will send gratuitous ARP messages so that switches will update their MAC address tables. It now functions as the default gateway.
@@ -1201,7 +1202,7 @@ ff02::1:ff:a3:b1
 
 Neighbor Discovery Protocol
 - Neighbor Discovery Protocol (NDP) is a protocl used with IPv6
-- It has various functions, and one of those functions is to replace ARP (Address Resolution Protocol), which is no longer used in Pv6.
+- It has various functions, and one of those functions is to replace ARP (Address Resolution Protocol), which is no longer used in IPv6.
 - The ARP-like function uses ICMPv6 and solicited-node multicast addresses to learn the MAC address of other hosts. (ARP is IPv4 uses broadcast)
 - Two message types are used:
 	1.Neighbor Solicitation (NS) = ICMPv6 Type 135

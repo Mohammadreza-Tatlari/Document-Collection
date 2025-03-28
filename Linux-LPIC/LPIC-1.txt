@@ -207,25 +207,25 @@ it is recommended to use Temp folder to use as swap but it is new inventon
 ### + important:  LPIC-001-014 GRUB and Bootloader installation part 1 GRUB legacy ### 
 MBR (Master Boot Record): Legacy BIOS -> 0,0,1 (Clander 0, Side 0 , Sector 1) is the first location of Hard disk that is around 512 byte and contains information about boot loading. but in modern computer and more advanced boot loader the small part of the loader is placed in that location and computer reads from it and initiate the rest of boot loader in other locations. the memory that is being used Is called ?MBR?
 
-GRUB (Grand Unified Bootloader): started to replace the older LILO. the first version (1) is GRUB legacy and started in 1999 the second version started in 2005 and is a complete rewrite of version 1. its menu based system which Kernerl or Chainloader is being selected to boot. it is also possible to edit the menu on the fly or give direct commands from a command line.
+GRUB (Grand Unified Bootloader): started to replace the older LILO (Linux Loader). the first version (1) is GRUB legacy and started in 1999 the second version started in 2005 and is a complete rewrite of version 1. its menu based system which Kernerl or Chainloader is being selected to boot. it is also possible to edit the menu on the fly or give direct commands from a command line.
 Grub configuration is possible via grub config file
 
 UEFI uses stages to boot the system and these stages are like checking the security of OS and ...
 
-definition of chainloading: when a boot loader, load another boot loader. for example when linux bootloader needs to start a windows system
+definition of chainloading: when a boot loader loads another boot loader. for example when linux bootloader needs to start a windows system
 
 ### * important LPIC-001-015 ###
 Installation and configuration of Boot and Boot loader part2 GRUB2
 
 It is possible to change the configuration of GRUBs in linux systems but it depends on firmware and type of Bios or UEFI
 to do so we can check out /boot/grub/grub.cfg file or with similar name.
-in the file most of configuration and options are avialable and by changing the we can change the GRUB behaviour. it is possible to add new menuentry for it and config sda location and more changes.
+in the grub file most of configuration and options are avialable and by changing it we can change the GRUB behaviour. it is possible to add new menuentry for it and config sda location and more changes.
 all GRUB2 configurations are not placed inside a single file so for more conviniences grub-mkconfig file is created to implement changes to grub interfaces.
 so in etc/default/grub or etc/grub.d there is a grub-mkconfig and you need to issue it and take an output form changes to it into another file:
 grub2-mkconfig -o (or >) boot/grub2/grub.cfg
 
 options of grub2:
-menuentry: defines a new menueentry
+menuentry: defines a new menuentry
 set root: defines the root where /boot located
 linux,linux16: defines the location of the linux kernel on BIOS systems
 linuxefi: defines the Linux kernel on UEFI systems

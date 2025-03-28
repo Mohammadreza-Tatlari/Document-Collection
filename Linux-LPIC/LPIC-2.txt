@@ -317,7 +317,7 @@ lsdev => list devices and device information that kernel has detected.
 
 
 ### 202.1 Customizing SysV-init system startup ###
-Traditionally system V init was used to start start other services. but V init had shortages. so upstart and systemd were developed.
+Traditionally system V init was used to start other services. but V init had shortages. so upstart and systemd were developed.
 
 we can check each file directory by 'stat'
 stat /etc/init.d => shows sysV if its present in linux box
@@ -327,7 +327,7 @@ stat /usr/lib/systemd
 in ' /proc/1/exe ' also we can see to which file the "exe" file has symbolic link
 
 
-SysV is an ancient method of handlinh system services from unix world.
+SysV is an ancient method of handling system services from unix world.
 sysV uses runlevels concept to define sequence of services that are going to be loaded. in each runlevel specific amounto fshell scripts is proecssed to reach the state we desired.
 
 runlevel		Redhat							Debian
@@ -1655,7 +1655,7 @@ ssh login banner
 it is a good habit to configure a security banners for ssh logins
 there are two ways to display banner message. first is issue.net and second is using MOTD
 issue.net: display banner before password prompt
-motd: displa banner after the user login process.
+motd: display banner after the user login process.
 
 1. edit the issue.net file in configuration directory.
 • cat or vim /etc/issue.net

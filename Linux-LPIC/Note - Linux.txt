@@ -106,4 +106,7 @@ iptables [options] [chain] [criteria] -j [target]
 • use dpkg -L squid | grep ncsa_auth (in ubuntu) or locate ncsa_auth for finding packages related to application
 
 
+we can change the configuration of Rocky 9 Network with:
+• nmtui => it will bring up a wizard in order to troubleshoot it fast.
+
 				

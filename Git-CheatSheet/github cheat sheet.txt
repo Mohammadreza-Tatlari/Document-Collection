@@ -38,6 +38,7 @@ commit: when we have taken a snapshop and make it ready to be pushed
 
 git commit -a -m "": to bypass the staging and directly track and commit the modified files
 
+(use git status to check its name)
 git rm <filename> " file name ": to remove the file from directory
 
 git restore <filename> "file name": to resotre the deleted file
@@ -77,7 +78,7 @@ when a piece of code is modified in two different branches the merge conflic occ
 
 PUSHING AN EXISTING REPOSITORY TO CLOUD:
 
-after git init and all the tracking can commiting (witch should be done after connecting to the cloud)
+after git init and all the tracking can commiting (which should be done after connecting to the cloud)
 
 we can use the commands below
 
