@@ -51,6 +51,8 @@ useradd (username) -m => to add new user with a directory related to the user.
 use userdel (username) to delete the user name.
 vimtutor => let you get more comfortable with vim
 
+usermod -aG sudo (username) => add the user to sudo group (root privilege needed)
+
 
 terminator split screen hotkeys:
 ctrl+shift+O => horizontal split
