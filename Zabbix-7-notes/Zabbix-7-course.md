@@ -92,16 +92,16 @@ zabbix server and zabbix agent version should match otherwise it can make proble
 
 
 ### 9 - Install Zabbix Agent on Same Network as Zabbix Server ###
-follow the zabbix agent installation on: 
+follow the zabbix agent installation on: <br>
 https://www.zabbix.com/download?zabbix=7.2&os_distribution=ubuntu&os_version=24.04&components=agent_2&db=&ws=
 
 in /etc/zabbix/zabbix_agentd.conf, this parameters needs modification:
 1. Server
-2. ServerActive: if the 
+2. ServerActive: if the the host is going to receive request to retrieve data to the server.
 3. Hostname : is the name that zabbix-server/zabbix-proxy is going to use to name the host.
 
 - passive check on agent: it means that Zabbix-Server/proxy will send request to agent to retrieve data from it.
-- active check on agent: it means that agent will send data automatically to zabbix server/proxy base on an interval timer.
+- active check on agent: it means that agent will send data automatically to zabbix server/proxy base on an interval timer. (this is used for CGNAT)
 thus:
 if zabbix agent is on active check, the "ServerActive" parameter should be modified<br>
 if zabbix agent is on passive check, the "Server" parameter should be modified.<br>
@@ -184,21 +184,21 @@ parameters:<br>
 - History: time of storing the data on database.
 - value mapping: the customized value that will be shown in monitoring for parameters.
 - Unit: it received values like "B" for byte or "%" for percentage , etc to show the information in that format 
-
+<pre>
 Zabbix Agent Ping	Zabbix Agent (active)	agent.ping	<br>
 Free Space	Zabbix Agent (active)	vfs.fs.size[C:,free]	B <br>
 CPU (User)	Zabbix Agent (active)	system.cpu.util	% <br>
-
-creating an item
+</pre>
+creating an item <br>
 https://www.zabbix.com/documentation/current/en/manual/config/items/item
 
-zabbix agent
+zabbix agent <br>
 https://www.zabbix.com/documentation/current/manual/config/items/itemtypes/zabbix_agent
 
-Unit Symbols
+Unit Symbols <br>
 https://www.zabbix.com/documentation/current/manual/appendix/suffixes
 
-note:
+note: <br>
 in Items, "Execute Now" Option is only available for Passive Items because it is the server that is requesting for value.
 
 
@@ -209,16 +209,16 @@ triggers are used for re-evaluating a host when the parameter that is received f
 Data Collection > Hosts > Triggers > Create Trigger <br>
 
 Examples of time-based functions are nodata(), date(), dayofmonth(), dayofweek(), time(), now() 
-
+<pre>
 for example:
 NODATA 60 seconds	Disaster		nodata(/host/agent.ping,60)=1
 Less than 5GB free	High			last(/host/vfs.fs.size[/,free])<5000000000
 High CPU Usage 75% for 2 minutes	Warning	avg(/host/system.cpu.util[,user],2m)>75
-
-useful documents for creating trigger:
+</pre>
+useful documents for creating trigger: <br>
 https://www.zabbix.com/documentation/current/en/manual/config/triggers
 
-trigger functions:
+trigger functions: <br>
 https://www.zabbix.com/documentation/current/en/manual/appendix/functions
 
 
@@ -227,8 +227,7 @@ https://www.zabbix.com/documentation/current/en/manual/appendix/functions
 we can add email to zabbix for notifying admins. the mail server can be used for disaster alerts for instance.
 
 - Alert > Media types > mail <br>
-however there are so many other ways that can be used to send notification
-also template for email can be modified.
+however there are so many other ways that can be used to send notification also template for email can be modified.
 
 note: for email on SMTP protocol we need a mail server which most organization do provide.
 
@@ -272,7 +271,7 @@ remember that when a host is created and is up based by a template, the items or
 you can create a template for dashboards and it is located in: <br>
 Data Collection > Templates > Dashboard Button <br>
 
-when a template for dashboard is created the data which is being demonstrate on each graph or visualization will be contain of place holders become that visualization is going to be used for hosts. <br>
+when a template for dashboard is created the data which is being demonstrate on each graph or visualization will be contained of place holders that will become the values of visualization.
 
 note: <br>
 some data like gauges or clock should not be persisted on database for more than 7 days because they can affect performance and long run issues.
@@ -283,7 +282,7 @@ some data like gauges or clock should not be persisted on database for more than
 in the global dashboard we have three main components: <br>
 Global View: which is the main zabbix dashboard and its difference is that it can show data from multiple hosts. <br>
 Zabbix Server: which is consist of a diagram of Hosts and Nodes.<br>
-zabbix server health: which contain graph and visualization about zabbix server condition.<br>
+zabbix server health: which contains graph and visualization about zabbix server condition.<br>
 
 
 
@@ -302,7 +301,7 @@ in windows OS logs are preserved in Event Viewer > Windows Logs and each section
 these logs are holding are activities that are happening on the windows. so we can use them to monitor it on our zabbix server.<br>
 note:
 be sure that the logs are logged on by Local system and not other accounts, to check it go to:<br>
-Services > ( service Name) > properties > Log On. and it should be on Local System account to be send by Agent to Zabbix Server/Proxy
+Services > (service Name) > properties > Log On. and it should be on Local System account to be send by Agent to Zabbix Server/Proxy
 
 to create an Item for Event logs it is recommended to add that Item to a Template:<br>
 Data Collection > Templates > Items > create Item.<br>
@@ -338,7 +337,7 @@ and add the regex parameters in to parameters tab and also add the output (\1 or
 
 
 ### 24 - Item Preprocessing with JavaScript ###
-it is also possible to do preprocessing with JS similar to regex but keep in mind that in zabbix v7 the javascript version that is supported is ES5 so variables like const and let are not allowed.
+it is also possible to do preprocessing with JS similar to regex but keep in mind that in zabbix v7 the javascript version that is supported is ES5 so variables like const and let are not allowed. (commonjs vs ecmascript)
 
 for instance:
 ```javascript
@@ -377,7 +376,7 @@ https://www.zabbix.com/documentation/current/en/manual/web_monitoring/example
 
 ### 26 - JSON API Monitoring with the HTTP Agent Item ###
 we can do JSON API operation by Zabbix. for instance GET data from a website API and monitor it on zabbix server. it is also possible to do POST or PUT request on API too. <br>
-it also doesn't matter which host is request the API because it is the Server/Proxy which is request that API call. <br>
+it also doesn't matter which host is request the API because it is the Server/Proxy which requests that API call. <br>
 
 to add API based Item: <br>
 Template > Items > create Item > Type: HTTP Agent. (items can be filled based on request and json format).
@@ -387,10 +386,10 @@ https://jsonpath.com/ <br>
 JSON Path Examples: <br>
 https://www.zabbix.com/documentation/current/en/manual/config/items/preprocessing/jsonpath_functionality
 
-to test preprocessing value first we need to check "Get Value from host" and then add the fetch data after JSONPath implimentation.
+to test preprocessing value, first we need to check "Get Value from host" and then add the fetch data after JSONPath implimentation.
 
 note: <br>
-when we do pre-processing we also can changed the format of items to desired way cause we have already filtered out the outcome.
+when we do pre-processing we also can change the format of items to desired way cause we have already filtered out the outcome.
 
 it is also possible to used direct URL instead of filtering out with JSONPath.
 
@@ -399,11 +398,11 @@ if HTTP request has authentication it should be consider to add that in Item's v
 
 
 ### 27 - Log File Monitoring ApacheNginx HTTP Status Codes ###
-Monitoring Log files - HTTP status COdes of an Apache or Nginx web server. <br>
+Monitoring Log files - HTTP status Codes of an Apache or Nginx web server. <br>
 * we can adapt this feature to monitor production webserver.
 
-there are some steps to be able to read logs from web-servers on devices. <br>
-firstly we are trying the access log on zabbix-server itself.
+there are some steps needed to be able to read logs from web-servers on devices. <br>
+firstly we are trying to the access log on zabbix-server itself.
 
 to monitor logs from these services (ie: nginx): 
 1. we should first located the log files that are on Linux, which are usually in: <br>
@@ -421,9 +420,9 @@ we can use regex101 website  <br>
 example of a regex being used: <br>
 ` ^(\S+) (\S+) (\S+) \[([\w:\/]+\s[+\-]\d{4})\] \"(\S+)\s?(\S+)?\s?(\S+)?\" (\d{3}|-) (\d+|-)\s?\"?([^\"]*)\"?\s?\"?([^\"]*)\" `=> this regex file also have escape quotations in order to be used in HTTP agent Items in zabbix. ( " " ) remember to use double quote. <br>
 note: <br>
-in regex we have defined groups so in we can use \8 for (output) to should 8th group. so it means only status codes. 
+in regex we have defined groups so we can use \8 for ( as output) to show 8th group. so it means only status codes. 
 
-4. then we need to add a new Item in zabbix template with the Type: Zabbix agent (active). the key need to be " log[]:  Log file monitoring "
+4. then we need to add a new Item in zabbix template with the Type: Zabbix agent (active). the key need to be `log[]:  Log file monitoring `
 
 5. add trigger base on status error of 404 in order to check whether the web service is being under pen testing or etc.
 	5.1 go to triggers
@@ -442,12 +441,12 @@ Creating dependent items means that the agent doesn't need to run possibly ident
 dependent Items can be used for situation in which there is a Item that consist of lost of information and Regex riched or the resource for data processing of it is on high demand.
 
 to do so, similar to creating an access.log for nginx we can make it as a master item and assing dependent Items to it: <br>
-Master:
+##### Master:
 	name: HTTP Access Log
 	Type: zabbix Agent (active)
 	Key: log[var/log/nginx/access.log,"^.*",,,skip,,,,]
 	type of Information: Log
-Dependent Item:
+##### Dependent Item:
 	- Name: HTTP Web Server Status
 	- Type: Dependent Item
 	- Key: HTTPStatusCode
@@ -511,7 +510,6 @@ note that it is recommended for items to come with trigger.
 
 ### 30 - Execute a Shell Script using Zabbix Agent ###
 
-
 *** CREATE A PLOT TO USE WHAT YOU HAVE LEANED ***
 
 in linux system bash script is used for exection of command or programs. <br>
@@ -569,7 +567,7 @@ in the zabbix-server add new host item.
 
 
 Flexible User Parameters
-we can also create parameters that accept dynamic inputs. for example we can used them instead of system.run.
+we can also create parameters that accept dynamic inputs. for example we can use them instead of system.run.
 
 1. add userparameter to the zabbix agent configuration file.
 - UserParameter=checkssl[*],/home/zabbix/checkssl.sh $1 $2 => this line create a parameter name "checkssl" and accepts any input, then it will run /home/zabbix/checkssl.sh with 2 parameters that it will receive.
@@ -594,16 +592,18 @@ example:
 going to receive the query counts of mysql and then calculate on them based on how much volatation it got over time. for example number of queries over time. <br>
 * it helps us to see if our data base is busy or not.
 
-1. add the new userParameter to agent configuration:
+1. add a new userParameter to agent configuration:
 - UserParameter=mysql.queries, mysqladmin status | cut -f4 -d":" | cut -f1 -d"S"
 	- test it by:  zabbix_agent -t mysql.queries
 2. add a new mysql config file to /var/lib/ in order to allow zabbix user to use mysqladmin privileges
 	- mkdir /var/lib/zabbix
 		- nano .my.cnf
 			- add these lines to it which are user/password of zabbix in mysql
+				```conf
 				[client]
 				user='zabbix'
 				password='password'
+				```
 3. restart the agent and test it by:
 	- sudo -H -u zabbix bash -c 'zabbix_agentd -t mysql.queries'
 
@@ -676,6 +676,7 @@ in previous versions of Zabbix, some commands such as "free" or etc should be al
 
 Stopping Starting Windows Services <br>
 on alert > script > create new script:
+<pre>
 - Name: 					Windows/Restart Print Spooler
 - Type: 					script
 - Execute on:				Zabbix agent
@@ -683,7 +684,7 @@ on alert > script > create new script:
 - user group: 				zabbix administrator
 - Host group:				Windows server (your choice)
 - Required host permission: Read
-
+</pre>
 to get status of service:
 - powershell -NoProfile -ExecutionPolicy bypass Get-Service -Name 'Spooler'
 
@@ -1491,15 +1492,17 @@ https://www.zabbix.com/documentation/current/en/manual/discovery/network_discove
 
 
 ### 58 - Setup SNMP Traps ###
-SNMP Trap acts as active check, it send back data to proxy or sever
-before seting up snmp trapper we should acknowledge:
+receiving  SNMP trap is the opposite of querying SNMP Devices the device will send the massage. <br>
+SNMP Trap acts as active check, it send back data to proxy or sever. thats reason we need a service to be run on proxy/server to listen and process Received SNMP. <br> 
+before setting up snmp trapper we should acknowledge:
 1. SNMP Trap uses UDP 162 to listen on so we configure end-host devices to send the trap massages to the port 162 of the proxy/server
-2. snmptrapd will then send the received data to "zabbix_trap_receiver.pl" file which it will format information into incoming messages.
+2. snmptrapd will then send the received data to "zabbix_trap_receiver.pl" file which it will format information into incoming messages. (needs to be executable)
 3. the message will be saved into /tmp/zabbix_trap.tmp file.
 4. zabbix proxy reads "zabbix_trap.tmp" file and sends to the zabbix server snmptrap.fallback item.
 
 
-1.enabling the snmptrap on zabbix proxy
+[SNMP Trap setup guide](https://sbcode.net/zabbix/snmp-traps/).
+1. enabling the snmptrap on zabbix proxy
 in /etc/zabbix/zabbix_proxy.conf
 - StartSNMPTrapper=1
 - SNMPTrapperFile=/tmp/zabbix_traps.tmp
@@ -1517,9 +1520,9 @@ install snmptrapd which will listen on port 162 and logs SNMP Trap and Inform me
 - apt install snmp snmp-mibs-downloader snmptrapd
 
 modify snmptrap conf file and add community name and be able to run trap receiver
- in /etc/snmp/snmptrapd.con:
-- authCommunity execute mcommunity
-- perl do "/usr/bin/zabbix_trap_receiver.pl 
+ in /etc/snmp/snmptrapd.con add at the end of file:
+` authCommunity execute mcommunity `
+` perl do "/usr/bin/zabbix_trap_receiver.pl `
 
 note: check if the perl exist on the proxy server 
 - perl -v
@@ -1564,7 +1567,7 @@ for troubleshoot two files are consider
 
 
 ### 59 - Triggers on SNMP Traps ###
-for SNMP Trap fallback Item we can create a trigger that will be activated base on parameters that it find to do so similar to creating other triggers this time we use " find function" <br>
+for SNMP Trap fallback Item we can create a trigger that will be activated base on parameters that it find. to do so, similar to creating other triggers this time we use " find function" <br>
 Host > Trigger > snmp trapper fallback ( related fallback ) > Problem expression 
 <pre>
 Function: 			find() - Check occurrence
