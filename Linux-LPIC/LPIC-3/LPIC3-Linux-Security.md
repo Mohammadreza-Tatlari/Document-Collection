@@ -2346,7 +2346,7 @@ All incoming TCP connections are queued until they are services. A TCP Syn queue
 
 </br>
 
-![TCP SYN Queue and Accept](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQmFj9t4mNNpFGsRdLRzyh-EIjxp8hEnaCKTQ&s)
+![TCP SYN Queue and Accept](https://yqintl.alicdn.com/0f72fe628f4e77b59f92d149c8584476f8d6fc5d.png)
 
 
 #### net.ipv4.tcp_synack_retries 
