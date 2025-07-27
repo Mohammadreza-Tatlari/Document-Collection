@@ -2343,6 +2343,9 @@ All incoming TCP connections are queued until they are services. A TCP Syn queue
 `sysctl -w net.ipv4.tcp_max_syn_backlog=8192`
 
 [SYN and ACCEPT Queue Explained](https://www.alibabacloud.com/blog/tcp-syn-queue-and-accept-queue-overflow-explained_599203)
+
+</br>
+
 ![TCP SYN Queue and Accept](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQmFj9t4mNNpFGsRdLRzyh-EIjxp8hEnaCKTQ&s)
 
 
