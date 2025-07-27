@@ -2347,7 +2347,7 @@ All incoming TCP connections are queued until they are services. A TCP Syn queue
 </br>
 
 ![TCP SYN Queue and Accept](../../media/sync-queue-accept-queue.png)
-media/sync-queue-accept-queue.png
+
 
 #### net.ipv4.tcp_synack_retries 
 The `tcp_synack_retries` parameter will define the number of times the kernel will send responses to new incoming connection request. By default the value is set to 5, for network with 1G to 10G connection this can be further reduced to 3 as the servers are generally busy and reducing the number of retries to 3 would help improve network performance.</br>
@@ -3606,7 +3606,8 @@ to use it there are steps to take:
 ### PAM (Pluggable Authentication Modules) - Securing User Accounts Topic
 **What is PAM?**
 A **pluggable authentication module (PAM)** is a mechanism to integrate multiple low-level authentication schema into a high-level application programming interface (API). PAM allows programs that rely on authentication to be written independently of the underlying authentication scheme. </br>
-The following figure illustrates the PAM architecture. Applications communicate with the PAM library through the PAM application programming interface (API). PAM modules communicate with the PAM library through the PAM service provider interface (SPI). Thus, the PAM library enables applications and modules to communicate with each other.
+The following figure illustrates the PAM architecture. Applications communicate with the PAM library through the PAM application programming interface (API). PAM modules communicate with the PAM library through the PAM service provider interface (SPI). Thus, the PAM library enables applications and modules to communicate with each other. </br>
+
 ![PAM Schema](https://docs.oracle.com/cd/E26502_01/html/E29016/figures/pam.overview.1.png)
 
 #### Enforcing Strong Password Criteria
