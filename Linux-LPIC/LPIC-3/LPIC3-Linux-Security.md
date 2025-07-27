@@ -2346,8 +2346,8 @@ All incoming TCP connections are queued until they are services. A TCP Syn queue
 
 </br>
 
-![TCP SYN Queue and Accept](https://yqintl.alicdn.com/0f72fe628f4e77b59f92d149c8584476f8d6fc5d.png)
-
+![TCP SYN Queue and Accept](../../media/sync-queue-accept-queue.png)
+media/sync-queue-accept-queue.png
 
 #### net.ipv4.tcp_synack_retries 
 The `tcp_synack_retries` parameter will define the number of times the kernel will send responses to new incoming connection request. By default the value is set to 5, for network with 1G to 10G connection this can be further reduced to 3 as the servers are generally busy and reducing the number of retries to 3 would help improve network performance.</br>
