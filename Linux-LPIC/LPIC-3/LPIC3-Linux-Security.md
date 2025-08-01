@@ -16,7 +16,7 @@ the CIA triangle side are not always Equal and it is based on the content or use
 
 
 ### CVE (Common Vulnerabilities and Exposures)
-the CVE consist of all the vulnerabilities that have been detected and got signiture. it is created in order to first, to announce the problem so everybody will be aware of it. </br>
+the CVE consist of all the vulnerabilities that have been detected and got signatureure. it is created in order to first, to announce the problem so everybody will be aware of it. </br>
 there are many websites and communities that hold these CVEs like: [**mitre.orh**](https://cve.mitre.org/) </br>
 we need daily survery over CVE if we are working on security.
 
@@ -108,7 +108,7 @@ Ali will take data and encrypt it with Mona Public Key --> then it will sign it 
 
 
 #### Signing should happen after encryption
-signing a data always should be done after encryption cause it will reduce process overflow. cause for instance by not verifying the signiture, the encryption process will not be needed.
+signing a data always should be done after encryption cause it will reduce process overflow. cause for instance by not verifying the signature, the encryption process will not be needed.
 
 #### Hashing
 Hashing means encrypting a data in order that it only can be decrypted in one way and cannot be decrypted from calculating the encrypted data. </br>
@@ -1448,7 +1448,7 @@ note that inside ``/etc/yum/metasploit-framework.repo`, the `enabled=1` should b
 
 **how does anti-virus detect malwares?**: </br>
 anti-virus can detect malware based on two concepts:
-1. hash signiture: the AV will refer to their database that hold all hashes related to softwares and malewares and if their detect one they will alarm.
+1. hash signature: the AV will refer to their database that hold all hashes related to softwares and malewares and if their detect one they will alarm.
 2. behavior: for instance when an executable file wants to access port 80 even if its not related to services related to that port
 
 
@@ -1504,7 +1504,7 @@ In SSH connection this step is as follow: </br>
 
 #### creating SSH Key Pairs
 in step one, we first need to generate the ssh key pair with `ssh-keygen` </br>
-`ssh-keygen -t rsa -b 4096` => it will create a two pair keys and prompt a wizard to assign its location and give it a passphrase. then it will print out the **finger print** hash signiture. it also print a random art for better human readability. </br>
+`ssh-keygen -t rsa -b 4096` => it will create a two pair keys and prompt a wizard to assign its location and give it a passphrase. then it will print out the **finger print** hash signature. it also print a random art for better human readability. </br>
 fpr example: </br>
 <pre>
 Your identification has been saved in /home/hacker/.ssh/id_rsa.
@@ -1544,7 +1544,7 @@ if we go to `/etc/ssh` we can see all the keys in it. in some conditions we migh
 
 
 #### verifying that the destination host is authentication
-previously we use `ssh-copy-id <username>@<ip-address-destination>` to authenticate the end-host machine. it will print ous **the algorithm** and **SHA signiture**. to truely verify if the end house is the correct one we can call the owner of that machine and check them as follow: </br>
+previously we use `ssh-copy-id <username>@<ip-address-destination>` to authenticate the end-host machine. it will print ous **the algorithm** and **SHA signature**. to truely verify if the end house is the correct one we can call the owner of that machine and check them as follow: </br>
 the owner will check the file inside `/etc/ssh` that match with the algorithm that we are defining for example in our case it is `ECDSA`, so they should check `/etc/ssh/ssh_host_ecdsa_key.pub ` via: </br>
 `ssh-keygetn -lvf /etc/ssh_host_ecdsa_key.pub` => the SHA will be printed and owner can verify that for example via email.
 
@@ -2628,9 +2628,9 @@ Configuration Over Malware Detect is crucial cause a misconfiguration on it can 
 `vim /usr/local/maldetect/conf.maldet` => open the `conf.maldet` and alter the following parameters: </br>
 - `email_alert="1"` => change the email alert to 1 and also add an operative email to `email_addr="you@domain.com"`
 - in a standard manner the secured servers or security team's machines are isolated from network, however in some conditions we can add `slack` or `telegram` API to `maldet` configuration to receive notification related to any malware detection.
-- `autoupdate_signatures="1"` => it is mandatory to keep malware up to date to have the latest malware signitures and patches.
+- `autoupdate_signatures="1"` => it is mandatory to keep malware up to date to have the latest malware signatures and patches.
 - `cron_prune_days="90"` => retention and keeping data policy is vary between policies of each organization but it is good practice to keep it for a medium to long period.
-- `import_custsigs_hex_url=""` => on some conditions we can have our signiture updates from specific organization and by that we can append their URL to our maldetect.
+- `import_custsigs_hex_url=""` => on some conditions we can have our signature updates from specific organization and by that we can append their URL to our maldetect.
 - `scan_max_depth="21` it should be always more than the default value cause attackers know the default max depth and can evade it off
 - `scan_min_file_size="19"`, `scan_max_filesize="2148k"` => we 19 is refered as byte and 2148k is slithtly more that the default value. but why is it important? in security and introsion there is concept called **binary Padding** in which developer can add junk data such as **NOP (NO Operation)** to the file and make it moderatly bigger so it will be harder to detect or even **the Hash of malware will be changed**.
 - `scan_clamscan="1"` and `scan_tmpdir_paths= /tmp /var/tmp /dev/shm` => allow clamscan to scan in depth in directories that have more mild permission access.
@@ -2639,7 +2639,7 @@ Configuration Over Malware Detect is crucial cause a misconfiguration on it can 
 
 
 ### Updating ClamAV and Maldet
-to update or refresh the signitures of ClamAV and Maldet we can use these commands:</br>
+to update or refresh the signatures of ClamAV and Maldet we can use these commands:</br>
 `freshclam` => for updating clamAV </br>
 `maldet -u` => to update maldet
 note that if its not feasible to fetch data from from repo due to 403 HTTP, we can set proxy to evade this limitation `export http_proxy...`
@@ -2647,9 +2647,9 @@ note that if its not feasible to fetch data from from repo due to 403 HTTP, we c
 
 #### testing functionality of Anti-Virus
 when new AV is installed on OS the first attempt is to test whether it susceptible against threats or not. to do that we can use **eicar** products.
-**eicar** programs are generally group of test files that have similar signiture to malwares so they can be used in order to test AV.
+**eicar** programs are generally group of test files that have similar signature to malwares so they can be used in order to test AV.
 
-to do that, firstly, download a malware signiture from "https://secure.eicar.org/eicar.com" and add it into a text file by `vim maltest.com`. the signiture is:</br>
+to do that, firstly, download a malware signature from "https://secure.eicar.org/eicar.com" and add it into a text file by `vim maltest.com`. the signature is:</br>
 `X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*`
 save the file in a directory and scan it via `maldet -a` </br>
 `maldet -a /srv/` => it will scan the directory and if it find any malware then it will return a report then we can check out the report profile via: </br>
@@ -2683,8 +2683,8 @@ to list history of all scans we can do </br>
 - `maldet -e list` => it will list all reports with date and SCANID
 
 
-#### adding custome signiture to maldet repository
-there are cases that we are given list of malware hashes so we can import them in our malware detector repository `maldetect/sigs`. thus in further scanning if any new log is reported we can figure out the relationship of it. note that do not import these signitures blindly cause they can cause false positive.
+#### adding custome signature to maldet repository
+there are cases that we are given list of malware hashes so we can import them in our malware detector repository `maldetect/sigs`. thus in further scanning if any new log is reported we can figure out the relationship of it. note that do not import these signatures blindly cause they can cause false positive.
 - `ls /usr/local/maldetect/sigs/` and then for instance `cat md5.dat`
 
 
@@ -3728,6 +3728,141 @@ to prevent none-root users from login to OS, we can create `etc/nolign` file and
 
 *[GTFObin And CTF (Capture the Flag)](https://gtfobins.github.io/)*
 *NIST SP 800 Series and Compliance are not being followed in Iran accurately and can be a potential for those whom want to make impact*
+
+
+
+## Session 12
+
+### IDS (Intrusion Detection System) and IPS (Intrusion Prevention System)
+to be more clear first lets clarify what are the differences between Firewall, IDS and IPS. As we have discussed, firewalls works with **Policy** and rule. these help us to describe connection conditions between sources and destinations.
+
+IPS and IDS works with signatures and this signatures are described in verified organizations. for instance, it is detected that when a network or system is infected by a malware, the malware will send specific traffic through internet with destination IP of 1.2.3.4 or domain abc.zxy. thus, this routing behavior will be signed and included inside the IPS, IDS. </br>
+the difference between IPS and IDS is that, the IPS will do an action based on the signature, for example drop the packets. but IDS will only send notification. </br>
+it is worth mentioning that there are firewalls that have Modules for IDS,IPS and even Anti-Viruses.
+
+
+#### What is Suricata?
+**Suricata**, the open source intrusion detection (IDS), intrusion prevention (IPS), and network security monitoring (NSM) system is developed and maintained by a vast community under the guidance of the Open Information Security Foundation (OISF). The project started in 2009, and had its first official release in 2010.
+
+The original goal of the Suricata IDS project was to develop an intrusion detection engine based on signatures, similar to its ancestor Snort but with different technological choices. The aim was to build a network IDS that would share the same detection language as Snort and have a strong focus on community. The early technology choices were to implement **multi-threading**, advanced HTTP support, and a port-independent protocol recognition.
+
+- List of Open Source Tools: </br>
+Snort </br>
+Suricata </br>
+Bro (Zeek) is another NSM (Network Security Monitoring) Commonly used beside Snort and Suricata </br>
+OSSEC </br>
+Samhain Labs </br>
+OpenDLP </br>
+
+
+### getting familiar With Suricata
+Suricata Basic installation is straightforward, we only need to use our Distro's package manager to install. </br>
+after installation, the suricata configuration file will be present in `/etc/suricata` directory.
+
+#### `/etc/suricata/classification.config` file
+in this file as its name goes, it has classifications for each network behavior. it is actually categorizing all intrusions and based on them, commit an action.
+
+
+#### `/etc/suricata/reference.config`
+it consists of resource references URLs that suricata will use to refer for each Detection or Prevention. for instance it might have reference links to "http://cve.mitre.org/cgi-bin/".
+
+
+#### `/etc/suricata/rules/`
+in this directory, there are list of rules for observations and recognition on different protocols. such as 
+`http-events.rules`, `ipsec-events.rules`, `modbus-events.rules`
+
+
+#### `/etc/suricata/suricata.yaml` 
+the suricata configurations are located in here and it may include other files allowing a configuration file to be broken into multiple files. The special field name include is used to include one or more files.
+
+
+#### `/var/lib/suricata/rules/suricata.rules`
+the rules used by Suricata for detecting malicious network activity are stored. These rules define what network traffic patterns Suricata should look for and what action to take when a match is found, such as logging an alert or dropping the traffic
+
+
+### working with suricata
+before working with suricata, its rules and configuration needs to be updated this update should be routined and should happen frequently. to do that, there is a built-in command in suricata:</br> 
+`suricata-update`
+
+
+#### adding new resource to suricata
+it is possible to include other resource from different organization and security repositories to suricana, these sources are free and commercial. to list all source: </br>
+`suricata-update list-sources`
+
+- to list all free sources only: </br>
+`suricata-update list-sources --free`
+
+- to list all included/enabled sources on our System: </br>
+`suricata-update list-enabled-sources`
+
+- to enable/disable a source or include it: </br>
+`suricata-update enable-source <Name>` for instance `suricata-update enable-source tgreen/hunting` </br>
+`suricata-update disable-source <Name>`
+
+- **IMPORTANT:** after adding new sources, it is crucial to update the suricata again to fetch rules from newly added sources. (it should happen both for enabling and disabling)
+`suricata-update`
+
+
+**Debugging no1:**
+in case that you hit the error: 
+<pre>
+<Warning> -- Failed to download index: https://www.openinfosecfoundation.org/rules/index.yaml: <urlopen error [Errno -2] Name or service not known>: will use bundled index.
+</pre>
+1. use VPN if you are in restricted area
+2. change your `/etc/resolv.conf` configuration and stop systemd resolver temporary `sudo systemctl restart systemd-resolved && sudo systemctl stop systemd-resolved`
+3. `ping www.openinfosecfoundation.org` => to check if resolver is working properly and the redo `suricata-update list-sources`
+
+
+**Debugging no2:**
+if during the `suricata-update` you have encountered with this error:
+<pre>
+1/8/2025 -- 01:40:17 - <Info> -- Testing with suricata -T.
+1/8/2025 -- 01:40:17 - <Error> -- [ERRCODE: SC_ERR_RULE_KEYWORD_UNKNOWN(102)] - unknown rule keyword 'http.response_header'.
+1/8/2025 -- 01:40:17 - <Error> -- [ERRCODE: SC_ERR_INVALID_SIGNATURE(39)] - error parsing signature "alert http $HOME_NET any -> any any (msg:"TGI HUNT Malicious Chunk-Proxy Webshell Artifacts in HTTP Response"; flow:established,to_client; http.response_header; content:"status|3a 20|"; pcre:"/^(?:close|successfully)/R"; threshold:type limit, track by_src, seconds 60, count 1; reference:url,travisgreen.net/updates/20240123; classtype:bad-unknown; sid:2610869; rev:1;)" from file /var/lib/suricata/rules/suricata.rules at line 622
+1/8/2025 -- 01:40:25 - <Error> -- [ERRCODE: SC_ERR_NO_RULES_LOADED(43)] - Loading signatures failed.
+1/8/2025 -- 01:40:25 - <Error> -- Suricata test failed, aborting.
+1/8/2025 -- 01:40:25 - <Error> -- Restoring previous rules.
+</pre>
+
+we only need to disable the testing of links and file so the data will be loaded on memory and those that are not validate will be volatile. thus the rules will be updated anyway. the switch is: </br>
+`suricata-update --no-test` 
+
+then do `ls  -lh /var/lib/suricata/rules/suricata.rules` to verify if file is updated as well.
+
+
+#### Analysing a single line of Signature:
+<pre>
+drop tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"ET TROJAN Likely Bot Nick in IRC (USA +..)"; flow:established,to_server; flowbits:is_set,is_proto_irc; content:"NICK "; pcre:"/NICK .USA.*[0-9]{3,}/i"; reference:url,doc.emergingthreats.net/2008124; classtype:trojan-activity; sid:2008124; rev:2;)
+
+Action: alert pass reject drop
+Header: tcp $HOME_NET any -> $EXTERNAL_NET any
+</pre>
+Action:`drop` </br>
+HEADER:`tcp $HOME_NET any -> $EXTERNAL_NET any` </br>
+Rule Options: `(msg:"ET TROJAN Likely Bot Nick in IRC (USA +..)"; flow:established,to_server; flowbits:is_set,is_proto_irc; content:"NICK "; pcre:"/NICK .USA.*[0-9]{3,}/i"; reference:url,doc.emergingthreats.net/2008124; classtype:trojan-activity; sid:2008124; rev:2;)`
+
+**Actions**: if the signature is met what should be done on IPS?  </br>
+`alert`: it will generate an alert </br>
+`pass:` it will do nothing and pass it </br>
+`reject`: it will drop packet and generate an error to sender </br>
+`drop`: it will drop the packet and will not generate any error. </br>
+
+**HEADER**: it says on which protocol the rule should be met </br>
+`protocol`: `tpc`. `udp` or other. </br>
+`asset`: range of IPs that our assets are located there  </br>
+`source port`: it can be `any` which means any ports </br>
+`direction`: it is shown by `->` or `<->` or `<-` </br>
+for instance, `tcp $HOME_NET any -> $EXTERNAL_NET any` means that in tcp protocol from `$HOME_NET` which is our asset and from port `any` to direction of `$EXTERNAL_NET` which is everything that is not defined as our asset (outside internet) on port any.
+
+**Rule Options:** it involves details and struction of suricata rule </br>
+`msg`(message): emerging thread.</br>
+`flow`: how the connection is established.</br>
+`content`: detected lines in content.</br>
+`reference`: url of reference log</br>
+`classtype`: the classification inside the suricata files.</br>
+`sid`: the signature ID </br>
+`rev`: number of revisions on the rule.</br>
+for instance: `(msg:"ET TROJAN Likely Bot Nick in IRC (USA +..)"; flow:established,to_server; flowbits:is_set,is_proto_irc; content:"NICK "; pcre:"/NICK .USA.*[0-9]{3,}/i"; reference:url,doc.emergingthreats.net/2008124; classtype:trojan-activity; sid:2008124; rev:2;)` => in this rule, `msg` is indicating what the message should be when the conditions are met. `flow` means how the connection should be established which in this case it is `establisehd`. `content` is the data that is inside the connection which it is saying that if it has `NICK` in it and it also has `prce:` (prce perl compatible reqular expression) with regex `"/NICK .USA.*[0-9]{3,}/i"`. `reference` is the url and docuements that are provided for related behavior and used to referred to. `classtype` is trojan-activity and it is located in `/etc/suricata/classification.config`. `sid` is self explanatory and `rev:2` means that this rule is revisioned by authorities twice
 
 
 
