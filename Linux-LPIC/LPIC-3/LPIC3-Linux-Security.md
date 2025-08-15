@@ -3833,10 +3833,10 @@ then do `ls  -lh /var/lib/suricata/rules/suricata.rules` to verify if file is up
 #### Analysing a single line of Signature:
 <pre>
 drop tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"ET TROJAN Likely Bot Nick in IRC (USA +..)"; flow:established,to_server; flowbits:is_set,is_proto_irc; content:"NICK "; pcre:"/NICK .USA.*[0-9]{3,}/i"; reference:url,doc.emergingthreats.net/2008124; classtype:trojan-activity; sid:2008124; rev:2;)
-
-Action: alert pass reject drop
-Header: tcp $HOME_NET any -> $EXTERNAL_NET any
 </pre>
+>Action: alert pass reject drop
+>Header: tcp $HOME_NET any -> $EXTERNAL_NET any
+
 Action:`drop` </br>
 HEADER:`tcp $HOME_NET any -> $EXTERNAL_NET any` </br>
 Rule Options: `(msg:"ET TROJAN Likely Bot Nick in IRC (USA +..)"; flow:established,to_server; flowbits:is_set,is_proto_irc; content:"NICK "; pcre:"/NICK .USA.*[0-9]{3,}/i"; reference:url,doc.emergingthreats.net/2008124; classtype:trojan-activity; sid:2008124; rev:2;)`
@@ -3863,6 +3863,125 @@ for instance, `tcp $HOME_NET any -> $EXTERNAL_NET any` means that in tcp protoco
 `sid`: the signature ID </br>
 `rev`: number of revisions on the rule.</br>
 for instance: `(msg:"ET TROJAN Likely Bot Nick in IRC (USA +..)"; flow:established,to_server; flowbits:is_set,is_proto_irc; content:"NICK "; pcre:"/NICK .USA.*[0-9]{3,}/i"; reference:url,doc.emergingthreats.net/2008124; classtype:trojan-activity; sid:2008124; rev:2;)` => in this rule, `msg` is indicating what the message should be when the conditions are met. `flow` means how the connection should be established which in this case it is `establisehd`. `content` is the data that is inside the connection which it is saying that if it has `NICK` in it and it also has `prce:` (prce perl compatible reqular expression) with regex `"/NICK .USA.*[0-9]{3,}/i"`. `reference` is the url and docuements that are provided for related behavior and used to referred to. `classtype` is trojan-activity and it is located in `/etc/suricata/classification.config`. `sid` is self explanatory and `rev:2` means that this rule is revisioned by authorities twice
+
+
+
+### Setting up Suricata IDS/IPS
+in this section we are going to tune and configure Suricata. the suricata configuration file is located in `etc/suricata/suricata.yaml` and we need to change few parameters based on purpose.
+- changing `HOME_NET` and `EXTERNAL_NET` in `vars`:
+We need to define the internal (protected) and external networks under the `vars` section. This is achieved by setting the values for `HOME_NET` and `EXTERNAL_NET`.
+Note: `HOME_NET` includes the IP address of the network interface on which Suricata is running. The `EXTERNAL_NET` defines any network not listed as local. think of it as two arms that are mirroring data to IDS. first link is behind the firewall (our local assets) and the other is the public internet (external links).
+
+`vim /etc/suricata/suricata.yaml`
+```yaml
+HOME_NET: "[192.168.0.0/16,10.0.0.0/8,172.16.0.0/12]"
+EXTERNAL_NET: "!$HOME_NET"
+```
+
+
+#### afpacket
+AF-PACKET is built into the Linux kernel and includes fanout capabilities enabling it to act as a **flow-based load balancer**. This means, for example, if you configure Suricata for 4 AF-PACKET threads then each thread would receive about 25% of the total traffic that AF-PACKET is seeing. </br>
+configuring`af-packet` in Suricata: </br>
+`vim /etc/suricata/suricata.yaml` > go to `af-packet` section and change these parameters:
+`- interface: <your inteface>`
+`thread: auto`
+
+
+#### Packet Offloading
+Disable packet offloading in Suricata by disabling interface **Large Receive Offload (LRO)/Generic Receive Offload (GRO)**.
+
+**Note**: Large receive offload (**LRO**) is a technique for increasing inbound throughput of high-bandwidth network connections by reducing central processing unit (CPU) overhead. It works by aggregating multiple incoming packets from a single stream into a larger buffer before they are passed higher up the networking stack, thus reducing the number of packets that have to be processed. but the downside of it is that it manipulates the packets which can cause false positives or wrong data.
+
+to disable these features on Linux, `ethtool` can be used. the `ethtool` is a linux program for configuring our devices network interface functionality:
+`ethtool -K <interface-name> gro off lro off` => `-K` is a switch to turn off/on features. gro and lro are our desired features that wanted to be off. </br>
+`ethtool -k <interface-name> | egrep -i "Generic|large"` => `-k` (lowercase) will show all interface features. then we use regex grep to filter out the related data to `gro` & `lro`.
+
+
+#### Change Suricata interface
+on default configuration, if we do `systemctl status suricata` in `CGroup` we might see: </br>
+`/sbin/suricata -c /etc/suricata/suricata.yaml --pidfile /var/run/suricata.pid -i eth0 --user suricata` </br>
+as you can see the default interface (`-i`) is `eth0` which is not correct and cause suricata to not work. to change that we need to configure suricata file is `sysconfig` directory: </br> 
+`vim /etc/sysconfig/suricata`: </br>
+```ini
+# Add options to be passed to the daemon
+OPTIONS="-i <your-interface> --user suricata "
+```
+
+*alternatively* we can use suricata without using systemd service by issuing suricata command as below:
+`suricata -D -c etc/suricata/suricata.yaml -i ens33`
+
+verify if the service is running:
+`tail /var/log/suricata/suricata.log`
+
+
+#### log files in suricata
+inside `var/log/suricata` we can different files that suricata is generating for logs and each have different purposes:
+`eve.json`: `eve` stands for **event** and is the most comprehensive file that collects all event logs from network. this is the file that should be sent to SOC (SIEM). </br>
+`fast.log`: it only saves alert logs related to traffics
+`stats.log`: it contains statistic of suricata and pulse every 8 seconds. on enterprise usage this log is disabled cause it produce huge amount of unusable data.
+`suricata.log`: it contains logs related to suricata service itself.
+
+
+
+### Suricata Perfomance Tuning
+#### 1.Runmodes
+Generally, the workers runmode performs the best. In this mode the NIC/driver makes sure packets are properly balanced over Suricata's processing threads. Each packet processing thread then contains the full packet pipeline. </br>
+Note: **Workers has the advantage of keeping all pkt processing in one thread and if cpu affinity is set all processing will stay on a single cpu/core**. One critical aspect of this is that Suricata needs to get both sides of a flow in the same thread. </br>
+
+configure runmode on suricata: </br>
+`vim /etc/suricata/suricata.yaml`
+- change `runmode: autofp` to `runmode: workers`
+
+
+#### 2.mpm-algo (Multi Pattern Matching)
+It controls the pattern matcher algorithm. </br>
+AC (**Aho-Corasick**) is the default. On supported platforms, **Hyperscan** (HS) is the best option. On commodity hardware if Hyperscan is not available the suggested setting is mpm-algo: ac-ks (**Aho-Corasick** Ken Steele variant) as it performs better than mpm-algo: ac. </br>
+Note: Hyperscan is a high-performance multiple regex matching library. and if you use suricata linux packages, this library is included. but if you want to build suricata by yourself, this library should be added manually. <br>
+to change `mpm-algo` to use hyperscan we need to change its value in `/etc/suricata/suricata.yaml`
+- `mpm-algo: hs` => it will use hyperscan for regex streaming filter.
+
+
+#### 3. detect.profile
+The detection engine tries to split out separate signatures into groups so that a packet is only inspected against signatures that can actually match. As in large rule set this would result in way too many groups and memory usage similar groups are merged together. The profile setting controls how aggressive this merging is done. The default setting of high usually is good enough. </br>
+to change that in `etc/suricata/suricata.yaml`
+```yaml
+detect:
+  profile: high
+  custom-values:
+    toclient-groups: 3
+    toserver-groups: 25
+  sgh-mpm-context: auto
+  inspection-recursion-limit: 3000
+```
+
+
+#### 4. ring-size
+Ring-size is another af-packet variable that can be considered for tuning and performance benefits. It basically means the buffer size for packets per thread. So if the setting is ring-size: 100000 like below, it means there will be 100,000 packets allowed in each buffer of the 5 threads.
+`ring-size: 100000` => this value increases as your environment grows.
+`threads: 5`
+
+
+#### 5. pcap-log
+With the `pcap-log` option, you can save all packets that are registered by Suricata, in a log file named `log.pcap`. This allows you to review all packets whenever you want. keep in mind that it needs enough storage to hold only pcap logs. configure it in `etc/suricata/suricata.yaml`
+```yaml
+- pcap-log:
+  enabled: yes #enables the pcap logging
+  filename: /pcap/log.pcap
+  limit: 1000mb #the size of each .pcap log file
+  max-files: 2000 #the maximum number of files that pcap can create limit x max-files
+  compression: lz4 #the compression type that can reduce size of each file
+  lz4-level: 16 #the best compression level. it can cause overhead on CPU but it worths it.
+  dir: /var/log/suricata/pcap #it will create a directory to save pcap files in it
+```
+
+- after tuning the values. restart and check status of suricata: </br>
+`systemctl restart suricata.service` </br>
+`systemctl status suricata.service` </br>
+
+
+
+### IPSEC (IP Security)
+
 
 
 
