@@ -3932,6 +3932,9 @@ configure runmode on suricata: </br>
 `vim /etc/suricata/suricata.yaml`
 - change `runmode: autofp` to `runmode: workers`
 
+![runmode schema](https://docs.suricata.io/en/suricata-7.0.5/_images/workers.png)
+</br>
+
 
 #### 2.mpm-algo (Multi Pattern Matching)
 It controls the pattern matcher algorithm. </br>
