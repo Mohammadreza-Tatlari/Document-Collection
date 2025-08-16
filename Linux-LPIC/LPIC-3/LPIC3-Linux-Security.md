@@ -1851,13 +1851,13 @@ then by that, we can inpsect and modify the content being send from our browser 
 
 
 
-- *modesecurity, appsec (with Machine Learning)*
-- *how to check access logs related to Specific URI via fail2ban (not WAF)*
-- *basic authentication for apache server, failed attempts*
-- *what is maxstartup in ssh `MaxStartups 10:30:60` and its usecase in DoS*
-- **port knocking**
-- *ICMP Tunneling usecase for extracting data and its tools*
-- *Hostkey Algorithm RFC-7457 ietf.org*
+- *modesecurity, appsec (with Machine Learning)* </br>
+- *how to check access logs related to Specific URI via fail2ban (not WAF)* </br>
+- *basic authentication for apache server, failed attempts* </br>
+- *what is maxstartup in ssh `MaxStartups 10:30:60` and its usecase in DoS* </br>
+- **port knocking** </br>
+- *ICMP Tunneling usecase for extracting data and its tools* </br>
+- *Hostkey Algorithm RFC-7457 ietf.org* </br>
 
 
 
@@ -2268,16 +2268,16 @@ to disable server from rebooting via `ctrl+alt+delete` we can mask it via: </br>
 
 
 
-- *spectre and Meltdown and its disabling outcomes [Meltdownattack.com](https://meltdownattack.com/)*
-- *Carbanak APT(advanced Persistent Threat) and key loggers [wikipedia](https://en.wikipedia.org/wiki/Carbanak)*
-- *WHID ELITE and RAT (remote access Trojan) [RAT](https://www.fortinet.com/uk/resources/cyberglossary/remote-access-trojan) [WHID](https://portswigger.net/daily-swig/whid-elite-weaponized-usb-gadgets-boast-multiple-features-for-the-stealthy-red-teamer)*
-- *SAK (Secure Attention Key) or SAS (Secure Attention Sequence) Recovering from Frozen Systems,Bypassing Malware*
-- *FIM, AIDE, Wazuh, XDR, other tools for checking file*:
-- *open appsec a open source WAF [github](https://github.com/openappsec/openappsec)*
-- *safeline docker [github](https://github.com/chaitin/SafeLine)*
-- *HSTS (HTTP Strict Transport Security) Header [HSTS wiki](https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security)*
-- *how to disable TLS 1.1 in nginx*
-- *CIS Mark Nginx book*
+- *spectre and Meltdown and its disabling outcomes [Meltdownattack.com](https://meltdownattack.com/)* </br>
+- *Carbanak APT(advanced Persistent Threat) and key loggers [wikipedia](https://en.wikipedia.org/wiki/Carbanak)* </br>
+- *WHID ELITE and RAT (remote access Trojan) [RAT](https://www.fortinet.com/uk/resources/cyberglossary/remote-access-trojan) [WHID](https://portswigger.net/daily-swig/whid-elite-weaponized-usb-gadgets-boast-multiple-features-for-the-stealthy-red-teamer)* </br>
+- *SAK (Secure Attention Key) or SAS (Secure Attention Sequence) Recovering from Frozen Systems,Bypassing Malware* </br>
+- *FIM, AIDE, Wazuh, XDR, other tools for checking file*: </br>
+- *open appsec a open source WAF [github](https://github.com/openappsec/openappsec)* </br>
+- *safeline docker [github](https://github.com/chaitin/SafeLine)* </br>
+- *HSTS (HTTP Strict Transport Security) Header [HSTS wiki](https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security)* </br>
+- *how to disable TLS 1.1 in nginx* </br>
+- *CIS Mark Nginx book* </br>
 
 
 
@@ -2605,19 +2605,19 @@ by opening `vim /usr/local/maldetect/conf.maldet` we cna have access to maldet c
 `autoupdate_version="1"` and `autoupdate_version_hashed="1"`
 
 
-*virustotal related sandbox*
-*fork bomb*
-*mastering linux hardening book*
-*sybex lpic 2 book*
-*kernel_unprivileged_bpf_disabled*
-*kernel.ctrl_alt_del*
-*kernel.threads-max number of threads on OS and its security benefits*
-*kernel.yama.ptrace_scope=2 attackers usage for injecting their code to other process*
-*Differences between ASLR, KASLR and KARL(Kernel Address Randomized Link)*
-*net.core.somaxconn and its usage in maximum number of stablished connection in acept queue*
-*[CVE-2017-17901 Detail](https://nvd.nist.gov/vuln/detail/cve-2017-17901)*
-*[CVE-2017-9103 Detail](https://nvd.nist.gov/vuln/detail/CVE-2017-9103)*
-*[UDP Fragmentation CAPEC-495](https://capec.mitre.org/data/definitions/495.html)*
+*virustotal related sandbox* </br>
+*fork bomb* </br>
+*mastering linux hardening book* </br>
+*sybex lpic 2 book* </br>
+*kernel_unprivileged_bpf_disabled* </br>
+*kernel.ctrl_alt_del* </br>
+*kernel.threads-max number of threads on OS and its security benefits* </br>
+*kernel.yama.ptrace_scope=2 attackers usage for injecting their code to other process* </br>
+*Differences between ASLR, KASLR and KARL(Kernel Address Randomized Link)* </br>
+*net.core.somaxconn and its usage in maximum number of stablished connection in acept queue* </br>
+*[CVE-2017-17901 Detail](https://nvd.nist.gov/vuln/detail/cve-2017-17901)* </br>
+*[CVE-2017-9103 Detail](https://nvd.nist.gov/vuln/detail/CVE-2017-9103)* </br>
+*[UDP Fragmentation CAPEC-495](https://capec.mitre.org/data/definitions/495.html)* </br>
 
 
 
@@ -3002,20 +3002,20 @@ if __name__ == "__main__":
 
 
 
-*insmod, rmmod, .ko files in Injection and Rootkit attacks*
-[auditd-mtre github](https://github.com/uf0o/auditd-mitre)
-[Neo23x0 Auditd github](https://github.com/Neo23x0/auditd)
-[bfuzzy auditd attack github](https://github.com/bfuzzy/auditd-attack)
-[Kirtar22 Github Litmus Test](https://github.com/Kirtar22/Litmus_Test)
-*process injection and ptrace*
-*[GTFObin And Threat Hunting](https://gtfobins.github.io/)*
-*IOA Indicator Of Attack*
-*IOC Indicator Of Compromise*
-**TTP and Attack Purposes APT File*
-*XDR and Wazuh (FIM Agents)*
-*inotify_base_watches="16384" in maldet*
-*scan io_nice*
-*behavioral detection*
+*insmod, rmmod, .ko files in Injection and Rootkit attacks* </br>
+[auditd-mtre github](https://github.com/uf0o/auditd-mitre) </br>
+[Neo23x0 Auditd github](https://github.com/Neo23x0/auditd) </br>
+[bfuzzy auditd attack github](https://github.com/bfuzzy/auditd-attack) </br>
+[Kirtar22 Github Litmus Test](https://github.com/Kirtar22/Litmus_Test) </br>
+*process injection and ptrace* </br>
+*[GTFObin And Threat Hunting](https://gtfobins.github.io/)* </br>
+*IOA Indicator Of Attack* </br>
+*IOC Indicator Of Compromise* </br>
+**TTP and Attack Purposes APT File* </br> 
+*XDR and Wazuh (FIM Agents)* </br>
+*inotify_base_watches="16384" in maldet* </br>
+*scan io_nice* </br>
+*behavioral detection* </br>
 
 
 
@@ -3295,13 +3295,13 @@ confirm the functionality via: </br>
 `dig DNSKEY @192.168.112.135 iran.ir`
 
 
-
-*RFC 7129 NSEC3* 
-*shanon entropy*
-*NXDomains*
-*Rebinding Attacks*
-*Phantom Domains attacks*
-*lock up attacks*
+ 
+*RFC 7129 NSEC3*  </br>
+*shanon entropy* </br>
+*NXDomains* </br>
+*Rebinding Attacks* </br>
+*Phantom Domains attacks* </br>
+*lock up attacks* </br>
 
 
 
@@ -3726,8 +3726,8 @@ auth    required pam_google_authenticator.so
 to prevent none-root users from login to OS, we can create `etc/nolign` file and inserting a message inside it. then each non-root user that wants to login will receive that message and cannot enter anymore. this file actually works with `pam_nologin` module. further information is in `man pam_nologin`  
 
 
-*[GTFObin And CTF (Capture the Flag)](https://gtfobins.github.io/)*
-*NIST SP 800 Series and Compliance are not being followed in Iran accurately and can be a potential for those whom want to make impact*
+*[GTFObin And CTF (Capture the Flag)](https://gtfobins.github.io/)* </br>
+*NIST SP 800 Series and Compliance are not being followed in Iran accurately and can be a potential for those whom want to make impact* </br>
 
 
 
@@ -3984,8 +3984,49 @@ With the `pcap-log` option, you can save all packets that are registered by Suri
 
 
 ### IPSEC (IP Security)
+**IPSec** (Internet Protocol Security) is a suite of protocols and algorithms for securing data transmitted over the internet or any public network. The Internet Engineering Task Force (**IETF**) developed the IPSec protocols in the mid-1990s to provide security at the IP layer through **authentication** and **encryption** of IP network packets. IPsec and work both on **Transport**(Host to Host encryption Connection) and Tunnel Mode (Firewall to Firewall Connection). </br>
+IPSec originally defined two protocols for securing IP packets:
+- Authentication Header (**AH**)
+- Encapsulating Security Payload (**ESP**) </br>
+The former provides **data integrity** and **anti-replay** services, and the latter encrypts and authenticates data. </br>
+**Note**: The anti-replay protocol provides Internet Protocol (IP) packet-level security by making it impossible for a hacker to intercept message packets and insert changed packets into the data stream between a source computer and a destination computer. **By detecting packets that match the sequence numbers of those that have already arrived**, the mechanism helps ensure that invalid packets are discarded and communication integrity is maintained.
+
+The IPSec suite also includes Internet Key Exchange (**IKE**), which is used to generate shared security keys to establish a security association (**SA**). SAs are needed for the encryption and decryption processes to negotiate a security level between two entities. A special router or firewall that sits between two networks usually handles the SA negotiation process.
+
+**Note**: There **has to be** a Security Association (SA) between the VPN peers for this IKE mechanism to work. This uses **key based** data encryption and decryption methods. And, data flow through the VPN tunnel **can only happen** after this connection.
 
 
+#### Host-to-Host Encryption over IPsec
+one of the packages that can be used to adjust IPsec is `libreswan`. and in the following we are going to configure it on 2 different hosts. </br>
+to install it: <br>
+`apt install libreswan` after installation make sure that you restart the service via `systemctl restart ipsec` cause it will generate `etc/ipsec.conf` file. (just in case) </br>
+
+after installation and restarting service, redirect to `/etc/ipsec.d` which contains 3 files and one directory:
+`cert9.db`, `key4.db`: both these files are related to NSS Library that IPsec uses for its cryptography. if you use `file cert9.db` you will see that SQLite is being used as for fast and efficient db format. 
+`pkcs11.txt`: the pkcs11 in ipsec means that this service included all standards of **Public-Key Cryptography Standard** (PKCS). 11 is the specified version of it.
+`/policies`: contains policies that that IPSec will obey and function based on that
+
+
+**NSS**
+NSS (Network Security Services) is one of **Open-Source Cryptography Libraries** similar to TLS or Openssl that many services are using in the encryption and the cryptography. tools like **curl**, **IPsec**, **PKI** and etc are using NSS as the source for cryptography. </br>
+for instance if you change directory to `/etc/pki`, you will see `nssdb/` which contains related data to NSS.
+
+**CAUTION**: </br>
+on most scenarios when a new device is given to us it is recommended to delete both `cert9.db` and `key4.db` and then run `ipsec initnss` which reinitiate both files.
+
+
+#### Left Right in IPsec
+unlike other connection arbitrary that use client/host; In IPsec, "left/west" and "right/east" are used to distinguish between the two sides of a VPN connection, and they are arbitrary. The terms are used to define connection parameters without needing to know which side is local and which is remote.
+
+
+*pkcs11* </br>
+*2021-2109 cve exploit-db, /var/lib/suricata/rules/suricata.rules signatures sid: 2031532 and hexcode in url* </br>
+*Snort* </br>
+*Suricata* </br>
+*Bro (Zeek)* is another NSM (Network Security Monitoring) Commonly used beside Snort and Suricata </br>
+*OSSEC* </br>
+*Samhain Labs* </br>
+*OpenDLP* </br>
 
 
 
