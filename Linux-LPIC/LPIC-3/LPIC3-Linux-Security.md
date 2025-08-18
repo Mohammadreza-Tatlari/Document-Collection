@@ -4020,27 +4020,27 @@ unlike other connection arbitrary that use client/host; In IPsec, "left/west" an
 
 
 #### Firewall Configuration for IPSec
-for IKE, ESP and AH Protocol to work in IPSec service, we need to allow 500 and 4500/UDP ports.
+for IKE, ESP and AH Protocol to work in IPSec service, we need to allow 500 and 4500/UDP ports. </br>
 if using `firewalld`: </br>
-`firewall-cmd --add-service="ipsec" --permanent` => it will read from the ipsec xml file and open proper ports.
+`firewall-cmd --add-service="ipsec" --permanent` => it will read from the ipsec xml file and open proper ports. </br>
 `firewall-cmd reload`
 
 
 ### Starting IPsec Service between hosts (2 hosts in this scenario)
 1. to manage IPsec, we use `ipsec` commmand, to start a new host, we need to generate a hostkey for that.
-`ipsec newhostkey` => it will generate a new `CKAID` which is stored inside the NSS (this should be generated on both hosts)
-`ipsec showhostkey --list` => to show the all generated hostkeys
-`ipsec showhostkey  --left --ckaid <CKAID>` => to see the public key of related CKAID, the `--left/--right` will cause the public key to have right/left signiture before the public key.
+`ipsec newhostkey` => it will generate a new `CKAID` which is stored inside the NSS (this should be generated on both hosts) </br>
+`ipsec showhostkey --list` => to show the all generated hostkeys </br>
+`ipsec showhostkey  --left --ckaid <CKAID>` => to see the public key of related CKAID, the `--left/--right` will cause the public key to have right/left signiture  before the public key.
 
-2. after generating hostkeys, we need to create a common configuration file that will establish the tunnel between two sides. (one to one tunneling)
-create a config file in `etc/ipsec.d` file. **NOTE**: the indentation and lower/upper case is important in configuration 
-vim `etc/ipsec.d/one-to-one.conf`(this file should be created on both hosts):
-there are parameters that have different definition:
-`conn`: this is the connection name of our peer-to-peer tunnel.
-`leftid`: the id name that needs to be defined for ipsec which should interpret it as `@west` 
-`rightid`: the id name that needs to be defined for ipsec which should interpret it as `@east` 
-`leftrsasignkey/rightrsasignkey`: the sign keys that can be optain from `ipsec showhostkey` command.
-`authby=rsasig`: to only use asymmetric encryption for first authentication, to improve performance we only authentication witha asymmetric and keep connection on symmetric
+2. after generating hostkeys, we need to create a common configuration file that will establish the tunnel between two sides. (one to one tunneling) </br>
+create a config file in `etc/ipsec.d` file. **NOTE**: the indentation and lower/upper case is important in configuration </br>
+vim `etc/ipsec.d/one-to-one.conf`(this file should be created on both hosts): </br>
+there are parameters that have different definition: </br>
+`conn`: this is the connection name of our peer-to-peer tunnel. </br>
+`leftid`: the id name that needs to be defined for ipsec which should interpret it as `@west`  </br>
+`rightid`: the id name that needs to be defined for ipsec which should interpret it as `@east`  </br>
+`leftrsasignkey/rightrsasignkey`: the sign keys that can be optain from `ipsec showhostkey` command. </br>
+`authby=rsasig`: to only use asymmetric encryption for first authentication, to improve performance we only authentication witha asymmetric and keep connection on symmetric </br>
 the format is as follow:
 <pre>
 conn testtunnel
@@ -4055,14 +4055,14 @@ conn testtunnel
 then restart the service: </br>
 `ipsec setup start` => it is equivalent of `systemctl restart ipsec.service`
 
-3. since we might have multiple connections, we need to define which configuration and tunnel we are going to use (these command should be done on both sides):
-`ipsec auto --add testtunnel` => it will add the testtunnel. but it is not established
+3. since we might have multiple connections, we need to define which configuration and tunnel we are going to use (these command should be done on both sides): </br>
+`ipsec auto --add testtunnel` => it will add the testtunnel. but it is not established </br>
 `ipsec auto --up testtunnel` => this command will establish the connection 
 
 
-4. test the connection:
-    1. on right host send ping to your left host: `ping 192.168.112.135`
-    2. on the left host use tcpdump to capture the related traffic:
+4. test the connection: </br>
+    1. on right host send ping to your left host: `ping 192.168.112.135` </br>
+    2. on the left host use tcpdump to capture the related traffic: </br>
     `tcpdump -n -i ens33 host 192.168.56.102` => the -n means to make the values numerical, similar to `route -n` that shows gateway-ip instead of gateway word. the `-i` will filter specific interface and `host` will only capture traffic from related host IP. 
 
 
