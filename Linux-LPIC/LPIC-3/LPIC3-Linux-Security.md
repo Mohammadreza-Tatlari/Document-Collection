@@ -4019,6 +4019,61 @@ on most scenarios when a new device is given to us it is recommended to delete b
 unlike other connection arbitrary that use client/host; In IPsec, "left/west" and "right/east" are used to distinguish between the two sides of a VPN connection, and they are arbitrary. The terms are used to define connection parameters without needing to know which side is local and which is remote.
 
 
+#### Firewall Configuration for IPSec
+for IKE, ESP and AH Protocol to work in IPSec service, we need to allow 500 and 4500/UDP ports.
+if using `firewalld`: </br>
+`firewall-cmd --add-service="ipsec" --permanent` => it will read from the ipsec xml file and open proper ports.
+`firewall-cmd reload`
+
+
+### Starting IPsec Service between hosts (2 hosts in this scenario)
+1. to manage IPsec, we use `ipsec` commmand, to start a new host, we need to generate a hostkey for that.
+`ipsec newhostkey` => it will generate a new `CKAID` which is stored inside the NSS (this should be generated on both hosts)
+`ipsec showhostkey --list` => to show the all generated hostkeys
+`ipsec showhostkey  --left --ckaid <CKAID>` => to see the public key of related CKAID, the `--left/--right` will cause the public key to have right/left signiture before the public key.
+
+2. after generating hostkeys, we need to create a common configuration file that will establish the tunnel between two sides. (one to one tunneling)
+create a config file in `etc/ipsec.d` file. **NOTE**: the indentation and lower/upper case is important in configuration 
+vim `etc/ipsec.d/one-to-one.conf`(this file should be created on both hosts):
+there are parameters that have different definition:
+`conn`: this is the connection name of our peer-to-peer tunnel.
+`leftid`: the id name that needs to be defined for ipsec which should interpret it as `@west` 
+`rightid`: the id name that needs to be defined for ipsec which should interpret it as `@east` 
+`leftrsasignkey/rightrsasignkey`: the sign keys that can be optain from `ipsec showhostkey` command.
+`authby=rsasig`: to only use asymmetric encryption for first authentication, to improve performance we only authentication witha asymmetric and keep connection on symmetric
+the format is as follow:
+<pre>
+conn testtunnel
+        leftid=@west
+        left=192.168.112.135
+        leftrsasigkey=0sAwEAAa3tD9uk+qN7R17594dLGMjzkIoZ8zis3fcnlWNFx4uH1fFphu35w0ph2qIEQ5nRG8uTl3gaYe5h0Pc/+FCondtEeMfh2Q9zw5ryKbAqojZEKRNLYil8brWWoIEcA1W6IVcBbSiF2RDYWUPoK4npYx8MecztL5uEy7qnUQekAUGzPNGk+Y7l8AVUMNt1ye41BiWq9ZWP5xGRwBa8Fj67m4e/J11zXJVnFMqYjOzGZ9yiCONe44pW2BrW3grbPDL530uwmV08GQ2RHdsatgU22gADtw7KBXym/M4qj69tEixUKDvDv1jyrKjLPePpaMn3SzyIQLTj4uE82pYpc+uJMEiLF3u9sV6b2+9b8G3UmWgprBuOIrvn9tBAu3VGL7UCek8yHFSFBIs4Sk12PQMT5pt0tk2qSsQ4xcifxISE0kiLygLhBeEOMF2hty8KKmLwFWq7emOU0/ulPloVJknotIewt73pK683Q25p5ohzQpW5FGo8wzug9343cNuxZdM7HtaLLlGsxDjq855HOXMr3STHatmGU7n7sk5VDBbuBe7OR27y6OwTPzXZtxWfyaeqfyoj
+        right=192.168.56.102
+        rightrsasigkey=0sAwEAAfnKcnFlOeJJybl2QeKD+eulB+kJqb/FTq3DJxOUHXbbQj0ojt1Jpqd6HXwp9MDk9Hmb75ogrjqRzVo6VuV/MEEI0Rm57Xw2d9aMbSBAzFW1C1awuXR9coArklkOH9NilRBJvHCZl/AM3x6yQa6YaI0CwHKWRNpUMWAwnlJcVyo0e9dWbGLaMGRlo9VnL8nlCkh/7MMCdhSmQKirLBnt9VPyv1orw7nv4e9X4ACMnsetB9oOBrZGPAqI/axQ+eD/koI2VMkRmoRNlohQD9qIpZIjPcudnF45bkbcwbeW8ELF1/ZQpLpvBdg/6Ou0ppBfr48wbEoPWRu4BG7/uv5j8bByprN6+62RKxOzxyEIlvVGoYBYZHy9C0fL/qIF0g0lkLLCjsgQNlg7rDCB8+OSuC4kQ45XRDbNOFmnosfmKe8uebt0w8xXT3W6H4dS7A6kvNXePGhu5zJoDwFwV5yeDBcv84AeGrXWgCrqAzkz3SdlASrC+Bxlu4ZW3xQaK4GuwH8/FvqPQcUm4Hoe9JUQjyuYOKsqQS4Inu6kC3w3JS0NxUGDsqhZ
+        authby=rsasig
+</pre>
+
+then restart the service: </br>
+`ipsec setup start` => it is equivalent of `systemctl restart ipsec.service`
+
+3. since we might have multiple connections, we need to define which configuration and tunnel we are going to use (these command should be done on both sides):
+`ipsec auto --add testtunnel` => it will add the testtunnel. but it is not established
+`ipsec auto --up testtunnel` => this command will establish the connection 
+
+
+4. test the connection:
+    1. on right host send ping to your left host: `ping 192.168.112.135`
+    2. on the left host use tcpdump to capture the related traffic:
+    `tcpdump -n -i ens33 host 192.168.56.102` => the -n means to make the values numerical, similar to `route -n` that shows gateway-ip instead of gateway word. the `-i` will filter specific interface and `host` will only capture traffic from related host IP. 
+
+
+
+
+
+
+
+
+
+
 *pkcs11* </br>
 *2021-2109 cve exploit-db, /var/lib/suricata/rules/suricata.rules signatures sid: 2031532 and hexcode in url* </br>
 *Snort* </br>
