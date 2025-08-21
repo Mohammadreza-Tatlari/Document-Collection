@@ -4067,13 +4067,93 @@ then restart the service: </br>
 
 
 
+### Other User Password Complexity Implementation and Old Password Policies.
+in a secure Linux OS environment, it is recommended to force Users to have complex password or update their password regularly. </br>
+to apply this setup, we need to chang configuration on `/etc/pam.d/system-auth`
+vim `/etc/pam.d/system-auth`
+`password    sufficient    pam_unix.so try_first_pass use_authtok remember=10 sha512 shadow` => intead of using `nullok` we use `remember=10`. it will keep a hash format of all 10 previous passwords and when user change password and whats to set a password that is saved as hash it will throw:
+<pre>
+BAD PASSWORD: the password is just rotated old one
+Password has been already used. choose another
+</pre>
+
+
+
+### how to block USB Input 
+to disable USB inputs on OS, there are several packages but in this scheme we will use `usbguard`. to install it: </br>
+`sudo apt install usbguard`
+
+- 1. usbguard directory consist of: </br>
+`IPCAccessControl.d`: it holds all data Related to IPC (Inter Process Communication) and access control rules </br>
+`rules.conf`: the rules that usbguard will follow for managing USB and other Input functionality </br>
+`rules.d`: holds customized rules </br>
+`usbguard-daemon.conf`: the usbgaurd behavior over rules. (these is the file we will work mostly in this section) </br>
+
+- 2. important parameters in `usbguard-daemon.conf`: </br>
+`ImplicitPolicyTarget=block`: How to treat devices that don't match any rule in the policy. </br>
+`PresentDevicePolicy=apply-policy`: How to treat devices that are already connected when the daemon starts.
+
+- 3. restart service
+`systemctl restart usbguard`
+
+- now if you import a USB into your device it will be appeared in `lsusb` but it wonn't be **mounted**
+
+
+to allow specific usb to be mountable, we can use `usbguard` commands themselves.
+
+- to allow specific usb to be mounted on OS. 
+1. we need to insert the USB to our device
+2. use the command below to add newly inserted USB to allowed inputs </br>
+`usbgaurd generate-policy -X > /etc/usbguard/rules.conf`
+3. restart service via: `systemctl restart usbguard`
+
+4. to make a USB permanently added to device, use the command below: </br>
+`usbguard allow-device <ID> -p` for example `usbguard allow-device 0d4b:00d2` => the `-p` switch will make that ID permanent 
+
+- to remove a rule from usbguard: </br>
+`usbguard list-rules` => it will list all the rules that are present. </br>
+`usbguard remove-rule <rule number>` => removes the rule based on the number that has appeared in `list-rules`
+`systemctl restart usbguard` => restart Service
+
+
+
+
+### Password Setup on Grub
+it is possible to change root password in grub or edit sensitive files. in order to prevent grub from being manipulated, it is mandatory to set password authentication to access grub. to do so:
+1. we need to use `grub2` utilities to set password
+`grub2-setpassword` => it will prompt a wizard to set password for grub. then it creates a `user.cfg` file inside `/boot/grub2/` </br>
+`user.cfg` holds password with pbkdf2 and in hashed format.
+
+if `grub2.cfg` is examined there is a snippet that checks if user.cfg exists and if so then it will prompt user for password:</br>
+```sh
+### BEGIN /etc/grub.d/01_users ###
+if [ -f ${prefix}/user.cfg ]; then
+  source ${prefix}/user.cfg
+  if [ -n "${GRUB2_PASSWORD}" ]; then
+    set superusers="root"
+    export superusers
+    password_pbkdf2 root ${GRUB2_PASSWORD}
+  fi
+fi
+### END /etc/grub.d/01_users ###
+```
+
+2. regenerate gurb configuration to apply changes 
+`grub2-mkconfig -o /boot/grub2/grub.cfg`
+
+- finally if we reboot our system and want to enter to grub editing via `e` switch, password authentication will be prompted.
+
+
+
+### crontab hardening (just a portion) 
+in a restricted system it is required to prevent all users from being able to create a cron job. thus, in cron configuration directory all users are predefined as denied and we only use allow configuration for specific users. for example, in `/etc/` we have `cron.allow` and presume all other users that are in `cron.deny` by deault.
+so only root user can be set in `cron.allow` file. Note that this file should be created.
 
 
 
 
 
-
-
+*FreeIPA* </br>
 *pkcs11* </br>
 *2021-2109 cve exploit-db, /var/lib/suricata/rules/suricata.rules signatures sid: 2031532 and hexcode in url* </br>
 *Snort* </br>
@@ -4086,7 +4166,7 @@ then restart the service: </br>
 
 
 
-### how can we encrpyt the whole filesystem "/" and even let the system use /boot to bootup? (related to LUKS)
+### how can we encrpyt the whole filesystem "/" but still let the system use /boot to bootup? (related to LUKS)
 for encrypting the whole filesystem we can define our key inside the `initramfs` environment
 
 ### how to convert pem to data and data to pem as certiifcation
