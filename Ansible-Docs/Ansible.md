@@ -586,4 +586,274 @@ check out the configuration file in control node:
 
 
 
+### Adding Users and Boots trapping
+
+#### [user](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/user_module.html#ansible-builtin-user-module-manage-user-accounts) module
+To add a user in Ansible, you use the `user` module within a `playbook` or ad-hoc command. The user module manages user accounts on target systems. Depending on the state parameter, it can create, modify, or remove users. You can also set options like home directory, shell, UID, and encrypted passwords.
+
+#### [authorized_key](https://docs.ansible.com/ansible/2.9/modules/authorized_key_module.html#authorized-key-adds-or-removes-an-ssh-authorized-key) module
+Adds or removes SSH authorized keys for particular user accounts.
+
+for example, we are going to add a user with name simone to our `web_servers` hosts and also add that user to sudoer with SSH key to connect remotely:
+create a `sudoer_simon` file and add then set permission to it (**NOTE: there should not be a syntax error!**).</br>
+
+`sudoer_simon`:
+```ini
+simone ALL=(ALL) NOPASSWD: ALL
+```
+
+`playbook.yaml`:
+```yaml
+---
+- hosts: web_servers
+  become: true
+  tasks:
+    - name: adding simone user 
+      tags: always
+      user:
+        name: simone
+        group: root
+
+    - name: add ssh key for simone
+      tags: always
+      authorized_key:
+        user: simone
+        key: "ssh-public string comes here"     # example: cat ~/.ssh/ansible.pub
+
+    - name: add sudeors file for simone
+      tags: always
+      copy:
+        src: sudoer_simone      # file that was created to add permissions
+        dest: /etc/sudoers.d/simone
+        owner: root
+        group: root
+        mode: 0440
+```
+
+run the script via: </br>
+`ansible-playbook --ask-become-pass playbook.yaml`
+
+- check out `/etc/shadow` file in control nodes to see if `simone` user is added. </br>
+- check authorized key on control hosts in simone's `.ssh/authorized_keys`. </br>
+- ssh to the node hosts via ansible private key to verify the ssh connection: </br> 
+`ssh -i ~/.ssh/ansible simone@172.24.24.13`
+
+
+
+### passing password with `remote_user` in `ansible.cfg`
+in `ansible.cfg`, by using `remote_user` we set the login user for the target machines. When blank is uses, the connection plugins the default. normally the user currently executing Ansible. </br>
+for example:
+```ini
+[defaults]
+inventory = ./inventory
+private_key = ~/.ssh/ansible
+remote_user = mohammadreza      # add remote_user 
+```
+
+after the change we can simply run ansible play book without `--ask-become-pass`: </br>
+`ansible-playbook playbook.yaml`
+
+
+
+### Roles in Ansible
+Roles let you automatically load related vars, files, tasks, handlers, and other Ansible artifacts based on a known file structure. After you group your content into roles, you can easily reuse them and share them with other users. [Role structure](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#roles).
+
+in this scenario we are going to associate multiple roles into our playbook and then create directory and `main.yaml` file based on each role. </br>
+
+1. Create a roles directory
+ `mkdir roles`
+
+2. Create a directory for each role you wish to add:
+```sh
+cd roles
+mkdir base
+mkdir db_servers
+mkdir file_servers
+mkdir web_servers
+mkdir workstations
+```
+
+3. Inside each role directory, create a tasks directory and relative `main` and folder files
+```sh
+cd <role_name>
+mkdir tasks
+```
+
+- `based/main.yaml`:
+```yaml
+- name: add ssh key for simone
+  authorized_key:
+    user: simone
+    key: "ssh-ed25519- private key"
+```
+
+- `db_servers/main.yaml`
+```yaml
+- name: install mariadb server package (CentOS)
+   tags: centos,db,mariadb
+   dnf:
+     name: mariadb
+     state: latest
+   when: ansible_distribution == "CentOS"
+ 
+ - name: install mariadb server
+   tags: db,mariadb,ubuntu
+   apt:
+     name: mariadb-server
+     state: latest
+   when: ansible_distribution == "Ubuntu"
+```
+
+- `file_servers/main.yaml`
+```yaml
+- name: install samba package
+  tags: samba
+  package:
+    name: samba
+    state: latest
+```
+
+- `workstations/main.yaml`
+```yaml
+- name: install unzip
+  package:
+    name: unzip
+
+- name: install terraform
+  unarchive:
+    src: https://releases.hashicorp.com/terraform/0.12.28/terraform_0.12.28_linux_amd64.zip
+    dest: /usr/local/bin
+    remote_src: yes
+    mode: 0755
+    owner: root
+    group: root
+```
+
+- `web_server/main.yaml`
+```yaml
+ - name: install httpd package (CentOS)
+   tags: apache,centos,httpd
+   dnf:
+     name:
+       - httpd
+       - php
+     state: latest
+   when: ansible_distribution == "CentOS"
+ 
+ - name: start and enable httpd (CentOS)
+   tags: apache,centos,httpd
+   service:
+     name: httpd
+     state: started
+     enabled: yes
+   when: ansible_distribution == "CentOS"
+ 
+ - name: install apache2 package (Ubuntu)
+   tags: apache,apache2,ubuntu
+   apt:
+     name:
+       - apache2
+       - libapache2-mod-php
+     state: latest
+   when: ansible_distribution == "Ubuntu"
+ 
+ - name: change e-mail address for admin
+   tags: apache,centos,httpd
+   lineinfile:
+     path: /etc/httpd/conf/httpd.conf
+     regexp: '^ServerAdmin'
+     line: ServerAdmin somebody@somewhere.net
+   when: ansible_distribution == "CentOS"
+   register: httpd
+ 
+ - name: restart httpd (CentOS)
+   tags: apache,centos,httpd
+   service:
+     name: httpd
+     state: restarted
+   when: httpd.changed    
+ 
+ - name: copy html file for site
+   tags: apache,apache,apache2,httpd
+   copy:
+     src: default_site.html
+     dest: /var/www/html/index.html
+     owner: root
+     group: root
+     mode: 0644
+```
+
+
+the directory structure is as follow: 
+```
+ansible/
+    site.yaml   
+    roles/
+        /workstations
+            /task
+                main.yaml
+        /web_servers
+            /task
+                main.yaml
+                /file
+                    default_site.index
+        /db_servers
+            /task
+                main.yaml
+        /file_servers
+            /task
+                main.yaml
+```
+
+`site.yaml`:
+```yaml
+ --- 
+ - hosts: all
+   become: true
+   pre_tasks:
+ 
+   - name: update repository index (CentOS)
+     tags: always
+     dnf:
+       update_cache: yes
+     changed_when: false
+     when: ansible_distribution == "CentOS"
+ 
+   - name: update repository index (Ubuntu)
+     tags: always
+     apt:
+       update_cache: yes
+     changed_when: false
+     when: ansible_distribution == "Ubuntu"
+ 
+ - hosts: all
+   become: true
+   roles:
+     - base
+    
+ - hosts: workstations
+   become: true
+   roles:
+     - workstations
+ 
+ - hosts: web_servers
+   become: true
+   roles:
+     - web_servers
+ 
+ - hosts: db_servers
+   become: true
+   roles:
+     - db_servers
+ 
+ - hosts: file_servers
+   become: true
+   roles:
+     - file_servers
+```
+
+run the new playbook:
+`ansible-playbook --ask-become-pass site.yml`
+
+
 
