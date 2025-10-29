@@ -856,4 +856,70 @@ run the new playbook:
 `ansible-playbook --ask-become-pass site.yml`
 
 
+### [Host Variables](https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html#assigning-a-variable-to-one-machine-host-variables) and Handlers
+You can easily assign a variable to a single host and then use that variable later in playbooks. You can do this directly in your inventory file. to add host variables, first a `/host_vars` directory should be created inside the root directory of ansible files. this directory will contain variables. </br>
+for creating host variables, create file based on host's IP or Domain Name. for instance: </br>
+```
+/host_vars
+    ./172.24.24.11.yaml
+    ./172.24.24.12.yaml
+```
+
+inside each file we add variables that are going to be used for each hosts for instance: </br>
+
+`vim 172.24.24.11.yaml`:
+
+```ini
+apache_package_name: apache2
+apache_serviec: apache2
+php_package: libapache2-mod-php
+```
+
+we can then use these variables inside roles and playbook as follow:
+
+```yaml
+- name: restart apache
+  tags: apache,ubuntu
+  service:
+    name: "{{ apache_service }}"
+    state: restarted
+  when: apache.changed
+```
+
+
+#### Using Handlers
+Sometimes you want a task to run only when a change is made on a machine. For example, you may want to restart a service if a task updates the configuration of that service, but not if the configuration is unchanged. Ansible uses handlers to address this use case. Handlers are tasks that only run when notified. </br>
+Tasks can instruct one or more handlers to execute using the `notify` keyword. The `notify` keyword can be applied to a task and accepts a list of handler names that are notified on a task change. Alternatively, a string containing a single handler name can be supplied as well
+
+for instance: </br>
+we have a playbook that has a task which changes the email of apache service and needs to change the config file.
+
+```yaml
+---
+- hosts: all
+  become: true
+  tasks: 
+    - name: change e-mail address for admin
+      tags: apache,centos,httpd
+      lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^ServerAdmin'
+        line: ServerAdmin mohammadreza@email.com
+      when: ansible_distribution == "CentOS"
+      notify: restart_apache
+
+```
+
+after that we need to create the `restart_apache` task in a `/handler/main.yaml` directory. note that this file should be created in `/handler` directory. if `roles` are being used in our ansible code then each of these `/handler` files should be created inside each role's related file.
+
+`handler/main.yaml`
+```yaml
+- name: restart_apache
+  service: 
+    name: "{{ apache_service }}
+    state: restarted 
+```
+
+
+
 
