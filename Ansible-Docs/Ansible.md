@@ -907,7 +907,6 @@ we have a playbook that has a task which changes the email of apache service and
         line: ServerAdmin mohammadreza@email.com
       when: ansible_distribution == "CentOS"
       notify: restart_apache
-
 ```
 
 after that we need to create the `restart_apache` task in a `/handler/main.yaml` directory. note that this file should be created in `/handler` directory. if `roles` are being used in our ansible code then each of these `/handler` files should be created inside each role's related file.
@@ -921,5 +920,9 @@ after that we need to create the `restart_apache` task in a `/handler/main.yaml`
 ```
 
 
+
+### Templates in Ansible
+A template in Ansible is a Jinja2-formatted file used to create dynamic content, such as configuration files, based on variables and host-specific data. </br>
+the `template` module is part of ansible-core and included in all Ansible installations. In most cases, you can use the short module name `template` even without specifying the collections keyword. However, we recommend you use the **Fully Qualified Collection Name (FQCN)** `ansible.builtin.template` for easy linking to the module documentation and to avoid conflicting with other collections that may have the same module name.
 
 
