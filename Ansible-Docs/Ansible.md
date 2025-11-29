@@ -144,7 +144,7 @@ then in the same directory where `ansible.cfg` is present do the following comma
 
 
 ### Writing Playbook
-in ansible, palybooks are written in `.yaml` format. in this section we are going to write a simple playbook that will install apache2 packages on all hosts.
+in ansible, playbooks are written in `.yaml` format. in this section we are going to write a simple playbook that will install apache2 packages on all hosts.
 
 1. `vim apache2_installer.yaml`:
 
@@ -226,7 +226,7 @@ PLAY RECAP *********************************************************************
 
 
 ### When Condition in Ansible
-The task will run only if the condition is true. If it is false, the task will be skipped to ensure no misconfigurations with environments occur will take place. 
+The task will run only if the condition is true. If it is false, the task will be skipped to ensure no misconfigurations with environment occur will take place. 
 for instance: <br>
 we are going to add a condition that if the distro is Ubuntu or debain playbook will use `apt` package and otherwise it will skip and apply the relative task
 
@@ -297,7 +297,7 @@ in previous sections we have learn how to install packages in different task but
   become: true
   tasks:
 
-  - name: installing apache2 and php packages packages
+  - name: installing apache2 and php packages
    apt:
      name:          # in this section we are installing two different packages in a single task
       - apache2
@@ -595,7 +595,7 @@ To add a user in Ansible, you use the `user` module within a `playbook` or ad-ho
 Adds or removes SSH authorized keys for particular user accounts.
 
 for example, we are going to add a user with name simone to our `web_servers` hosts and also add that user to sudoer with SSH key to connect remotely:
-create a `sudoer_simon` file and add then set permission to it (**NOTE: there should not be a syntax error!**).</br>
+create a `sudoer_simon` file and then set permission to it (**NOTE: there should not be a syntax error!**).</br>
 
 `sudoer_simon`:
 ```ini
