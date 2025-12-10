@@ -155,16 +155,142 @@ EXT_NET_GATEWAY=${EXT_NET_GATEWAY:-'172.31.11.254'}
 
 # Openstack Network (Neutron)
 
+## Neutron Architecture
+Neutron is an OpenStack project to provide "networking as a service" between interface devices (e.g., vNICs) managed by other Openstack services (e.g., nova).
+Neutron gives cloud tenants an API to build rich networking topologies, and configure advanced network policies in the cloud. for example create multi-tier web application topology.
 
 
+### neutron-server
+neutron-server provides a webserver that exposes the Neutron API, and passes all web service calls to the Neutron plugin for processing. in our kolla ansible project we are running Neutron service in a docker container. you can verify it via:
+- `docker ps | grep neutron-server` => it will list all service that has been run via `neutron-server`
+- `docker ps | grep neutron_server`
 
 
+### Modular Layer 2 (ML2) Architecture Neutron ([ML2 Plug-in](https://docs.openstack.org/neutron/latest/admin/config-ml2.html))
+The Modular Layer 2 (ML2) neutron plug-in is a framework allowing OpenStack Networking to simultaneously use the variety of layer 2 networking technologies found in complex real-world data centers. The ML2 framework distinguishes between the two kinds of drivers that can be configured. </br>
+
+to check drivers and configs of ml2 in neutron service we can check it in docker via:
+- `docker exec -it neutron_server cat /etc/neutron/plugins/ml2/ml2_conf.ini`
 
 
+### network services
+
+to check all related process such as openvswitch, l3, l3-agent by hosts via:
+- `openstack network agent list -c Host -c Binary`
+
+we can list docker containers via:
+- `docker ps | grep neutron`
 
 
+### openvswitch
+we might want to run network services such as DHCP or L3 Routing on other machines but how can each compute node find out how to route its network traffic? thats where we use openvswtich and ovs-agent. they are responsible for managing the local virtual swtich and connect them in to other nodes because ovs agent is interacting in layer 2 so each compute node can send broadcast message to receive service or connection. we can confirm its running contaner via: </br>
+
+- `docker ps | grep openvswitch`
 
 
+### ovs-agent ([Open vSwitch L2 Agent](https://docs.openstack.org/neutron/latest/contributor/internals/openvswitch_agent.html))
+ovs-neutron-agent can be configured to use different networking technologies to create project isolation. These technologies are implemented as ML2 type drivers which are used in conjunction with the Open vSwitch mechanism driver.
+
+
+#### ovs agent firewall capability ([Open vSwitch Firewall Driver](https://docs.openstack.org/neutron/latest/contributor/internals/openvswitch_firewall.html))
+ovs is not only used for layer 2 capability but it is also responsible for access rules and security enforcing. the ovs-agent uses `iptables` as its own `firewall_driver` check out the drivers by: </br>
+- `docker exec -it neutron_openvswitch_agent cat /etc/neutron/plugins/ml2/openvswitch_agent.ini` 
+
+`iptables` as a driver adds complexity and performance overhead. another option for that is `openvswitch`.
+
+
+### openvswitch firewall
+the `openvswitch` driver is the native and more cleanr and more efficient approach for applying firewall security. for better performance we can reconfigure our `kolla-ansible` configuration to use native ovs firewall. we do this by adding custome configuration file that kolla ansbile will override the default setting.
+
+1. create a directory for new neutron configuration file.
+- `mkdir -p /etc/kolla/config/neutron`
+
+2. add the new `openvswitch_agent.ini` to the configuration file and change to `firewall_driver` to `openvswitch`
+- `vim /etc/kolla/config/neutron/openvswitch_agent.ini`
+
+``` ini
+[securitygroup]
+firewall_driver = openvswitch
+
+```
+
+3. run the kolla-ansible deployment playbook to apply new configuration
+- `kolla-ansible deploy -i all-in-one`
+
+
+### Tenant Network and Provider Network
+
+#### 1. Tenant Network
+think of it as your own private project scope network space. Tenant networks are created by users and Neutron is configured to automatically select a network segmentation type like VXLAN or VLAN. The user cannot select the segmentation type. these are called overlay network which it means that they run over the existing physical networks. openstack achieve this through encapsulation. you can create these virtual network without need for network teams to be envolved
+
+#### 2. Provider networks 
+provider network is a direct bridge to a physical network that already exists outside of openstack cloud. these are created by administrators, that can set one or more of the following attributes: </br>
+Segmentation type (flat, VLAN, Geneve, VXLAN, GRE) </br>
+Segmentation ID (VLAN ID, tunnel ID) </br>
+Physical network tag </br>
+Any attributes not specified will be filled in by Neutron. </br>
+
+
+### Network and Subnet Configuration
+for 2 different vms to communication, they first need a common network. the openstack network will act as a distributed layer between 2 VMs. to do that lets create a network
+
+1. create a network
+- `openstack network create <name-of-network>`
+
+2. create a subnet which belongs to the created network and define IP address pool and dns server.
+- `openstack subnet create --network <name-of-network> --subnet-range 192.168.1.0/24 --gateway 192.168.1.254 --dns-nameserver 8.8.8.8 <name-of-subnet`
+
+in openstack, VMs don't connect directly to the network, they connect through ports which are like virtual network plug. a port holds the MAC address, IP address, and security.
+
+we can list our ports in openstack via:
+- `openstack port list`
+
+inpsect the port s device owner via:
+- `openstack port show <ID> -c device_owner`
+
+inspect dhcp provder nodes
+- `openstack network agent list --agent-type dhcp`
+
+
+#### how does dhcp agent connect to networks?
+it uses the `namespaces` which is a linux feature. it is an isolated copy of the networking stack with its own interfaces, routing tables and firewall rules. </br>
+to list networking namepsaces we use:
+- `ip netns`
+
+for interacting inside dhcp node we use `exec -it` switch:
+- `ip netns exec <qdhcp-ip> bash`
+
+inside the dhcp node, use `ip add` to see interfaces. to check the interface.
+
+and then to check `dnsmasq` to see which interface it is using
+- `ps -ef | grep dnsmasq`
+
+
+### creating dedicated port for virtual machines
+after establishing, network, a subnet and dhcp service, we can create a dedicated port for creating VMs. 
+- `openstack port create --network <network-name> --fixed-ip subnet=<subnet-name>,ip-address=192.168.1.1 <port-name>` 
+note: 
+> if you don't specific the `ip-address` the ip will be applied automatically from subnet.
+> also if the port is not defined for any VM its status will be DOWN.
+
+
+#### Create a new machine with create network
+after establishing the network and ports we can create machine and assign the network port to that.
+- `openstack server create --flavor m1.tiny --image cirros --port <port-name> <vm-name>`  
+
+check the ports again to see if the created port is `UP`:
+- `openstack port list --long`
+
+ 
+
+### OVS Bridge
+its a software based virtual switch. it connects different network interfaces like network tunnels, physical NICs and VM interfaces. ovs uses **three distinct bridges** on each network node to separate and manage different types of traffic. </br>
+to identify and list it:
+- `docker exec -it openvswitch_db ovs-vsctl show` this command will list data related to 1. integration bridge
+
+1. **intergration bridge (`Bridge br-int`)**: this is the central hub. all virtual network interfaces for your VM connect to dhcp server and virtual routers and etc.
+2. Port 
+ 
 
 
 
