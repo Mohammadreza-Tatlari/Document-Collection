@@ -10,8 +10,15 @@ A daemon that maintains a map of the state of the cluster. This “cluster state
 the number of Monitoring Nodes should be an oddnumber because it will be possible to always elect the true data when a client triesto mount a block device. when client wants to mount a block device, the first thing, it checks with `mons` and take a copy of cluster map, then it uses that map for read/write based on cluster map and applies the crash algorithm to pinpoint which object storage is holding the data.
 
 
-### Object Storage Daemon (OSD)
+### Object Storage Daemon (OSD) ([OSD-Service](https://docs.ceph.com/en/latest/cephadm/services/osd/))
 if Monitors are the brain, the OSDs are the muscles. they store data, replicate, rebalance and etc. each osd typically manages a single physical disk and exposes a client API so clients can talk to them directly. the more OSD means the more parallel reads and writes. that means better performance, no bottle-neck and a scalable system.
+
+
+### Placement Groups (PG)
+Placement groups (PGs) are subsets of each logical Ceph pool. Placement groups perform the function of placing objects (as a group) into OSDs. Ceph manages data internally at placement-group granularity: this scales better than would managing individual RADOS objects. A cluster that has a larger number of placement groups (for example, 150 per OSD) is better balanced than an otherwise identical cluster with a smaller number of placement groups.
+- [Monitoring OSDs and PGS](https://docs.ceph.com/en/reef/rados/operations/monitoring-osd-pg/#monitoring-osds-and-pgs)
+- [PG (Placement Group) Notes](https://docs.ceph.com/en/latest/dev/placement-group/#pg-placement-group-notes)
+- [Placement Groups](https://docs.ceph.com/en/latest/rados/operations/placement-groups/)
 
 
 ### Managers (mgr)
@@ -166,13 +173,17 @@ The guide for [Changing the Ceph Dashboard Password using the command line inter
 
 
 
-## Ceph Dashboard Concepts:
+### Ceph Dashboard Concepts ([Ceph Dashboard](https://docs.ceph.com/en/latest/mgr/dashboard/)):
 The Ceph Dashboard is a web-based Ceph management-and-monitoring tool that can be used to inspect and administer resources in the cluster. It is implemented as a Ceph Manager Daemon module.
-###  
+
+if you are running a multi node cluster and want to where the dashboard is located:
+- `ceph mgr services | jq .dashboard`
+
+
 
 ...
 
-# Ceph RBD and Openstack Implementation
+# Ceph Cluster Openstack Implementation
 This Document is followed by [This Tutorial](https://www.youtube.com/watch?v=VF01hPMtz_Y&list=PLUF494I4KUvq1pbYBDoQQomRgoNRgvdzC&index=1)
 
 
