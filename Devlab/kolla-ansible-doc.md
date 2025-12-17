@@ -539,23 +539,6 @@ how do you setup HA and distributed virtual routing
 
 
 
-FRR on compute node
-eve-ng network
-VXLAN FRR
-PBKVM profit bricks kvm
-
-FULL GDPR Europe Law and Licensing
-
-Sonic OCP (Open Compute Project)
-
-Software for open netwroking in the cloud
-
-DBaaS
-Kubernete
-
-Spain and Netherland Research about Work and Learning Opportunities
-
-
 ---
 ## how to install kolla-ansible on offline linux server. (403 Error)
 

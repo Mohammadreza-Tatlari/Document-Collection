@@ -18,7 +18,7 @@ if Monitors are the brain, the OSDs are the muscles. they store data, replicate,
 The Ceph manager daemon (ceph-mgr) is a daemon that runs alongside monitor daemons to provide monitoring and interfacing to external monitoring and management systems. it gives you a windows into the cluster health and performance. it runs the web dashboard, collect metrics, and basically act as a watch tower. mgr also hosts all plugins such as dashboard, grafana, prometheus adn etc 
 
 
-## Setting Up 3 Node Cluster
+## Setting Up 3 Nodes Cluster
 in these steps we are going to setup 3 node cluster for ceph.
 ### requirements:
 - 3x Ubuntu Server with 4 Core and 8GB of RAM with 50GB Disk for OS and 100GB Unmounted Disk (the more disk means more parallel read/write and Distribution of Data)
@@ -26,6 +26,9 @@ in these steps we are going to setup 3 node cluster for ceph.
 
 
 ### Configurations
+0. update your OS packages
+- `sudo apt update`
+
 #### 1. Preconfigurations on Each OS
 1. turn off swap on all nodes (because ceph is designed to manage memory and to ensure predictable behavior. we don't want it to start swaping)
 - `swapoff -a`
@@ -38,30 +41,33 @@ in these steps we are going to setup 3 node cluster for ceph.
 - `apt install cephadm`
 
 
-#### 2. bootstraping cluster
+#### 2. bootstraping cluster ([CEPH BOOTSTRAP INFORMATION](https://docs.ceph.com/en/latest/cephadm/install/#further-information-about-cephadm-bootstrap))
 1. if you have your local registry also include `--image` in your bootstrap but if not just remove it and its value. then by `--mon-ip` we define which server should be the monitor service. </br>
 in this case because we only have  
 - `cephadm --image *<hostname>*:5000/ceph/ceph bootstrap --mon-ip *<mon-ip>*` </br>
 example:
-- `cephadm --image *<hostname>*:5000/ceph/ceph  bootstrap --mon-ip 172.31.11.152 --initial-dashboard-user admin --initial-dashboard-password admin123`
+- `cephadm --image reg.abrvand.ir/quay.io/ceph/ceph:v19.2.3  bootstrap --mon-ip 172.31.11.152 --initial-dashboard-user admin --initial-dashboard-password admin123`
 
 check running dockers
 - `docker ps`
 
 
 #### 3. Copy Ceph SSH keys to other Cluster Nodes
-0. change the ssh-cloud config:
-- `sudo grep -q "PasswordAuthentication" /etc/ssh/sshd_config.d/60-cloudimg-settings.conf && sudo sed -i -r 's/^[[:space:]]*(#)?[[:space:]]*PasswordAuthentication[[:space:]]+(yes|no)/PasswordAuthentication yes/' /etc/ssh/sshd_config.d/60-cloudimg-settings.conf || sudo echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config.d/60-cloudimg-settings.conf;`
+0. change the ssh-cloud config PasswordAuthentication to 'yes':
+- `sudo grep -q "PasswordAuthentication" /etc/ssh/sshd_config.d/60-cloudimg-settings.conf && sudo sed -i -r 's/^[[:space:]]*(#)?[[:space:]]*PasswordAuthentication[[:space:]]+(yes|no)/PasswordAuthentication yes/' /etc/ssh/sshd_config.d/60-cloudimg-settings.conf || sudo echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config.d/60-cloudimg-settings.conf; sudo systemctl restart ssh`
 
-`sudo vim /etc/ssh/sshd_config.d/60-cloudimg-settings.conf`
-`sudo systemctl restart ssh`
+or 
+- `sudo vim /etc/ssh/sshd_config.d/60-cloudimg-settings.conf`
+- `sudo systemctl restart ssh`
+
 1. copy the ssh-key to ceph
 - `ssh-copy-id -f -i /etc/ceph/ceph.pub ubuntu@172.31.11.153`
 - `ssh-copy-id -f -i /etc/ceph/ceph.pub ubuntu@172.31.11.154`  
 
 2. Authorize ssh public keys for root (all nodes). create a .ssh directory in root of each node as follow:
-- `sudo mkdir -p /root/.ssh; sudo chmod 700 /root/.ssh`
-- `tail -1 /home/ubuntu/.ssh/authorized_keys | sudo tee -a /root/.ssh/authorized_keys` => it is going to copy ubuntu user newly added authorized key which for ceph to root's authorized keys.
+- `sudo mkdir -p /root/.ssh; sudo chmod 700 /root/.ssh; sudo chmod 600 /root/.ssh/authorized_keys; sudo chown -R root:root /root/.ssh`
+
+- `grep ' ceph-' /home/ubuntu/.ssh/authorized_keys | sudo tee -a /root/.ssh/authorized_keys` => it is going to copy ubuntu user newly added authorized key which is for ceph to root's authorized keys.
 
 
 #### 4. Enable CEPH CLI 
@@ -78,18 +84,59 @@ ceph orch ps
 ```
 
 
-### Add Hosts to Cluster
+### Pre-Registry Configuration Checks
+1. first we need to check our default image repository:
+- `ceph config get mgr mgr/cephadm/container_image_base` => it shows the base registry
+<!-- - `ceph config get mgr mgr/cephadm/container_image_tag` => it shows the tag of images --> #wrong syntax - NEEDS REVISION
+- `ceph config get mgr mgr/cephadm/container_image_node_exporter`  #it might not be beginning of deployment so it shout be `set`
+- `ceph config get mgr mgr/cephadm/container_image_prometheus` #it might not be beginning of deployment so it shout be `set`
+- `ceph config get mgr mgr/cephadm/container_grafana` #it might not be beginning of deployment so it shout be `set`
+- `ceph config get mgr mgr/cephadm/container_image_alertmanager` #it might not be beginning of deployment so it shout be `set`
+
+2. check your current ceph version (**it will be used for registry taging**)
+- `ceph -v`
+
+
+### Setting New Registry
+In this step, registry and image directory of each service is explicitly define with **its version** keep in mind that `:latest` versioning is highly discouraged. for lack of inconsistency in versioning.
+
+1. change the registry by:
+- `ceph config set mgr mgr/cephadm/container_image_base <reg.abrvand.ir/quay.io>`
+- `ceph config set mgr mgr/cephadm/container_image_prometheus reg.abrvand.ir/quay.io/prometheus/prometheus:v2.51.0`
+- `ceph config set mgr mgr/cephadm/container_image_alertmanager reg.abrvand.ir/quay.io/prometheus/alertmanager:v0.25.0`
+- `ceph config set mgr mgr/cephadm/container_image_grafana reg.abrvand.ir/quay.io/ceph/grafana:10.4.0`
+- `ceph config set mgr mgr/cephadm/container_image_node_exporter reg.abrvand.ir/quay.io/prometheus/node-exporter:v1.7.0`
+
+verify it: 
+- `ceph config get mgr mgr/cephadm/container_image_base`
+- `ceph config dump | grep container_image`
+
+
+### Redeploy daemons to apply changes
+
+1. redeploy services (this process can take time)
+`ceph orch redeploy prometheus`
+`ceph orch redeploy alertmanager`
+`ceph orch redeploy grafana`
+`ceph orch redeploy node-exporter`
+
+verify it on docker engine: </br>
+- `docker ps -a`
+
+
+### Add Hosts to Cluster ([ADDING HOSTS](https://docs.ceph.com/en/latest/cephadm/host-management/#adding-hosts))
 To add each new host to the cluster, we need to perform `ceph orch` command inside the **ceph shell** created by `cephadm shell`:
 - list all currently added host to ceph cluster
 ```sh
 ceph orch host ls
 ```
+
 **note:**
 > By default, a `ceph.conf` file and a copy of the `client.admin` keyring are maintained in `/etc/ceph` on all hosts that have the `_admin` label. This label is initially applied only to the bootstrap host. We recommend that one or more other hosts be given the `_admin` label so that the Ceph CLI (for example, via `cephadm shell`) is easily accessible on multiple hosts.
-- add hosts to cluster
+- add hosts to cluster **(with `_admin` labels we can have multiple admin cluster and managable in failure**) it is also recommended to set the host name as the real hostname of that host.
 ```sh
-ceph orch host add ceph-v-srv2 172.31.11.153
-ceph orch host add ceph-v-srv3 172.31.11.154
+ceph orch host add ceph-v-srv2 172.31.11.153 --labels _admin
+ceph orch host add ceph-v-srv3 172.31.11.154 --labels _admin
 ```
 
 
@@ -105,8 +152,26 @@ verify that OSD deamons are running on each block device
 - `ceph osd tree` => it will list the OSDs and their stats
 
 
+### Integrating With GUI
+to use ceph core capabilities like volume, management, thin provisioning, snapshots, cloning, copy on write and etc, we can also use Web GUI beside using CLI or directly manaing with Openstack via ceph api API. in this step we are using Ceph GUI:
+1. connect to Ceph web GUI via your browser:
+- `https://172.31.11.152:8443` +> login with the password that you have entered in boostrap. 
+
+
+#### If User/Password is forgotten use the below step to set new password:
+The guide for [Changing the Ceph Dashboard Password using the command line interface](https://www.ibm.com/docs/en/storage-ceph/7.1.0?topic=ia-changing-ceph-dashboard-password-using-command-line-interface)  
+1. `cephadm shell`
+2. `vi dashboard_password.yml` => put the password in the `yaml` file
+3. `ceph dashboard ac-user-set-password DASHBOARD_USERNAME -i dashboard_password.yml`
+
+
+
+## Ceph Dashboard Concepts:
+The Ceph Dashboard is a web-based Ceph management-and-monitoring tool that can be used to inspect and administer resources in the cluster. It is implemented as a Ceph Manager Daemon module.
+###  
 
 ...
+
 # Ceph RBD and Openstack Implementation
 This Document is followed by [This Tutorial](https://www.youtube.com/watch?v=VF01hPMtz_Y&list=PLUF494I4KUvq1pbYBDoQQomRgoNRgvdzC&index=1)
 

@@ -1,20 +1,21 @@
 ## Changing Cephadm Container Registry
 
-### Pre-Deployment Checks
+### Pre-Registry Configuration Checks
 1. first we need to check our default image repository:
 - `ceph config get mgr mgr/cephadm/container_image_base` => it shows the base registry
-- `ceph config get mgr mgr/cephadm/container_image_tag` => it shows the tag of images
-- `ceph config get mgr mgr/cephadm/container_image_node_exporter`
-- `ceph config get mgr mgr/cephadm/container_image_prometheus`
-- `ceph config get mgr mgr/cephadm/container_grafana`
-- `ceph config get mgr mgr/cephadm/container_image_alertmanager`
+<!-- - `ceph config get mgr mgr/cephadm/container_image_tag` => it shows the tag of images --> #wrong syntax - NEEDS REVISION
+- `ceph config get mgr mgr/cephadm/container_image_node_exporter`  #it might not be beginning of deployment so it shout be `set`
+- `ceph config get mgr mgr/cephadm/container_image_prometheus` #it might not be beginning of deployment so it shout be `set`
+- `ceph config get mgr mgr/cephadm/container_grafana` #it might not be beginning of deployment so it shout be `set`
+- `ceph config get mgr mgr/cephadm/container_image_alertmanager` #it might not be beginning of deployment so it shout be `set`
 
 2. check your current ceph version (**it will be used for registry taging**)
 - `ceph -v`
 
 
-
 ### Setting New Registry
+In this step, registry and image directory of each service is explicitly define with **its version** keep in mind that `:latest` versioning is highly discouraged. for lack of inconsistency in versioning.
+
 1. change the registry by:
 - `ceph config set mgr mgr/cephadm/container_image_base <reg.abrvand.ir/quay.io>`
 - `ceph config set mgr mgr/cephadm/container_image_prometheus reg.abrvand.ir/quay.io/prometheus/prometheus:v2.51.0`
@@ -27,41 +28,36 @@ verify it:
 - `ceph config dump | grep container_image`
 
 
-2. change the image tags:
-- `ceph config set mgr mgr/cephadm/container_image_tag <v19.1>`
-
-verify it:
-- `ceph config get mgr mgr/cephadm/container_image_tag`
-
-
-
 ### Redeploy daemons to apply changes
-1. re-deploy mgr first
-- `ceph orch redeploy mgr`
 
-2. re-deploy mons
-- `ceph orch redeploy mon`
-
-3. re-deploy OSDs
-- `ceph orch redeploy osd`
-
-4. redeploy
+1. redeploy services (this process can take time)
 `ceph orch redeploy prometheus`
 `ceph orch redeploy alertmanager`
 `ceph orch redeploy grafana`
 `ceph orch redeploy node-exporter`
 
-#### Redeploy Per Hosts
-1. if you have multiple host in cluster:
-- `ceph orch host redeploy <hostname>`
+verify it on docker engine: </br>
+- `docker ps -a`
 
+
+2. if Ceph `mgr`,`mon`,`osd` also need to be re-deployed (not mandatory and needs revision)
+    1. re-deploy mgr first
+    - `ceph orch redeploy mgr`
+    2. re-deploy mons
+    - `ceph orch redeploy mon`
+    3. re-deploy OSDs
+    - `ceph orch redeploy osd`
+
+
+#### Redeploy Per Hosts
+1. if you have multiple host in cluster and deployment are not scheduled on them:
+- `ceph orch host redeploy <hostname>` </br>
 monitor re-deploy process:
 - `ceph orch ps`
 
 
 #### Verify Running Containers
 - `docker ps --format "{{.Image}}"`
-
 
 
 ### Handle private registry authentication (if needed)
