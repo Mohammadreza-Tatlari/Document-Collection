@@ -181,7 +181,7 @@ if you are running a multi node cluster and want to where the dashboard is locat
 
 
 
-...
+---
 
 # Ceph Cluster Openstack Implementation
 This Document is followed by [This Tutorial](https://www.youtube.com/watch?v=VF01hPMtz_Y&list=PLUF494I4KUvq1pbYBDoQQomRgoNRgvdzC&index=1)
@@ -258,24 +258,27 @@ rbd status
 for connecting openstack to ceph we need to use "**CephX Authentication and Protocol**". The CephX protocol is enabled by default. create a new user for Nova/Cinder and Glance. Execute the following:
 
 - setup a user for glance service. we grant access to monitors with rbd porfile that provides minimum necessary permissions for an RBD client and also grant permissions to storage demons OSDs. with profile rbd we grant read/write on images pool for this user  </br>
-`ceph auth get-or-create client.glance mon 'profile rbd' osd 'profile rbd pool=images' mgr 'profile rbd pool=images' -o ceph.client.glance.keyring` 
+- `ceph auth get-or-create client.glance mon 'profile rbd' osd 'profile rbd pool=images' mgr 'profile rbd pool=images' -o ceph.client.glance.keyring` 
 
+- `ceph auth get client.glance`
 output:
 ```
 [client.glance]
-        key = AQAcVzVpYTAJNRAA6slBJKQsmqBo0ONib1/InA==
+        key = AADasdlk1JAm6nzO95v14q8k6Cw==
+        caps mgr = "profile rbd pool=images"
+        caps mon = "profile rbd"
+        caps osd = "profile rbd pool=images"
 ```
 
 
 - create and assign permissions to relative pools and profile for cinder service </br>
-`ceph auth get-or-create client.cinder mon 'profile rbd' osd 'profile rbd pool=volumes, profile rbd pool=vms, profile rbd-read-only pool=images' mgr 'profile rbd pool=volumes, profile rbd pool=vms' -o ceph.client.cinder.keyring`
+- `ceph auth get-or-create client.cinder mon 'profile rbd' osd 'profile rbd pool=volumes, profile rbd pool=vms, profile rbd-read-only pool=images' mgr 'profile rbd pool=volumes, profile rbd pool=vms' -o ceph.client.cinder.keyring`
 
-`ceph auth get client.cinder-backup`: </br>
-
+- `ceph auth get client.cinder`: </br>
 output:
 ```
 [client.cinder-backup]
-        key = AQCGVzVp2gmEGBAAI6n+oE9YGo+CZVlDiA9/8A==
+        key = AQCGVdlk1JAm6nzO95v14q8kGo+CZVlDiA9/8A==
         caps mgr = "profile rbd pool=backups"
         caps mon = "profile rbd"
         caps osd = "profile rbd pool=backups"
@@ -285,10 +288,11 @@ output:
 - create and assign permissions to relative pools and profile for cinder backups </br>
 `ceph auth get-or-create client.cinder-backup mon 'profile rbd' osd 'profile rbd pool=backups' mgr 'profile rbd pool=backups' -o ceph.client.cinder-backup.keyring`
 
+- `ceph auth get client.cinder-backup`: </br>
 output:
 ```
 [client.cinder-backup]
-        key = AQCGVzVp2gmEGBAAI6n+oE9YGo+CZVlDiA9/8A==
+        key = AQCGVzVpdlk1JAm6nzO95v14q8kE9YGo+CZVlDiA9/8A==
 ```
 
 
@@ -330,7 +334,6 @@ openstack service with kolla will be running in docker containers but they will 
 
 2. copy and send the `ceph.conf` from ceph cluster into openstack's services directory:
 - `scp /etc/ceph/ceph.conf <USERNAME>@<SERVICE_SERVER_IP>:/etc/kolla/config/glance/ceph.conf`
-- `cp /etc/kolla/config/glance/ceph.conf /etc/kolla/config/cinder/cinder-backup`
 - `cp /etc/kolla/config/glance/ceph.conf /etc/kolla/config/cinder/cinder-backup/`
 - `cp /etc/kolla/config/glance/ceph.conf /etc/kolla/config/cinder/cinder-volume/`
 - `cp /etc/kolla/config/glance/ceph.conf /etc/kolla/config/nova/`
@@ -338,7 +341,7 @@ openstack service with kolla will be running in docker containers but they will 
 
 3. add credentials for each service
 - `ceph auth get client.glance -o ceph.client.glance.keyring && scp ceph.client.glance.keyring <USERNAME>@<SERVICE_SERVER_IP>:/etc/kolla/config/glance/`
-- `ceph auth get client.cinder -o ceph.client.glance.keyring && scp ceph.client.cinder.keyring <USERNAME>@<SERVICE_SERVER_IP>:/etc/kolla/config/cinder/cinder-volume`
+- `ceph auth get client.cinder -o ceph.client.cinder.keyring && scp ceph.client.cinder.keyring <USERNAME>@<SERVICE_SERVER_IP>:/etc/kolla/config/cinder/cinder-volume`
 - `ceph auth get client.cinder-backup -o ceph.client.cinder-backup.keyring && scp ceph.client.cinder-backup.keyring <USERNAME>@<SERVICE_SERVER_IP>:/etc/kolla/config/cinder/cinder-backup`
 - `ceph auth get client.cinder -o ceph.client.cinder.keyring && scp ceph.client.cinder.keyring <USERNAME>@<SERVICE_SERVER_IP>:/etc/kolla/config/nova/`
 
@@ -348,7 +351,7 @@ this should be the final result:
 config/
 ├── cinder
 │   ├── cinder-backup
-│   │   ├── ceph.client.cinder.keyring (it has backup keyring)
+│   │   ├── ceph.client.cinder.keyring (it has backup keyring) 
 │   │   └── ceph.conf
 │   └── cinder-volume
 │       ├── ceph.client.cinder.keyring

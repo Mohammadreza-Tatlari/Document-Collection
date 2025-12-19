@@ -1,4 +1,4 @@
-## Changing Cephadm Container Registry
+# Changing Cephadm Container Registry
 
 ### Pre-Registry Configuration Checks
 1. first we need to check our default image repository:
@@ -86,4 +86,16 @@ If this is production, you should pair this with:
 - Explicit upgrade workflows
 
 
+---
+# Changing Docker Registry in Kolla Ansible ([Deploy a Registry](https://docs.openstack.org/kolla-ansible/2023.1/user/multinode.html#deploy-a-registry))
 
+- 1. changing `globals.yml` key values as follow:
+
+```yaml
+docker_registry: reg.abrvand.ir/quay.io
+#docker_registry_insecure: false
+```
+
+2. redeploy the kolla-ansible cluster
+
+- `kolla-ansible reconfigure -i all-in-one`
