@@ -412,6 +412,7 @@ We use three dedicated servers with identical resources:
 - Disk: 15 GB
 
 ![ETCD Quarum Cluster](./media/etcd-cluster.png)
+
 Image: ETCD Cluster as A DCS 
 
 > **Important:** All nodes must have consistent system time configuration.

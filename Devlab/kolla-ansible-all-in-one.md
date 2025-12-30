@@ -214,7 +214,7 @@ firewall_driver = openvswitch
 ```
 
 3. run the kolla-ansible deployment playbook to apply new configuration
-- `kolla-ansible deploy -i all-in-one`
+- `kolla-ansible deploy -i all-in-one` or `kolla-ansible reconfigure -i all-in-one` (if you have a running cluster)
 
 
 ### Tenant Network and Provider Network
@@ -230,15 +230,23 @@ Physical network tag </br>
 Any attributes not specified will be filled in by Neutron. </br>
 
 
+
 ### Network and Subnet Configuration
 for 2 different vms to communication, they first need a common network. the openstack network will act as a distributed layer between 2 VMs. to do that lets create a network
 
 1. create a network
 - `openstack network create <network-name>`
 
+verify it via:
+- `openstack network list`
+
 2. create a subnet which belongs to the created network and define IP address pool and dns server.
 - `openstack subnet create --network <network-name> --subnet-range 192.168.1.0/24 --gateway 192.168.1.254 --dns-nameserver 8.8.8.8 <subnet-name>`
 
+verify it via: 
+- `openstack subnet list`
+
+**Note**: </br> 
 in openstack, VMs don't connect directly to the network, they connect through ports which are like virtual network plug. a port holds the MAC address, IP address, and security.
 
 we can list our ports in openstack via:
@@ -246,6 +254,7 @@ we can list our ports in openstack via:
 
 inpsect the ports device owner via:
 - `openstack port show <ID> -c device_owner`
+- `openstack port show <ID>`
 
 inspect dhcp provider nodes
 - `openstack network agent list --agent-type dhcp`
@@ -257,6 +266,10 @@ to list networking namepsaces we use:
 - `ip netns`
 
 for interacting inside dhcp node we use `exec -it` switch:
+- `docker ps | grep dhcp` => find the `neutron_dnsmasq` docker container 
+- `docker exec -it <dnsmasq-container> bash`
+
+inside the dhcp container:
 - `ip netns exec <qdhcp-ip> bash`
 
 inside the dhcp node, use `ip add` to see interfaces. to check the interface.
@@ -277,6 +290,12 @@ note:
 after establishing the network and ports we can create machine and assign the network port to that.
 - `openstack server create --flavor m1.tiny --image cirros --port <port-name> <vm-name>`  
 
+Note:
+> if you don't have prebuild flavors you can simply create one by following [Flavor](https://docs.openstack.org/python-openstackclient/pike/cli/command-objects/flavor.html) and [Managed Flavors](https://docs.openstack.org/nova/pike/admin/flavors2.html)
+
+verify vm creation via:
+- `openstack server list`
+
 check the ports again to see if the created port is `UP`:
 - `openstack port list --long`
 
@@ -286,9 +305,9 @@ check the ports again to see if the created port is `UP`:
 its a software based virtual switch. it connects different network interfaces like network tunnels, physical NICs and VM interfaces. ovs uses **three distinct bridges** on each network node to separate and manage different types of traffic. </br>
 to identify and list it:
 - `docker exec -it openvswitch_db ovs-vsctl show` this command will list data related:
-1. **intergration bridge (`Bridge br-int`)**: this is the central hub. all virtual network interfaces for your VM connect to dhcp server and virtual routers and etc.
-2. **Ports**: list of interfaces of VMs and servers, they are tagged via `tag` so their networks corelations are defined
-3. **tunnel bridge (`Brdige br-tun`)**: it handles are the overlay network trafic between nodes. when a vm from a node wants to talk to another vm in another compute node, the tunnel bridge encapsulates traffic into a VXLAN tunnel and sends it across the physical network (the key to expand the private network across the cloud)
+1. **integration bridge (`Bridge br-int`)**: this is the central hub. all virtual network interfaces for your VM connect to dhcp server and virtual routers and etc.
+2. **Ports**: list of interfaces of VMs and servers, they are tagged via `tag` so their networks corelations are defined.
+3. **tunnel bridge (`Brdige br-tun`)**: it handles the overlay network traffic between nodes. when a vm from a node wants to talk to another vm in another compute node, the tunnel bridge encapsulates traffic into a VXLAN tunnel and sends it across the physical network (the key to expand the private network across the cloud).
 4. **external bridge (`bridge br-ex`)**: this is the gateway to the external world. it connects to the physical network interface (`eth1`) and manages traffic to provider networks and floating IPs. in short, it allows our VMs to reach the internet and be reachable.
 5. **patch ports (`Port patch-tun`)**: the separated bridged work together by being connected by patch ports. it acts as a virtual network that directly link ovs bridges
 
@@ -312,7 +331,7 @@ verify the port creation via:
 
 
 
-### How to VMs communicated in Different Physical Nodes (belong to the same Subnet) - these steps are done on MultiNode Scenario
+### How do VMs communicate in Different Physical Nodes (belong to the same Subnet) - these steps are done on MultiNode Scenario
 we are going to created two separated VMs in different compute nodes and establish their connection.
 
 1. create the first vm on one of our nodes
@@ -407,7 +426,7 @@ by adding both subnets to the router we can have the connectivity of instances. 
 
 #### inspect the integration of router to openvswitch
 to inpsect the router and openvswitch, check the `openvswitch_db` integration
-- `docker exec -it openvswitch_db ovs_vsctl` => it should list the `qr` interfaces of the router which are plugged into the ovs integration bridge (note that each are presented under the integration bridge (`br-int`))
+- `docker exec -it openvswitch_db ovs-vsctl show` => it should list the `qr` interfaces of the router which are plugged into the ovs integration bridge (note that each are presented under the integration bridge (`br-int`))
 
 **CAUTION:** each IP assigned to the router interface is the same that is defined in the gateway of each VM.
 
@@ -444,6 +463,12 @@ we need our vms to be able to connect to the external network (internet)
 `--external`: defining that the network is external
 `--provider-phusical-network`: specifying the physical network mapping
 `--provider-network-type`: there will be NO VLAN taging
+
+note:
+> the `physnet1` is the flat network and It is a logical label defined in Neutron’s ML2 configuration that maps to a real physical L2 domain reachable via a specific OVS bridge.it is located in the `ml2` configuration. you can inspect it via `docker exec -it neutron_server cat /etc/neutron/plugins/ml2/ml2_conf.ini`. 
+
+> `physnet1`  ──► br-ex ──► NIC ──► upstream switch
+
 
 #### why `physnet1`?
 in ML2 we have declared `physnet1` as a valid flat network:
@@ -492,7 +517,7 @@ Bridge br-ex
 1. create a subnet and attach it to your external network
 - `openstack subnet create --no-dhcp --subnet-range 192.168.4.0/24 --network <network-name(public)> --allocation-pool 'start=192.168.4.11, end=192.168.4.250' --gateway 192.168.4.254 <subnet-name(public-subnet)>`
 
-**--gateway**: Note that the default gateway should be the IP of our external router
+**--gateway**: Note that the default gateway should be the IP of our external router. (the one that your openstack machines are using... for example in my case it was 172.31.11.254 which my compute nodes were running on that.)
 
 2. attach the router to external network and set it as gateway
 - `openstack router set --external-gateway <network-name(public)> <router-name>` =>

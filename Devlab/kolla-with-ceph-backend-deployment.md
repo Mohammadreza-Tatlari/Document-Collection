@@ -94,7 +94,6 @@ ceph orch ps
 ### Pre-Registry Configuration Checks
 1. first we need to check our default image repository:
 - `ceph config get mgr mgr/cephadm/container_image_base` => it shows the base registry
-<!-- - `ceph config get mgr mgr/cephadm/container_image_tag` => it shows the tag of images --> #wrong syntax - NEEDS REVISION
 - `ceph config get mgr mgr/cephadm/container_image_node_exporter`  #it might not be beginning of deployment so it shout be `set`
 - `ceph config get mgr mgr/cephadm/container_image_prometheus` #it might not be beginning of deployment so it shout be `set`
 - `ceph config get mgr mgr/cephadm/container_grafana` #it might not be beginning of deployment so it shout be `set`
@@ -108,6 +107,7 @@ ceph orch ps
 In this step, registry and image directory of each service is explicitly define with **its version** keep in mind that `:latest` versioning is highly discouraged. for lack of inconsistency in versioning.
 
 1. change the registry by:
+<!-- - `ceph config set mgr container_image reg.abrvand.ir/quay.io` -->
 - `ceph config set mgr mgr/cephadm/container_image_base <reg.abrvand.ir/quay.io>`
 - `ceph config set mgr mgr/cephadm/container_image_prometheus reg.abrvand.ir/quay.io/prometheus/prometheus:v2.51.0`
 - `ceph config set mgr mgr/cephadm/container_image_alertmanager reg.abrvand.ir/quay.io/prometheus/alertmanager:v0.25.0`
@@ -191,6 +191,7 @@ This Document is followed by [This Tutorial](https://www.youtube.com/watch?v=VF0
 Ceph is an open-source, software-defined, distributed storage system that unifies object, block, and file storage into a single, highly scalable, and reliable platform for modern data centers and clouds, allowing you to store massive amounts of data on commodity hardware with self-healing and self-managing capabilities.
 
 
+
 ## How Does Ceph Work in Openstack 
 You can attach Ceph Block Device images to OpenStack instances through `libvirt`, which configures the `QEMU` interface to `librbd`. Ceph stripes block volumes across multiple OSDs within the cluster, which means that **large volumes can realize better performance than local drives on a standalone server**!
 
@@ -198,6 +199,7 @@ You can attach Ceph Block Device images to OpenStack instances through `libvirt`
 
 Note:
 > To use Ceph Block Devices with OpenStack, you must have access to a running Ceph Storage Cluster
+
 
 
 ## Ceph Configuration for Openstack
@@ -387,11 +389,11 @@ verify the ceph implementation by using its services in following scenario:
 1. download a light weight image.
 - `wget https://download.cirros-cloud.net/0.6.3/cirros-0.6.3-x86_64-disk.img`
 
-2. check its format (it will be in `qemu`)
+2. check its format (it should be `qemu`)
 - `file cirros-0.6.3-x86_64-disk.img`
 
-3. we need conver that image into `raw` format
-- `qemu-img convert -f qcow2 -O raw cirros-0.6.3-x86_64-disk.img cirros.raw `
+3. we need to convert that image into `raw` format
+- `qemu-img convert -f qcow2 -O raw cirros-0.6.3-x86_64-disk.img cirros.raw`
 
 4. upload the image to glance
 - `openstack image create cirros --file cirros.raw --disk-format raw --container-format bare --public`
@@ -406,12 +408,17 @@ verify the ceph implementation by using its services in following scenario:
 7. **on openstack cluster** create a new cinder volume with the image:
 - `openstack volume create --image cirros --size 10 boot-volume` </br>
 verify it via:
-- `openstack volume ls`
+- `openstack volume list`
 
-8. **on ceph cluster**: verify that new RBD is also created parallel to the cinder
+
+**Note:**
+> In OpenStack with Ceph, parent/child RBD relationships are preserved only when the creating service does not immediately flatten the clone. Nova commonly preserves lineage; Cinder intentionally flattens volumes created from images to avoid long-term dependency chains.
+
+8. **on ceph cluster**: verify that new RBD is also created parallel to the cinder and it is children of image.
 - `rbd ls volumes` => its ID should be matched
-- `rbd info volumes/volume-<ID>` => it should have a parent image snapshot (`@snap`)
+- `rbd info volumes/volume-<ID>` => it should have a parent image snapshot (`@snap`) and the ID of it should be the one for the cirros image
 - `rbd children images/<ID@snap>` => it will confirm that it is a **copy on write clone** which it means that it cause optimization on creating OS machines from it.
+
 
 
 ### Boot new machine with created volume as its root disk
@@ -456,5 +463,12 @@ we can change the backup to incremental backup via:
 - `openstack volume backup create --name <boot-volume-name> <volume-name> --force --incremental`
 - `openstack volume backup list`
 - `rbd snap ls backups/volume-<ID>` => it will show that new snapshot is created (the new snapshot has a pointer to previous snapshot and openstack uses diff to find the changes)
+
+
+
+
+
+
+
 
 
