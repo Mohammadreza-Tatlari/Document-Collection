@@ -14,7 +14,7 @@ What you are *actually practicing* is:
 
 
 
-# Pratice 1 - Desing Before Deploy For Devlab
+# Pratice 1 - Design Before Deploy For Devlab
 before every project write a 2-3 Page Document to answer these questions:
 
 ## Goal of Project
@@ -82,17 +82,17 @@ That strongly points to this class of goal:
 > The goal of this project is to transform the existing infrastructure into a cloud operating model that enables rapid, self-service provisioning of compute, storage, and networking resources while maintaining on-premise control, cost predictability, and regulatory compliance.
 
 2. Explicit non-goals (this is critical) </br>
+This project is not intended to:
 *Example:*
-- This project is not intended to:
-- Replicate public-cloud scale or feature velocity
-- Eliminate all legacy systems in the first phase
-- Optimize for maximum hardware utilization at the expense of reliability
+- *Replicate public-cloud scale or feature velocity*
+- *Eliminate all legacy systems in the first phase*
+- *Optimize for maximum hardware utilization at the expense of reliability*
 
 3. Success criteria (observable, not KPIs yet) </br>
 *Example:*
-- Infrastructure can be provisioned via API without manual operator intervention
-- Environment definitions are reproducible from version-controlled code
-- Failure of individual nodes does not require manual recovery to restore service
+- *Infrastructure can be provisioned via API without manual operator intervention*
+- *Environment definitions are reproducible from version-controlled code*
+- *Failure of individual nodes does not require manual recovery to restore service*
 
 A clear goal gives you the right to say: </br>
 “Yes, this is worse in X, and we accept it because Y.”

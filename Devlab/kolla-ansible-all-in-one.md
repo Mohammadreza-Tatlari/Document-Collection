@@ -553,6 +553,8 @@ verify it via:
 we can detach and attach the floating Ip from one VM to another VM instance.
 
 
+
+
 Future Questions:
 how to attach to multiple physical network or VLANs?
 what are the best practices for designing a complex network topology?
