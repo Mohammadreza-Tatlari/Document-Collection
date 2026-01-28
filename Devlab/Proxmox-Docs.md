@@ -1,7 +1,13 @@
 
+---
+## How to Create LVM disk on Proxmox Cluster
+is ceph needed?
+what is local-lvm?
+
+
 
 ---
-### Creating VM in Proxmox Dashboard 
+## Creating VM in Proxmox Dashboard 
 ### 1.Steps and Parameter to consider when creating vm for "cloud-init Template" ([Youtube Link](https://www.youtube.com/watch?v=1Ec0Vg5be4s))
 0. Select "Create Machine"
 1. in General section
