@@ -44,7 +44,8 @@ what is local-lvm?
 - `qm importdisk <vm-id> <image-cloud.qcow2> <local-lvm> `
 5. also set the serial socker ang vga so we can use console for our machine
 - `qm set 1000 --serial0 socket --vga serial0`
-6. on the machine with related ID. add `cloud-init` driver and also add the Unused Disk
+6. on the machine with related ID. add `cloud-init` driver and also add the Unused Disk (unused disk is the one that has been added via CLI)
+- don't forget to check Discard when you are going to add it.
 7. add CloudInit Driver and add the Desired Storage
 8. in cloud-init template > options > change the boot order to scsi0 
 
