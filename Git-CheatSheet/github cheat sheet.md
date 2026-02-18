@@ -135,3 +135,164 @@ git stash => return everything to first commited changes
 
 
 
+## How to Add multiple Remote Repository:
+1. be sure that your local directory is git initiated and/or have an existing remote:
+```sh
+git status
+git init
+git remote -v
+
+git remote add github https://github.com/YOUR_USER/YOUR_REPO.git
+git remote add gitlab https://gitlab.xx.com/devsecops/devops-documents.git
+git remote -v #verify it
+
+git push -u github main
+git push -u gitlab main
+```
+
+
+
+## How to Push a sub directory into a different repository `git subtree`
+
+#### Mental model (important)
+* `/project` = main repo (authoritative)
+* `/project/subdir` = *exported view* of part of that repo
+* Subdir repo:
+
+  * has its own commits
+  * can be updated independently
+  * but stays in sync via subtree commands
+
+This is **one-way or two-way**, your choice.
+
+---
+
+#### Step 0 — Verify repo state
+
+From `/project`:
+
+```bash
+cd /project
+git status
+```
+
+Make sure:
+
+* working tree is clean (or at least committed)
+* `subdir/` already exists
+
+If not committed yet:
+
+```bash
+git add subdir
+git commit -m "Add subdir"
+```
+
+Subtree **requires committed content**.
+
+---
+
+#### Step 1 — Add the second repository as a remote
+
+This is the repo that will receive **only `subdir`**.
+
+```bash
+git remote add subdir-remote https://github.com/YOUR_USER/SUBDIR_REPO.git
+```
+
+Check:
+
+```bash
+git remote -v
+```
+
+You should now see:
+
+* `origin` (main repo)
+* `subdir-remote` (subdir-only repo)
+
+---
+
+#### Step 2 — Push `subdir` as its own repository
+
+This is the key command:
+
+```bash
+git subtree push --prefix=subdir subdir-remote main
+```
+
+##### What this does
+
+* Takes `/project/subdir`
+* Treats it as repo root
+* Pushes it to `subdir-remote`
+* Preserves commit history **only for that directory**
+
+After this:
+
+* The other repo will look like it was developed standalone
+* No extra nesting (`subdir/subdir`) — clean root
+
+---
+
+#### Step 3 — Verify on the remote
+
+On GitHub/GitLab:
+
+* You should see the **contents of `subdir` at repo root**
+* Commit messages preserved
+* No other project files
+
+If you see `subdir/subdir`, stop — prefix path was wrong.
+
+---
+
+#### Step 4 — Ongoing workflow (this matters)
+
+##### Normal development (in `/project`)
+
+```bash
+# work normally
+git add subdir
+git commit -m "Update subdir logic"
+```
+
+##### Push subdir updates
+
+```bash
+git subtree push --prefix=subdir subdir-remote main
+```
+
+That’s it. No magic. No sync daemons.
+
+---
+
+#### Step 5 — (Optional) Pull changes *back* from subdir repo
+
+If someone edits the subdir repo directly:
+
+```bash
+git subtree pull --prefix=subdir subdir-remote main
+```
+
+Git will:
+
+* merge changes
+* place them back into `/project/subdir`
+* keep history consistent
+
+This only works cleanly if **both sides respect subtree workflow**.
+
+
+## Ignore some files in the main repo, but track them in the subdir repo (via git subtree)
+This IS POSSIBLE, IF you structure the ignore rules correctly.
+```
+/project
+  ├── .gitignore          ← main repo rules
+  ├── subdir/
+  │     ├── .gitignore    ← subdir-specific rules
+  │     └── important.file
+```
+
+
+
