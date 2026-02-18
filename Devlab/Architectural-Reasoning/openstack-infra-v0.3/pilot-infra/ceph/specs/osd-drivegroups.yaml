@@ -1,0 +1,14 @@
+# cephadm OSD drive groups – one OSD per disk, device classes ssd/hdd
+# Apply after bootstrap and host add. Adjust hostnames and devices to match disk-map.
+# Ref: ceph orch apply osd -i osd-drivegroups.yaml (or add OSDs via CLI per device)
+
+# Example: define drive groups per node (YAML format for cephadm may vary by version)
+# Below is documentation; use `ceph orch device zap` and `ceph orch daemon add osd` per device if needed.
+
+# Node2 example (replace with real devices from ceph orch device ls):
+# - node2: /dev/sda (500G SSD), /dev/sdb (500G SSD), /dev/sdc (900G HDD)
+# - node3: ...
+# Device class is set when creating OSD or via: ceph osd crush set-device-class ssd <osd.id>
+
+# Optional: use ceph-volume or cephadm drive group (Ceph Quincy+):
+# https://docs.ceph.com/en/quincy/cephadm/drivegroups/

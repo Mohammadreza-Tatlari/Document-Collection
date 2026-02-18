@@ -1,0 +1,34 @@
+---
+# Create admin user and deploy SSH keys (use vault for authorized_keys or vars)
+# Run: ansible-playbook -i ../inventory/hosts.yml users-ssh-keys.yml --ask-vault-pass
+# Define in group_vars or host_vars: pilot_admin_user, pilot_authorized_keys (vault)
+
+- name: Create pilot admin user and SSH keys
+  hosts: all
+  become: true
+  vars:
+    pilot_admin_user: pilotadmin
+    # pilot_authorized_keys: "{{ vault_pilot_authorized_keys }}"
+  tasks:
+    - name: Ensure admin group exists
+      ansible.builtin.group:
+        name: "{{ pilot_admin_user }}"
+        state: present
+
+    - name: Create admin user
+      ansible.builtin.user:
+        name: "{{ pilot_admin_user }}"
+        group: "{{ pilot_admin_user }}"
+        groups: sudo
+        shell: /bin/bash
+        create_home: true
+        state: present
+
+    - name: Set up authorized_keys for admin (when provided)
+      ansible.posix.authorized_key:
+        user: "{{ pilot_admin_user }}"
+        key: "{{ item }}"
+        state: present
+      loop: "{{ pilot_authorized_keys | default([]) }}"
+      when: pilot_authorized_keys is defined and pilot_authorized_keys | length > 0
+      no_log: true

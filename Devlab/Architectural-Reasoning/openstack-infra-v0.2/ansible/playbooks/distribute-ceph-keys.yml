@@ -1,0 +1,54 @@
+---
+# Ansible Playbook: Distribute Ceph Client Keys
+# Copies Ceph client keys to all nodes that need them
+
+- name: Distribute Ceph client keys to OpenStack nodes
+  hosts: all
+  become: yes
+  vars:
+    ceph_keyring_dir: /etc/ceph
+    ceph_keys:
+      - name: cinder
+        keyring: "{{ ceph_keyring_dir }}/ceph.client.cinder.keyring"
+      - name: glance
+        keyring: "{{ ceph_keyring_dir }}/ceph.client.glance.keyring"
+      - name: nova
+        keyring: "{{ ceph_keyring_dir }}/ceph.client.nova.keyring"
+
+  tasks:
+    - name: Ensure Ceph keyring directory exists
+      file:
+        path: "{{ ceph_keyring_dir }}"
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Check if Ceph keys exist on deploy node
+      stat:
+        path: "{{ item.keyring }}"
+      register: keyring_stat
+      delegate_to: localhost
+      loop: "{{ ceph_keys }}"
+      failed_when: false
+
+    - name: Copy Ceph client keys to nodes
+      copy:
+        src: "{{ item.item.keyring }}"
+        dest: "{{ item.item.keyring }}"
+        mode: '0644'
+        owner: root
+        group: root
+      when: item.stat.exists
+      loop: "{{ keyring_stat.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: Verify keyring permissions
+      file:
+        path: "{{ item.keyring }}"
+        mode: '0644'
+        owner: root
+        group: root
+      loop: "{{ ceph_keys }}"
+      when: item.keyring is file

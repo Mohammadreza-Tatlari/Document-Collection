@@ -1,0 +1,45 @@
+# Prometheus alerting rules - OpenStack + Ceph pilot
+groups:
+  - name: node
+    rules:
+      - alert: NodeDown
+        expr: up{job="node"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node {{ $labels.instance }} is down"
+
+      - alert: HighCpu
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU on {{ $labels.instance }}"
+
+      - alert: LowDiskRoot
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low root disk on {{ $labels.instance }}"
+
+  - name: ceph
+    rules:
+      - alert: CephHealthError
+        expr: ceph_health_status == 2
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Ceph cluster in ERROR state"
+
+      - alert: CephHealthWarn
+        expr: ceph_health_status == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Ceph cluster in WARN state"

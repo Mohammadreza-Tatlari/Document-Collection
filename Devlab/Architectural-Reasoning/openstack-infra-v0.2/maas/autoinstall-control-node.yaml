@@ -1,0 +1,96 @@
+# MAAS autoinstall – OpenStack control node
+# Replace: YOUR_PASSWORD_HASH, YOUR_SSH_PUBLIC_KEY, hostname, 172.31.10.2 (control node IP)
+# Paste into MAAS Deploy → Cloud-init user-data
+
+#cloud-config
+autoinstall:
+  version: 1
+
+  identity:
+    hostname: controller-01
+    username: devops
+    password: "YOUR_PASSWORD_HASH"
+
+  ssh:
+    install-server: true
+    authorized-keys:
+      - "YOUR_SSH_PUBLIC_KEY"
+    allow-pw: true
+
+  network:
+    version: 2
+    ethernets:
+      eno1:
+        dhcp4: false
+      eno2:
+        dhcp4: false
+      eno3:
+        dhcp4: false
+    bonds:
+      bond0:
+        dhcp4: false
+        interfaces: [eno1, eno2, eno3]
+        parameters:
+          mode: 802.3ad
+          mii-monitor-interval: 1000
+    vlans:
+      bond0.110:
+        id: 110
+        link: bond0
+      bond0.111:
+        id: 111
+        link: bond0
+    bridges:
+      br0-v110:
+        interfaces: [bond0.110]
+        dhcp4: false
+        addresses: [172.31.10.2/24]
+        routes:
+          - to: default
+            via: 172.31.10.254
+        nameservers:
+          addresses: [1.1.1.1, 8.8.8.8]
+      br0-v111:
+        interfaces: [bond0.111]
+        dhcp4: false
+        addresses: [172.31.11.2/24]
+
+  storage:
+    layout:
+      name: custom
+    config:
+      - id: disk-sda
+        type: disk
+        match:
+          size: 500G
+        ptable: gpt
+        wipe: superblock-recursive
+        grub_device: true
+      - id: disk-sda-part1
+        type: partition
+        device: disk-sda
+        size: 1G
+        flag: boot
+      - id: disk-sda-part2
+        type: partition
+        device: disk-sda
+        size: -1
+      - id: fs-boot
+        type: format
+        fstype: ext4
+        volume: disk-sda-part1
+      - id: fs-root
+        type: format
+        fstype: ext4
+        volume: disk-sda-part2
+      - id: mount-boot
+        type: mount
+        device: fs-boot
+        path: /boot
+      - id: mount-root
+        type: mount
+        device: fs-root
+        path: /
+
+  late-commands:
+    - curtin in-target --target=/target -- bash -c "timedatectl set-timezone UTC"

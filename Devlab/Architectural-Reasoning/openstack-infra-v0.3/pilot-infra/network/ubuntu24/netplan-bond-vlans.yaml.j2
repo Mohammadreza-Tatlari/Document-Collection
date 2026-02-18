@@ -1,0 +1,34 @@
+# Ubuntu 24.04 Netplan: bond (LACP) + VLANs 110, 111, 112
+# Template: substitute NODE_ID, MANAGEMENT_IP, CEPH_IP, TENANT_IP, and interfaces (eno1, eno2, eno3)
+# Save as /etc/netplan/01-bond-vlans.yaml on each node
+
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    eno1: {}
+    eno2: {}
+    eno3: {}
+  bonds:
+    bond0:
+      interfaces: [eno1, eno2, eno3]
+      parameters:
+        mode: 802.3ad
+        lacp-rate: fast
+        mii-monitor-interval: 100
+  vlans:
+    bond0.110:
+      id: 110
+      link: bond0
+      addresses:
+        - "{{ management_ip }}"
+    bond0.111:
+      id: 111
+      link: bond0
+      addresses:
+        - "{{ ceph_ip }}"
+    bond0.112:
+      id: 112
+      link: bond0
+      addresses:
+        - "{{ tenant_ip }}"

@@ -1,0 +1,13 @@
+# cephadm cluster spec (reference – apply with: ceph orch apply -i cluster.yaml)
+# Adjust service_ids and placement to match your hostnames (node2..node6)
+---
+service_type: mon
+placement:
+  host_pattern: "node[2-4]"
+  count: 3
+
+---
+service_type: mgr
+placement:
+  host_pattern: "node[2-4]"
+  count: 3

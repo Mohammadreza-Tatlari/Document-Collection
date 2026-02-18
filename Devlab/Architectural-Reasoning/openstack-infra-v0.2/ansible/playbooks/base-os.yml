@@ -1,0 +1,66 @@
+---
+# Base OS: users, SSH, NTP, and common packages
+# Run on all hosts; use limit for specific groups
+- name: Base OS configuration for OpenStack/Ceph nodes
+  hosts: all
+  become: true
+  vars:
+    deploy_user: devops
+    ntp_servers:
+      - pool.ntp.org
+    # Set via group_vars or extra vars
+    admin_ssh_keys: []  # List of SSH public keys for deploy_user
+
+  tasks:
+    - name: Ensure deploy user exists
+      user:
+        name: "{{ deploy_user }}"
+        state: present
+        groups: sudo
+        append: true
+        shell: /bin/bash
+      when: deploy_user is defined and deploy_user != ""
+
+    - name: Add SSH keys for deploy user
+      authorized_key:
+        user: "{{ deploy_user }}"
+        key: "{{ item }}"
+        state: present
+      loop: "{{ admin_ssh_keys }}"
+      when: admin_ssh_keys | length > 0
+
+    - name: Install common packages
+      apt:
+        name:
+          - chrony
+          - curl
+          - htop
+          - jq
+          - python3
+          - vim
+        state: present
+        update_cache: true
+      when: ansible_os_family == "Debian"
+
+    - name: Ensure Chrony is configured
+      template:
+        src: templates/chrony.conf.j2
+        dest: /etc/chrony/chrony.conf
+      notify: Restart chrony
+      when: ansible_os_family == "Debian"
+      vars:
+        ntp_servers: "{{ ntp_servers | default(['pool.ntp.org']) }}"
+
+    - name: Enable and start Chrony
+      service:
+        name: chrony
+        state: started
+        enabled: true
+      when: ansible_os_family == "Debian"
+
+  handlers:
+    - name: Restart chrony
+      service:
+        name: chrony
+        state: restarted
+      when: ansible_os_family == "Debian"

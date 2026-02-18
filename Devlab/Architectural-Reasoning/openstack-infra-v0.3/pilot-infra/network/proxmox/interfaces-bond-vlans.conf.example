@@ -1,0 +1,45 @@
+# Proxmox /etc/network/interfaces – bond (LACP) + VLANs 110, 111, 112
+# Replace eno1, eno2, eno3 and IPs for node 1 (Proxmox)
+
+auto eno1
+iface eno1 inet manual
+    mtu 1500
+
+auto eno2
+iface eno2 inet manual
+    mtu 1500
+
+auto eno3
+iface eno3 inet manual
+    mtu 1500
+
+auto bond0
+iface bond0 inet manual
+    bond-slaves eno1 eno2 eno3
+    bond-mode 802.3ad
+    bond-miimon 100
+    bond-lacp-rate 1
+    mtu 1500
+
+auto bond0.110
+iface bond0.110 inet static
+    address 172.31.10.1/24
+    mtu 1500
+
+auto bond0.111
+iface bond0.111 inet static
+    address 172.31.11.1/24
+    mtu 1500
+
+auto bond0.112
+iface bond0.112 inet static
+    address 172.31.12.1/24
+    mtu 1500
+
+# Optional: Linux bridges for VMs (e.g. vmbr0 on VLAN 110 for management)
+# auto vmbr0
+# iface vmbr0 inet static
+#     address 172.31.10.1/24
+#     bridge-ports bond0.110
+#     bridge-stp off
+#     bridge-fd 0

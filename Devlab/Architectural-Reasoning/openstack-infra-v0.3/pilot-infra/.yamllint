@@ -1,0 +1,9 @@
+# yamllint config (relaxed for templates and examples)
+extends: default
+rules:
+  line-length:
+    max: 160
+    allow-non-breakable-inline: true
+  document-start: disable
+  truthy:
+    allowed-values: ["true", "false", "yes", "no"]

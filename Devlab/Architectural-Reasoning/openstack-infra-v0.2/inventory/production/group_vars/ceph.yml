@@ -1,0 +1,38 @@
+# Variables specific to Ceph nodes
+# These apply to all hosts in ceph-mon and ceph-osd groups
+
+# Ceph Cluster Configuration
+ceph_cluster_network: "192.168.2.0/24"  # TODO: Update with actual storage network
+ceph_public_network: "192.168.1.0/24"   # TODO: Update with actual management network
+
+# Cephadm Configuration
+cephadm_bootstrap_mon_ip: "192.168.1.10"  # TODO: Update with first mon node IP
+cephadm_container_image: "quay.io/ceph/ceph:v17"  # Pacific release
+
+# Ceph Pool Configuration
+ceph_pools:
+  volumes:
+    name: "volumes"
+    pg_num: 128
+    pgp_num: 128
+    device_class: "ssd"  # Fast pool for volumes
+  images:
+    name: "images"
+    pg_num: 64
+    pgp_num: 64
+    device_class: "ssd"  # Fast pool for images
+  backups:
+    name: "backups"
+    pg_num: 64
+    pgp_num: 64
+    device_class: "hdd"  # Slow pool for backups
+  vms:
+    name: "vms"
+    pg_num: 128
+    pgp_num: 128
+    device_class: "hdd"  # Slow pool for VM storage
+
+# Ceph Client Keys (managed via ansible-vault)
+ceph_client_cinder_key: ""  # Encrypted in vault
+ceph_client_glance_key: ""  # Encrypted in vault
+ceph_client_nova_key: ""    # Encrypted in vault

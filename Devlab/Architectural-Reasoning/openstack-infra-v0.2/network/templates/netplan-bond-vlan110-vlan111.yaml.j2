@@ -1,0 +1,46 @@
+# Netplan - LACP bond + VLAN 110/111 (Ubuntu 22.04+)
+# Substitute: management_ip, gateway; optional: storage_ip
+# Usage: copy to /etc/netplan/01-bond-vlans.yaml and run: netplan apply
+
+network:
+  version: 2
+  ethernets:
+    eno1:
+      dhcp4: false
+    eno2:
+      dhcp4: false
+    eno3:
+      dhcp4: false
+  bonds:
+    bond0:
+      dhcp4: false
+      interfaces: [eno1, eno2, eno3]
+      parameters:
+        mode: 802.3ad
+        mii-monitor-interval: 100
+        lacp-rate: fast
+  vlans:
+    bond0.110:
+      id: 110
+      link: bond0
+    bond0.111:
+      id: 111
+      link: bond0
+  bridges:
+    br0-v110:
+      dhcp4: false
+      interfaces: [bond0.110]
+      addresses:
+        - "{{ management_ip | default('172.31.10.1/24') }}"
+      routes:
+        - to: default
+          via: "{{ gateway | default('172.31.10.254') }}"
+      nameservers:
+        addresses: [8.8.8.8, 1.1.1.1]
+        search: [local]
+# Optional: bridge for VLAN 111
+#    br0-v111:
+#      dhcp4: false
+#      interfaces: [bond0.111]
+#      addresses:
+#        - "{{ storage_ip | default('172.31.11.1/24') }}"

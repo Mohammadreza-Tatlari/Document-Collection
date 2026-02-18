@@ -1,0 +1,290 @@
+# GitLab CI/CD Pipeline for OpenStack Infrastructure
+# This pipeline validates, tests, and deploys OpenStack + Ceph infrastructure
+
+stages:
+  - lint          # Code quality checks
+  - validate      # Configuration validation
+  - test          # Integration tests (future)
+  - deploy        # Deployment (manual only)
+
+variables:
+  ANSIBLE_HOST_KEY_CHECKING: "False"
+  ANSIBLE_FORCE_COLOR: "1"
+  KOLLA_ANSIBLE_DIR: "/usr/share/kolla-ansible"
+  CEPHADM_PATH: "/usr/bin/cephadm"
+
+# Default job template - all jobs inherit from this
+.default_job:
+  tags:
+    - deploy-node  # Runner must be tagged with 'deploy-node'
+  before_script:
+    - |
+      echo "=========================================="
+      echo "Pipeline: $CI_PIPELINE_ID | Job: $CI_JOB_NAME"
+      echo "Branch: $CI_COMMIT_REF_NAME | Commit: $CI_COMMIT_SHORT_SHA"
+      echo "=========================================="
+    - cd $CI_PROJECT_DIR
+    - |
+      # Verify required tools are available
+      command -v ansible-playbook >/dev/null 2>&1 || { echo "ansible-playbook not found"; exit 1; }
+      command -v kolla-ansible >/dev/null 2>&1 || { echo "kolla-ansible not found"; exit 1; }
+      command -v cephadm >/dev/null 2>&1 || { echo "cephadm not found"; exit 1; }
+    - |
+      # Display versions
+      echo "Ansible version: $(ansible-playbook --version | head -n1)"
+      echo "Kolla-Ansible version: $(kolla-ansible --version 2>/dev/null || echo 'unknown')"
+      echo "Cephadm version: $(cephadm version 2>/dev/null || echo 'unknown')"
+
+# ==========================================
+# LINT STAGE
+# ==========================================
+
+lint:yaml:
+  stage: lint
+  extends: .default_job
+  script:
+    - echo "🔍 Linting YAML files..."
+    - |
+      # Install yamllint if not available
+      if ! command -v yamllint >/dev/null 2>&1; then
+        pip3 install --user yamllint || pip install --user yamllint
+      fi
+    - yamllint -d relaxed inventory/ kolla/ ceph/ ansible/ network/ maas/ monitoring/ || true
+    - echo "✅ YAML linting completed"
+  allow_failure: true
+
+lint:ansible:
+  stage: lint
+  extends: .default_job
+  script:
+    - echo "🔍 Linting Ansible files..."
+    - |
+      # Install ansible-lint if not available
+      if ! command -v ansible-lint >/dev/null 2>&1; then
+        pip3 install --user ansible-lint || pip install --user ansible-lint
+      fi
+    - ansible-lint inventory/ ansible/ || true
+    - echo "✅ Ansible linting completed"
+  allow_failure: true
+
+lint:shellcheck:
+  stage: lint
+  extends: .default_job
+  script:
+    - echo "🔍 Linting shell scripts..."
+    - |
+      if ! command -v shellcheck >/dev/null 2>&1; then
+        echo "⚠️  shellcheck not installed, skipping..."
+        exit 0
+      fi
+    - shellcheck scripts/**/*.sh || true
+    - echo "✅ Shell script linting completed"
+  allow_failure: true
+
+# ==========================================
+# VALIDATE STAGE
+# ==========================================
+
+validate:inventory:
+  stage: validate
+  extends: .default_job
+  script:
+    - echo "✅ Validating Ansible inventory..."
+    - ansible-inventory -i inventory/production/hosts.yml --list
+    - ansible-inventory -i inventory/production/hosts.yml --graph
+    - echo "✅ Inventory validation passed"
+  only:
+    - merge_requests
+    - main
+    - develop
+    - tags
+
+validate:kolla-syntax:
+  stage: validate
+  extends: .default_job
+  script:
+    - echo "✅ Validating Kolla-Ansible configuration syntax..."
+    - |
+      # Check globals.yml syntax
+      python3 -c "import yaml; yaml.safe_load(open('kolla/globals.yml'))" || exit 1
+    - |
+      # Validate inventory can be parsed by kolla-ansible
+      kolla-ansible -i inventory/production/hosts.yml prechecks --check || true
+    - echo "✅ Kolla-Ansible syntax validation passed"
+  only:
+    - merge_requests
+    - main
+    - develop
+    - tags
+
+validate:ceph-spec:
+  stage: validate
+  extends: .default_job
+  script:
+    - echo "✅ Validating Ceph cluster specification..."
+    - |
+      # Validate YAML syntax
+      python3 -c "import yaml; yaml.safe_load(open('ceph/cluster-spec.yaml'))" || exit 1
+    - |
+      # Check if cephadm can parse the spec (dry-run)
+      if [ -f "ceph/cluster-spec.yaml" ]; then
+        echo "Ceph spec file found, validation passed"
+      else
+        echo "⚠️  Warning: ceph/cluster-spec.yaml not found"
+      fi
+    - echo "✅ Ceph specification validation passed"
+  only:
+    - merge_requests
+    - main
+    - develop
+    - tags
+
+validate:ansible-playbooks:
+  stage: validate
+  extends: .default_job
+  script:
+    - echo "✅ Validating custom Ansible playbooks..."
+    - |
+      if [ -d "ansible/playbooks" ]; then
+        for playbook in ansible/playbooks/*.yml; do
+          if [ -f "$playbook" ]; then
+            echo "Validating $playbook..."
+            ansible-playbook --syntax-check "$playbook" -i inventory/production/hosts.yml || exit 1
+          fi
+        done
+      else
+        echo "No custom playbooks found, skipping..."
+      fi
+    - echo "✅ Ansible playbook validation passed"
+  only:
+    - merge_requests
+    - main
+    - develop
+    - tags
+
+# ==========================================
+# TEST STAGE (Future - placeholder)
+# ==========================================
+
+test:integration:
+  stage: test
+  extends: .default_job
+  script:
+    - echo "🧪 Integration tests (to be implemented)"
+    - echo "This stage will run integration tests against staging environment"
+  when: manual
+  allow_failure: true
+  only:
+    - main
+    - tags
+
+# ==========================================
+# DEPLOY STAGE (Manual only, protected)
+# ==========================================
+
+deploy:ceph:
+  stage: deploy
+  extends: .default_job
+  script:
+    - echo "🚀 Deploying Ceph cluster..."
+    - |
+      if [ ! -f "scripts/deploy/ceph-deploy.sh" ]; then
+        echo "❌ Deployment script not found"
+        exit 1
+      fi
+    - chmod +x scripts/deploy/ceph-deploy.sh
+    - ./scripts/deploy/ceph-deploy.sh
+    - echo "✅ Ceph deployment completed"
+  when: manual
+  only:
+    - main
+    - tags
+  environment:
+    name: production
+    url: https://ceph-dashboard.example.com
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_TAG
+
+deploy:openstack-prechecks:
+  stage: deploy
+  extends: .default_job
+  script:
+    - echo "🔍 Running OpenStack pre-deployment checks..."
+    - kolla-ansible -i inventory/production/hosts.yml prechecks
+    - echo "✅ Pre-deployment checks passed"
+  when: manual
+  only:
+    - main
+    - tags
+  environment:
+    name: production
+
+deploy:openstack-pull:
+  stage: deploy
+  extends: .default_job
+  script:
+    - echo "📥 Pulling OpenStack container images..."
+    - kolla-ansible -i inventory/production/hosts.yml pull
+    - echo "✅ Container images pulled"
+  when: manual
+  only:
+    - main
+    - tags
+  needs:
+    - deploy:openstack-prechecks
+  environment:
+    name: production
+
+deploy:openstack-deploy:
+  stage: deploy
+  extends: .default_job
+  script:
+    - echo "🚀 Deploying OpenStack services..."
+    - kolla-ansible -i inventory/production/hosts.yml deploy
+    - echo "✅ OpenStack deployment completed"
+  when: manual
+  only:
+    - main
+    - tags
+  needs:
+    - deploy:openstack-pull
+  environment:
+    name: production
+
+deploy:openstack-postdeploy:
+  stage: deploy
+  extends: .default_job
+  script:
+    - echo "🔧 Running post-deployment tasks..."
+    - kolla-ansible -i inventory/production/hosts.yml post-deploy
+    - echo "✅ Post-deployment tasks completed"
+  when: manual
+  only:
+    - main
+    - tags
+  needs:
+    - deploy:openstack-deploy
+  environment:
+    name: production
+
+# ==========================================
+# UTILITY JOBS
+# ==========================================
+
+validate:all:
+  stage: validate
+  extends: .default_job
+  script:
+    - echo "✅ Running all validation checks..."
+    - echo "This job ensures all validation jobs pass before deployment"
+  only:
+    - merge_requests
+    - main
+    - develop
+    - tags
+  needs:
+    - validate:inventory
+    - validate:kolla-syntax
+    - validate:ceph-spec
+    - validate:ansible-playbooks

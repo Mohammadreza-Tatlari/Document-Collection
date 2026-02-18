@@ -1,0 +1,60 @@
+# Ansible
+*.retry
+.vault_pass.txt
+vault_pass.txt
+*.vault
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+
+# Secrets (should never be committed)
+*.key
+*.pem
+*.crt
+secrets/
+.secrets/
+
+# Kolla-Ansible
+kolla-build.conf
+kolla-build.log
+
+# Ceph
+ceph.conf.local
+ceph.client.*.keyring
+*.keyring
+
+# Local inventory overrides (if any)
+inventory/local/
+inventory/*/host_vars/*/local.yml
+
+# Terraform (if used in future)
+.terraform/
+*.tfstate
+*.tfstate.backup

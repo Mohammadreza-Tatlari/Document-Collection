@@ -1,0 +1,32 @@
+# Prometheus – pilot (management subnet 172.31.10.0/24)
+# Scrape node_exporter on all nodes; Ceph MGR prometheus on active MGR host
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: node
+    static_configs:
+      - targets:
+          - 172.31.10.1:9100   # node1 Proxmox
+          - 172.31.10.2:9100
+          - 172.31.10.3:9100
+          - 172.31.10.4:9100
+          - 172.31.10.5:9100
+          - 172.31.10.6:9100
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        regex: '([^:]+)(:[0-9]+)?'
+        replacement: '${1}'
+
+  - job_name: ceph
+    static_configs:
+      # Active MGR serves /metrics on 9283; add all MGR hosts or use service discovery
+      - targets:
+          - 172.31.10.2:9283
+          - 172.31.10.3:9283
+          - 172.31.10.4:9283
+    metrics_path: /metrics
+    scrape_interval: 30s

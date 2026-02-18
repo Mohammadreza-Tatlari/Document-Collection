@@ -1,0 +1,21 @@
+# Variables specific to compute nodes
+# These apply to all hosts in the 'compute' group
+
+# Nova Compute
+enable_nova_compute: true
+enable_nova_ssh: true
+
+# Neutron Agents
+enable_neutron_linuxbridge_agent: true
+enable_neutron_dhcp_agent: true
+enable_neutron_metadata_agent: true
+
+# Libvirt Configuration
+nova_compute_virt_type: "qemu"  # or "kvm" if hardware virtualization available
+
+# CPU Configuration
+nova_cpu_allocation_ratio: 16.0
+nova_ram_allocation_ratio: 1.5
+
+# Storage
+nova_enable_rbd_backend: true

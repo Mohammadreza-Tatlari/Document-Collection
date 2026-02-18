@@ -1,0 +1,35 @@
+# CODEOWNERS - Defines code ownership and review requirements
+# See: https://docs.gitlab.com/ee/user/project/code_owners.html
+
+# Global ownership - Senior engineer reviews all critical changes
+* @senior-engineer
+
+# Infrastructure and deployment
+/.gitlab-ci.yml @senior-engineer @mid-level-1
+/inventory/ @senior-engineer @mid-level-1
+/scripts/ @senior-engineer @mid-level-1
+
+# Kolla-Ansible core configuration
+/kolla/globals.yml @senior-engineer @mid-level-1
+/kolla/passwords.yml @senior-engineer
+/kolla/multinode @senior-engineer @mid-level-1
+
+# OpenStack Service Configurations
+# TODO: Assign teams once groups are defined
+/kolla/config/keystone.conf @mid-level-1
+/kolla/config/nova.conf @mid-level-2
+/kolla/config/neutron.conf @mid-level-3
+/kolla/config/cinder.conf @mid-level-1
+/kolla/config/glance-api.conf @mid-level-1
+
+# Ceph Configuration
+/ceph/ @senior-engineer @mid-level-1
+
+# Documentation
+/docs/ @senior-engineer
+
+# Monitoring
+/monitoring/ @mid-level-1
+
+# Ansible playbooks and roles
+/ansible/ @senior-engineer @mid-level-1

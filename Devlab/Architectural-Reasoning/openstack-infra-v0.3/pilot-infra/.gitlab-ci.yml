@@ -1,0 +1,32 @@
+# GitLab CI – validate IaC and config (no secrets in pipeline; use vault at deploy time)
+# Runs ansible-lint, yamllint; optional kolla-ansible prechecks when inventory is present
+
+stages:
+  - validate
+
+variables:
+  ANSIBLE_FORCE_COLOR: "true"
+
+.yamllint: &yamllint
+  image: cytopia/yamllint:latest
+  script:
+    - yamllint -d relaxed .
+  allow_failure: false
+
+.ansible_lint: &ansible_lint
+  image: cytopia/ansible-lint:latest
+  script:
+    - ansible-lint ansible/playbooks/*.yml ansible/playbooks/*.yaml 2>/dev/null || true
+  allow_failure: true
+
+validate:yaml:
+  stage: validate
+  <<: *yamllint
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+validate:ansible:
+  stage: validate
+  <<: *ansible_lint
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"

@@ -1,0 +1,54 @@
+# Prometheus configuration for OpenStack + Ceph pilot
+# Scrape node_exporter, Ceph mgr prometheus, and OpenStack exporters
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - localhost:9093
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+scrape_configs:
+  # Prometheus self
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - localhost:9090
+
+  # Node exporter on all hosts (management subnet 172.31.10.0/24)
+  - job_name: node
+    static_configs:
+      - targets:
+          - 172.31.10.1:9100   # bootstrap
+          - 172.31.10.2:9100   # controller-01
+          - 172.31.10.3:9100   # compute-01
+          - 172.31.10.4:9100   # compute-02
+          - 172.31.10.5:9100   # compute-03
+          - 172.31.10.6:9100   # compute-04
+          - 172.31.10.7:9100   # compute-05
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        regex: ([^:]+)(?::\d+)?
+        replacement: ${1}
+
+  # Ceph mgr prometheus plugin (one per cluster; adjust host/port if needed)
+  - job_name: ceph
+    static_configs:
+      - targets:
+          - 172.31.10.2:9283   # controller-01 mgr prometheus
+    metrics_path: /metrics
+    scheme: http
+
+  # OpenStack exporters (if deployed by Kolla or separately)
+  # - job_name: openstack
+  #   static_configs:
+  #     - targets:
+  #         - 172.31.10.2:9187   # nova exporter
+  #         - 172.31.10.2:9189   # cinder exporter

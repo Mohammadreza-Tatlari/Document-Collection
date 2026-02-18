@@ -1,0 +1,37 @@
+# kolla-ansible globals – pilot (OpenStack control on Proxmox, compute on 5 nodes)
+# Ref: https://docs.openstack.org/kolla-ansible/latest/user/variables.html
+# Keep passwords in passwords.yml (vault-encrypted); include with -e @passwords.yml
+
+kolla_base_distro: ubuntu
+kolla_install_type: binary
+openstack_release: "zed"
+
+# Networking – three VLANs: 110 management, 111 Ceph, 112 tenant
+network_interface: "bond0.110"
+neutron_external_interface: "bond0.112"
+kolla_internal_vip_address: "172.31.10.10"
+neutron_plugin_agent: linuxbridge
+
+# Enable Cinder with Ceph backend (RBD); pool name must match Ceph pool (e.g. volumes)
+enable_cinder: "yes"
+enable_cinder_backend_ceph: "yes"
+cinder_ceph_pool_name: "volumes"
+
+# Enable core services
+enable_glance: "yes"
+enable_nova: "yes"
+enable_neutron: "yes"
+enable_horizon: "yes"
+enable_placement: "yes"
+enable_keystone: "yes"
+
+# Optional: metering for portal
+# enable_ceilometer: "yes"
+# enable_gnocchi: "yes"
+# enable_aodh: "yes"
+
+# Horizon
+kolla_enable_tls_external: "no"
+
+# Neutron provider networks (VLAN 112 for tenant)
+# neutron_agent_mode: "dvr"  # optional

@@ -1,0 +1,22 @@
+# Variables specific to storage nodes
+# These apply to all hosts in the 'storage' group
+
+# Cinder Volume Service
+enable_cinder: true
+enable_cinder_backend_rbd: true
+
+# Cinder Backend Configuration
+cinder_backend_ceph:
+  volume_driver: "cinder.volume.drivers.rbd.RBDDriver"
+  rbd_pool: "volumes"
+  rbd_ceph_conf: "/etc/ceph/ceph.conf"
+  rbd_user: "cinder"
+  rbd_secret_uuid: ""  # Will be generated during deployment
+
+# Glance Configuration
+glance_backend_ceph:
+  stores: "rbd"
+  default_store: "rbd"
+  rbd_store_pool: "images"
+  rbd_store_user: "glance"
+  rbd_store_ceph_conf: "/etc/ceph/ceph.conf"

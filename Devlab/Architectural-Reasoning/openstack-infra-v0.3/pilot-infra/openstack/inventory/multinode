@@ -1,0 +1,28 @@
+# kolla-ansible multinode inventory – pilot
+# Control: VMs on Proxmox (node1); Compute: node2..node6 (Ubuntu 24.04)
+# Replace control1, compute1..compute5 hostnames with your VM/host names or IPs (VLAN 110)
+
+[control]
+control1 ansible_host=172.31.10.10
+
+[compute]
+compute1 ansible_host=172.31.10.2
+compute2 ansible_host=172.31.10.3
+compute3 ansible_host=172.31.10.4
+compute4 ansible_host=172.31.10.5
+compute5 ansible_host=172.31.10.6
+
+[network]
+control1
+
+[monitoring]
+control1
+
+[storage]
+control1
+
+[baremetal]
+# Optional: for Ironic (not used in this pilot)
+
+[deployment]
+localhost ansible_connection=local

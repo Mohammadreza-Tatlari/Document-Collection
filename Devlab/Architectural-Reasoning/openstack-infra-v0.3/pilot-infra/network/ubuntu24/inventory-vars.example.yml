@@ -1,0 +1,22 @@
+# Example per-node variables for netplan and Ansible
+# Copy to group_vars or host_vars and fill real IPs/interface names
+# Management: 172.31.10.0/24, Ceph: 172.31.11.0/24, Tenant: 172.31.12.0/24
+
+proxmox:
+  management_ip: 172.31.10.1/24
+  ceph_ip: 172.31.11.1/24
+  tenant_ip: 172.31.12.1/24
+  interfaces: ["eno1", "eno2", "eno3"]
+
+compute_nodes:
+  - hostname: node2
+    management_ip: 172.31.10.2/24
+    ceph_ip: 172.31.11.2/24
+    tenant_ip: 172.31.12.2/24
+    interfaces: ["eno1", "eno2", "eno3"]
+  - hostname: node3
+    management_ip: 172.31.10.3/24
+    ceph_ip: 172.31.11.3/24
+    tenant_ip: 172.31.12.3/24
+    interfaces: ["eno1", "eno2", "eno3"]
+  # ... node4, node5, node6 same pattern (e.g. .4, .5, .6)

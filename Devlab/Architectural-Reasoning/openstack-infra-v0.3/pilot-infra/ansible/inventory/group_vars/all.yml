@@ -1,0 +1,16 @@
+# Group vars for all pilot nodes
+# Override in group_vars/proxmox.yml or group_vars/ubuntu_compute.yml as needed
+
+# NTP (use your internal NTP or pool.ntp.org)
+ntp_servers:
+  - 0.pool.ntp.org
+  - 1.pool.ntp.org
+
+# DNS (management subnet or internal resolver)
+dns_servers:
+  - 172.31.10.1
+  - 8.8.8.8
+
+# Firewall: allow SSH, and later OpenStack/Ceph ports from management subnet
+management_subnet: 172.31.10.0/24
+allow_ssh_from: "{{ management_subnet }}"

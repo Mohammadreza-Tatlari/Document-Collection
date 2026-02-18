@@ -1,0 +1,72 @@
+# Ceph Pool Definitions
+# This file defines storage pools for OpenStack services
+# Pools will be created with specific device classes (SSD vs HDD)
+
+# ==========================================
+# Fast Pools (SSD-backed)
+# ==========================================
+
+# Volumes Pool - For Cinder block storage
+# Fast SSD pool for VM volumes
+volumes_pool:
+  name: volumes
+  pg_num: 128
+  pgp_num: 128
+  device_class: ssd
+  application: rbd
+  # Replication settings
+  size: 3  # Number of replicas
+  min_size: 2  # Minimum replicas for write operations
+
+# Images Pool - For Glance image storage
+# Fast SSD pool for VM images
+images_pool:
+  name: images
+  pg_num: 64
+  pgp_num: 64
+  device_class: ssd
+  application: rbd
+  size: 3
+  min_size: 2
+
+# ==========================================
+# Slow Pools (HDD-backed)
+# ==========================================
+
+# Backups Pool - For Cinder backups
+# Slow HDD pool for backup storage
+backups_pool:
+  name: backups
+  pg_num: 64
+  pgp_num: 64
+  device_class: hdd
+  application: rbd
+  size: 3
+  min_size: 2
+
+# VMs Pool - For Nova ephemeral storage (optional)
+# Slow HDD pool for VM ephemeral disks
+vms_pool:
+  name: vms
+  pg_num: 128
+  pgp_num: 128
+  device_class: hdd
+  application: rbd
+  size: 3
+  min_size: 2
+
+# ==========================================
+# Pool Configuration Notes
+# ==========================================
+# PG (Placement Group) Calculation:
+#   Total PGs = (Total OSDs * 100) / Replication Factor
+#   Round up to nearest power of 2
+#
+# For 5 nodes with ~10 OSDs each = 50 OSDs
+#   Total PGs = (50 * 100) / 3 = ~1667
+#   Distribute across pools:
+#     - volumes: 128 PGs
+#     - images: 64 PGs
+#     - backups: 64 PGs
+#     - vms: 128 PGs
+#   Total: 384 PGs (well within limits)

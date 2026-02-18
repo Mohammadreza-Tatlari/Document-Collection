@@ -1,0 +1,22 @@
+---
+# Deploy Netplan bond+VLAN config to Ubuntu nodes (use host vars for IPs)
+# Run: ansible-playbook -i ../inventory/hosts.yml deploy-netplan.yml -l ubuntu_compute
+# Ensure each host has management_ip, ceph_ip, tenant_ip in host_vars or group_vars.
+
+- name: Deploy Netplan bond and VLANs to Ubuntu compute
+  hosts: ubuntu_compute
+  become: true
+  tasks:
+    - name: Deploy netplan bond+VLAN config
+      ansible.builtin.template:
+        src: ../templates/netplan-bond-vlans.yaml.j2
+        dest: /etc/netplan/01-bond-vlans.yaml
+        mode: "0644"
+      vars:
+        management_ip: "{{ hostvars[inventory_hostname].management_ip | default('172.31.10.x/24') }}"
+        ceph_ip: "{{ hostvars[inventory_hostname].ceph_ip | default('172.31.11.x/24') }}"
+        tenant_ip: "{{ hostvars[inventory_hostname].tenant_ip | default('172.31.12.x/24') }}"
+
+    - name: Apply netplan (dry-run check)
+      ansible.builtin.command: netplan apply
+      changed_when: true

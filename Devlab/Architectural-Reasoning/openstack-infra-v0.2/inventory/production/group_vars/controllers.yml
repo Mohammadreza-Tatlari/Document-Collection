@@ -1,0 +1,27 @@
+# Variables specific to control plane nodes
+# These apply to all hosts in the 'control' group
+
+# OpenStack API Services
+enable_keystone: true
+enable_glance: true
+enable_nova_api: true
+enable_neutron_api: true
+enable_cinder_api: true
+enable_horizon: true
+
+# High Availability
+enable_keepalived: true
+enable_haproxy: true
+
+# Database (MariaDB/Galera)
+enable_mariadb: true
+enable_galera: true
+
+# Message Queue (RabbitMQ)
+enable_rabbitmq: true
+
+# Memcached
+enable_memcached: true
+
+# Etcd (for Neutron)
+enable_etcd: true

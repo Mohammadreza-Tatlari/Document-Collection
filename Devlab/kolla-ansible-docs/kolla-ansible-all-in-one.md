@@ -311,7 +311,7 @@ to identify and list it:
 4. **external bridge (`bridge br-ex`)**: this is the gateway to the external world. it connects to the physical network interface (`eth1`) and manages traffic to provider networks and floating IPs. in short, it allows our VMs to reach the internet and be reachable.
 5. **patch ports (`Port patch-tun`)**: the separated bridged work together by being connected by patch ports. it acts as a virtual network that directly link ovs bridges
 
-![OVS Bridges Schema](./../media/neutron-bridges-schema.png)
+![OVS Bridges Schema](./../../media/neutron-bridges-schema.png)
 
 
 

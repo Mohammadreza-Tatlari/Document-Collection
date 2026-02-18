@@ -12,6 +12,13 @@ What you are *actually practicing* is:
 > **Architectural reasoning under operational and failure constraints**
 > **Architecture design with explicit operational and failure assumptions**
 
+## 6 Principles of Design Level
+- Goal of Project
+- Accounting Assumption
+- Design Architecture
+- Failure Scenario
+- Trade Off
+- Unconcious Decisions
 
 
 # Pratice 1 - Design Before Deploy For Devlab
@@ -308,7 +315,6 @@ You must describe end-to-end flows. </br>
 6. System returns to steady state
 
 
-
 #### 4. State ownership table (Highly Recommended)
 This table alone prevents half of future incidents. *Example:*:
 
@@ -410,7 +416,5 @@ Keep in Mind That Design-level Scenario ends with "**Architectural Authority is 
 
 
 ## Unconscious Decisions
-
-
 
 

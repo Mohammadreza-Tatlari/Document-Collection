@@ -1,0 +1,18 @@
+# Alertmanager – pilot (minimal config; extend with receivers and routes)
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname', 'instance']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: default
+
+receivers:
+  - name: default
+    # Add webhook_config / email_config / slack_config as needed
+    # webhook_configs:
+    #   - url: 'http://example.com/webhook'
+
+inhibit_rules: []

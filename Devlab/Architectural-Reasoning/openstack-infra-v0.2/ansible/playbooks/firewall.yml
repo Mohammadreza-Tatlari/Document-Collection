@@ -1,0 +1,56 @@
+---
+# Host firewall (ufw) - management and storage VLANs
+# Adjust ports and sources per environment
+- name: Configure host firewall for pilot nodes
+  hosts: all
+  become: true
+  vars:
+    # Allow from management subnet and optional storage subnet
+    allowed_management_net: "172.31.10.0/24"
+    allowed_storage_net: "172.31.11.0/24"
+    # OpenStack/Ceph need many ports; for pilot we allow management subnet broadly
+    # For production, restrict to specific service ports
+    firewall_allow_management: true
+    firewall_allow_storage: true
+
+  tasks:
+    - name: Install ufw
+      apt:
+        name: ufw
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Allow SSH from management
+      ufw:
+        rule: allow
+        from_ip: "{{ allowed_management_net }}"
+        to_port: "22"
+        proto: tcp
+      when: ansible_os_family == "Debian" and firewall_allow_management | bool
+
+    - name: Allow management subnet (full) for pilot
+      ufw:
+        rule: allow
+        from_ip: "{{ allowed_management_net }}"
+      when: ansible_os_family == "Debian" and firewall_allow_management | bool
+
+    - name: Allow storage subnet for Ceph/Neutron
+      ufw:
+        rule: allow
+        from_ip: "{{ allowed_storage_net }}"
+      when: ansible_os_family == "Debian" and firewall_allow_storage | bool
+
+    - name: Set default policies
+      ufw:
+        direction: "{{ item.direction }}"
+        policy: "{{ item.policy }}"
+      loop:
+        - { direction: incoming, policy: deny }
+        - { direction: outgoing, policy: allow }
+      when: ansible_os_family == "Debian"
+
+    # Enable ufw when ready (uncomment to enforce). For pilot, leave disabled initially.
+    # - name: Enable ufw
+    #   ufw:
+    #     state: enabled
+    #   when: ansible_os_family == "Debian"

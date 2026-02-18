@@ -1,0 +1,11 @@
+# Secrets (never commit)
+**/passwords.yml
+*.vault
+*.vault.yml
+
+# Ansible
+*.retry
+
+# Local overrides
+inventory/hosts.yml
+**/hosts.yml

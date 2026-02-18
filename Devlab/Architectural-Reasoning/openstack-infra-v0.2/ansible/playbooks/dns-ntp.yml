@@ -1,0 +1,37 @@
+---
+# DNS client configuration
+# Ensures all nodes use internal DNS (e.g. Unbound). NTP is in base-os.yml.
+- name: DNS for OpenStack/Ceph nodes
+  hosts: all
+  become: true
+  vars:
+    dns_servers: "{{ lookup('vars', 'dns_servers') | default(['8.8.8.8', '1.1.1.1']) }}"
+    dns_search: "{{ lookup('vars', 'dns_search') | default('local') }}"
+
+  tasks:
+    - name: Resolve DNS servers list
+      set_fact:
+        dns_list: "{{ dns_servers if dns_servers is iterable and dns_servers is not string else dns_servers.split(',') }}"
+      when: dns_servers is defined
+
+    - name: Ensure resolved drop-in directory exists
+      file:
+        path: /etc/systemd/resolved.conf.d
+        state: directory
+        mode: "0755"
+      when: ansible_os_family == "Debian"
+
+    - name: Configure resolved for DNS (systemd-resolved)
+      copy:
+        content: |
+          [Resolve]
+          DNS={{ (dns_list | default(dns_servers)) | join(' ') }}
+          Domains={{ dns_search }}
+        dest: /etc/systemd/resolved.conf.d/ansible.conf
+      when: ansible_os_family == "Debian"
+
+    - name: Restart systemd-resolved
+      service:
+        name: systemd-resolved
+        state: restarted
+      when: ansible_os_family == "Debian"

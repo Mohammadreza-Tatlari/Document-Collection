@@ -1,0 +1,49 @@
+# Physical interfaces - LACP bond + VLAN 110/111
+# Substitute: management_ip (e.g. 172.31.10.1/24), gateway (e.g. 172.31.10.254)
+# Optional: storage_ip (e.g. 172.31.11.1/24) if using VLAN 111 for Ceph/Neutron
+
+auto eno1
+iface eno1 inet manual
+
+auto eno2
+iface eno2 inet manual
+
+auto eno3
+iface eno3 inet manual
+
+# Bond interface (802.3ad / LACP)
+auto bond0
+iface bond0 inet manual
+    bond-slaves eno1 eno2 eno3
+    bond-mode 4
+    bond-miimon 100
+    bond-lacp-rate 1
+
+# VLAN 110 - Management
+auto bond0.110
+iface bond0.110 inet manual
+    vlan-raw-device bond0
+
+# VLAN 111 - Storage / Tenant data plane
+auto bond0.111
+iface bond0.111 inet manual
+    vlan-raw-device bond0
+
+# Bridge VLAN 110 (management)
+auto br0-v110
+iface br0-v110 inet static
+    address {{ management_ip | default('172.31.10.1/24') }}
+    gateway {{ gateway | default('172.31.10.254') }}
+    bridge-ports bond0.110
+    bridge-stp off
+    bridge-fd 0
+    dns-nameservers 8.8.8.8 1.1.1.1
+    dns-search local
+
+# Bridge VLAN 111 (optional - uncomment and set storage_ip if used)
+# auto br0-v111
+# iface br0-v111 inet static
+#     address {{ storage_ip | default('172.31.11.1/24') }}
+#     bridge-ports bond0.111
+#     bridge-stp off
+#     bridge-fd 0

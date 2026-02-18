@@ -1,0 +1,67 @@
+# Cephadm Cluster Specification
+# This file defines the Ceph cluster topology and services
+# Reference: https://docs.ceph.com/en/latest/cephadm/service-spec/
+
+# ==========================================
+# Service Definitions
+# ==========================================
+
+# Ceph Monitor (MON) Services - 3 nodes for quorum (pilot: controller-01 + 2 compute)
+service_type: mon
+placement:
+  hosts:
+    - controller-01
+    - compute-01
+    - compute-02
+spec:
+  count: 3
+
+---
+# Ceph Manager (MGR) Services - 2 for HA
+service_type: mgr
+placement:
+  hosts:
+    - controller-01
+    - compute-01
+spec:
+  count: 2
+
+---
+# Ceph OSD Services
+# OSDs will be created based on osd-specs/ per node
+# This is a template - actual OSDs defined in osd-specs/
+service_type: osd
+placement:
+  hosts:
+    - compute-01
+    - compute-02
+    - compute-03
+    - compute-04
+    - compute-05
+spec:
+  # OSD specifications will be in separate files per node
+  # See osd-specs/ directory
+
+---
+# Ceph Metadata Server (MDS) - Optional, for CephFS
+# Uncomment if you need CephFS
+# service_type: mds
+# service_id: cephfs
+# placement:
+#   hosts:
+#     - controller-01
+#     - controller-02
+# spec:
+#   count: 2
+
+---
+# Ceph Rados Gateway (RGW) - Optional, for Object Storage
+# Uncomment if you need S3/Swift compatible object storage
+# service_type: rgw
+# service_id: object
+# placement:
+#   hosts:
+#     - controller-01
+# spec:
+#   count: 1
+#   rgw_frontend_port: 8080

@@ -1,0 +1,33 @@
+# Ubuntu 24.04 Netplan: bond (LACP) + VLANs 110, 111, 112 (Ansible)
+# Variables: management_ip, ceph_ip, tenant_ip (e.g. 172.31.10.2/24)
+
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    eno1: {}
+    eno2: {}
+    eno3: {}
+  bonds:
+    bond0:
+      interfaces: [eno1, eno2, eno3]
+      parameters:
+        mode: 802.3ad
+        lacp-rate: fast
+        mii-monitor-interval: 100
+  vlans:
+    bond0.110:
+      id: 110
+      link: bond0
+      addresses:
+        - "{{ management_ip }}"
+    bond0.111:
+      id: 111
+      link: bond0
+      addresses:
+        - "{{ ceph_ip }}"
+    bond0.112:
+      id: 112
+      link: bond0
+      addresses:
+        - "{{ tenant_ip }}"

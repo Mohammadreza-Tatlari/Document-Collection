@@ -1,4 +1,3 @@
-
 ### Patterns Defined in The Simulation Scenarios
 
 1. Pattern 1: Irrigation decisions are *not* optimization problems 

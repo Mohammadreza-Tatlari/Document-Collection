@@ -1,0 +1,75 @@
+---
+# Base OS: users, SSH, firewall, NTP, DNS client for all pilot nodes
+# Run: ansible-playbook -i ../inventory/hosts.yml site-base-os.yml
+
+- name: Base OS – Proxmox and Ubuntu compute
+  hosts: all
+  become: true
+  tasks:
+    - name: Ensure chrony (NTP) is installed
+      ansible.builtin.apt:
+        name: chrony
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Configure chrony
+      ansible.builtin.template:
+        src: ../templates/chrony.conf.j2
+        dest: /etc/chrony/chrony.conf
+      when: ansible_os_family == "Debian"
+
+    - name: Restart chrony
+      ansible.builtin.service:
+        name: chrony
+        state: restarted
+      when: ansible_os_family == "Debian"
+
+    - name: Ensure ufw is installed
+      ansible.builtin.apt:
+        name: ufw
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Allow SSH from management subnet
+      community.general.ufw:
+        rule: allow
+        from: "{{ allow_ssh_from }}"
+        to: any
+        port: "22"
+        proto: tcp
+      when: ansible_os_family == "Debian"
+
+    - name: Set UFW default deny incoming
+      community.general.ufw:
+        direction: incoming
+        policy: deny
+      when: ansible_os_family == "Debian"
+
+    - name: Set UFW default allow outgoing
+      community.general.ufw:
+        direction: outgoing
+        policy: allow
+      when: ansible_os_family == "Debian"
+
+    - name: Enable UFW (set ufw_enabled to true in vars when ready)
+      community.general.ufw:
+        state: enabled
+      when: ansible_os_family == "Debian" and (ufw_enabled | default(false) | bool)
+
+    - name: Write resolv.conf head (DNS)
+      ansible.builtin.copy:
+        content: |
+          nameserver {{ dns_servers[0] }}
+          nameserver {{ dns_servers[1] | default(dns_servers[0]) }}
+        dest: /etc/resolvconf/resolv.conf.d/head
+      when:
+        - ansible_os_family == "Debian"
+        - dns_servers is defined
+      notify: Restart resolvconf
+
+  handlers:
+    - name: Restart resolvconf
+      ansible.builtin.service:
+        name: resolvconf
+        state: restarted
+      when: ansible_os_family == "Debian"
